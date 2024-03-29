@@ -1,0 +1,10 @@
+server:
+  port: 7777
+  servlet:
+    context-path: /image
+  tomcat:
+    max-swallow-size: 100MB # 最重要的是这一行
+
+spring:
+  profiles:
+    active: dev
