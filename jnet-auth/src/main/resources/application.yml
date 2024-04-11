@@ -1,0 +1,10 @@
+server:
+  port: 7777
+  servlet:
+    context-path: /auth
+  tomcat:
+    max-swallow-size: 100MB
+
+spring:
+  profiles:
+    active: dev
