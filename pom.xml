@@ -14,6 +14,7 @@
     <module>jnet-image</module>
     <module>jnet-common</module>
     <module>jnet-gateway</module>
+    <module>jnet-auth</module>
   </modules>
 
   <properties>
