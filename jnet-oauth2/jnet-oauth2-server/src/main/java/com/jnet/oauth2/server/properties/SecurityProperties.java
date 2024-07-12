@@ -1,0 +1,28 @@
+package com.jnet.oauth2.server.properties;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author zlt
+ * @version 1.0
+ * @date 2019/1/4
+ * <p>
+ * Blog: http://zlt2000.gitee.io
+ * Github: https://github.com/zlt2000
+ */
+@Setter
+@Getter
+//@ConfigurationProperties(prefix = "jnet.auth")
+//@RefreshScope
+@Component
+public class SecurityProperties {
+    private AuthProperties auth = new AuthProperties();
+
+    private PermitProperties ignore = new PermitProperties();
+
+    private ValidateCodeProperties code = new ValidateCodeProperties();
+
+    private ResourceServerProperties resourceServer = new ResourceServerProperties();
+}

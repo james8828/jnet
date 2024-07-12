@@ -14,7 +14,8 @@
     <module>jnet-image</module>
     <module>jnet-common</module>
     <module>jnet-gateway</module>
-    <module>jnet-auth</module>
+    <module>jnet-oauth2</module>
+
   </modules>
 
   <properties>
@@ -42,6 +43,7 @@
     <springdoc-openapi.version>2.2.0</springdoc-openapi.version>
     <jna.version>5.12.1</jna.version>
     <fastjson2.version>2.0.46</fastjson2.version>
+    <redisson.version>3.25.0</redisson.version>
   </properties>
 
   <dependencies>
