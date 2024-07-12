@@ -1,6 +1,6 @@
 package com.jnet.oauth2.server.config;
 
-import com.jnet.oauth2.server.RedisOAuth2AuthorizationService;
+import com.jnet.oauth2.server.token.RedisOAuth2AuthorizationService;
 import com.jnet.oauth2.server.converter.PasswordAuthenticationConverter;
 import com.jnet.oauth2.server.properties.SecurityProperties;
 import com.jnet.oauth2.server.provider.PasswordAuthenticationProvider;
@@ -41,6 +41,14 @@ public class OAuth2ComponentConfig {
         return new RedisOAuth2AuthorizationService(securityProperties, redisson);
     }
 
+    /**
+     * authenticationProvider(): 添加一个用于验证 OAuth2ClientAuthenticationToken 的 AuthenticationProvider（主处理器）。
+     * @param userDetailsService
+     * @param authorizationService
+     * @param tokenGenerator
+     * @param passwordEncoder
+     * @return
+     */
     @Bean
     public PasswordAuthenticationProvider passwordAuthenticationProvider(UserDetailsService userDetailsService, OAuth2AuthorizationService authorizationService, OAuth2TokenGenerator tokenGenerator, PasswordEncoder passwordEncoder) {
         return new PasswordAuthenticationProvider(authorizationService, tokenGenerator, userDetailsService, passwordEncoder);

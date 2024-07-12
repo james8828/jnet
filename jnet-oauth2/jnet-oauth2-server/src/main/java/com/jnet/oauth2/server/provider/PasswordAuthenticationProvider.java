@@ -17,11 +17,9 @@ import org.springframework.util.Assert;
 
 /**
  * 用户名密码 provider
- *
  * @author james
  * @version 1.0
  * @date 2023/11/18
- * <p>
  */
 @Setter
 @Getter

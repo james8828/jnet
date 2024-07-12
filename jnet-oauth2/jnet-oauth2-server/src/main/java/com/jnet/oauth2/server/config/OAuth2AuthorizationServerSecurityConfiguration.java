@@ -19,7 +19,7 @@ package com.jnet.oauth2.server.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.jnet.api.R;
-import com.jnet.oauth2.server.authorizationManager.CustomAuthorizationManager;
+import com.jnet.oauth2.server.authorizationManager.PermissionAuthorizationManager;
 import com.jnet.oauth2.server.converter.CustomAccessTokenResponseHttpMessageConverter;
 import com.jnet.oauth2.server.provider.PasswordAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
@@ -29,7 +29,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -78,8 +77,55 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, AuthenticationConverter authenticationConverter, PasswordAuthenticationProvider passwordAuthenticationProvider) throws Exception {
 		/**
 		 * https://springdoc.cn/spring-authorization-server/configuration-model.html
+		 * OAuth2AuthorizationServerConfigurer 提供以下配置选项。
+		 *
+		 * @Bean
+		 * public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+		 * 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+		 * 		new OAuth2AuthorizationServerConfigurer();
+		 * 	http.apply(authorizationServerConfigurer);
+		 *
+		 * 	authorizationServerConfigurer
+		 * 		.registeredClientRepository(registeredClientRepository)
+		 * 		.authorizationService(authorizationService)
+		 * 		.authorizationConsentService(authorizationConsentService)
+		 * 		.authorizationServerSettings(authorizationServerSettings)
+		 * 		.tokenGenerator(tokenGenerator)
+		 * 		.clientAuthentication(clientAuthentication -> { })
+		 * 		.authorizationEndpoint(authorizationEndpoint -> { })
+		 * 		.tokenEndpoint(tokenEndpoint -> { })
+		 * 		.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint -> { })
+		 * 		.tokenRevocationEndpoint(tokenRevocationEndpoint -> { })
+		 * 		.authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint -> { })
+		 * 		.oidc(oidc -> oidc
+		 * 			.providerConfigurationEndpoint(providerConfigurationEndpoint -> { })
+		 * 			.userInfoEndpoint(userInfoEndpoint -> { })
+		 * 			.clientRegistrationEndpoint(clientRegistrationEndpoint -> { })
+		 * 		);
+		 *
+		 * 	return http.build();
+		 * }
+		 *
+		 * registeredClientRepository(): RegisteredClientRepository （必需的） 用于管理新的和现有的客户。
+		 * authorizationService(): 用于管理新的和现有的授权的 OAuth2AuthorizationService。
+		 * authorizationConsentService(): OAuth2AuthorizationConsentService ，用于管理新的和现有的授权许可（Consent）。
+		 * authorizationServerSettings(): 用于自定义OAuth2授权服务器的 configuration setting 的 AuthorizationServerSettings （必需的）。
+		 * tokenGenerator(): OAuth2TokenGenerator，用于生成OAuth2授权服务器支持的令牌。
+		 * clientAuthentication(): OAuth2客户端认证的configurer。
+		 * authorizationEndpoint(): OAuth2授权端点 的 configurer。
+		 * tokenEndpoint(): OAuth2令牌端点 的 configurer。
+		 * tokenIntrospectionEndpoint(): OAuth2 Token Introspection endpoint 端点的 configurer。
+		 * tokenRevocationEndpoint(): OAuth2 Token Revocation 端点 的 configurer。
+		 * authorizationServerMetadataEndpoint(): OAuth2授权服务器元数据端点 的 configurer。
+		 * providerConfigurationEndpoint(): OpenID Connect 1.0 Provider 配置端点 的 configurer。
+		 * userInfoEndpoint(): OpenID Connect 1.0 UserInfo 端点 的 configurer。
+		 * clientRegistrationEndpoint(): OpenID Connect 1.0 客户端注册端点 的 configurer。
+		 *
+		 * 默认情况下，OAuth2令牌端点、OAuth2令牌内省（Introspection）端点和 OAuth2令牌撤销端点 都需要客户端认证。
+		 * 支持的客户端认证方法有 client_secret_basic、client_secret_post、private_key_jwt、client_secret_jwt 和 none（公共客户端）。
 		 */
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
 				.authorizationEndpoint(oAuth2AuthorizationEndpointConfigurer -> {
 			oAuth2AuthorizationEndpointConfigurer
@@ -133,13 +179,12 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 
 	@Bean
 	@Order(2)
-	public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthorizationManager customAuthorizationManager) throws Exception {
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, PermissionAuthorizationManager customAuthorizationManager) throws Exception {
 		http
 				.authorizeHttpRequests((authorize) -> {
 					authorize.anyRequest().access(customAuthorizationManager);
 				})
 				.oauth2ResourceServer((oauth2) -> oauth2.jwt(withDefaults()));
-		// @formatter:on
 		return http.build();
 	}
 
@@ -191,6 +236,22 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
         return new InMemoryRegisteredClientRepository(loginClient, registeredClient,frontClient);
     }
 
+	/**
+	 * public final class AuthorizationServerSettings extends AbstractSettings {
+	 *
+	 * 	public static Builder builder() {
+	 * 		return new Builder()
+	 * 			.authorizationEndpoint("/oauth2/authorize")
+	 * 			.tokenEndpoint("/oauth2/token")
+	 * 			.tokenIntrospectionEndpoint("/oauth2/introspect")
+	 * 			.tokenRevocationEndpoint("/oauth2/revoke")
+	 * 			.jwkSetEndpoint("/oauth2/jwks")
+	 * 			.oidcUserInfoEndpoint("/userinfo")
+	 * 			.oidcClientRegistrationEndpoint("/connect/register");
+	 * 	    }
+	 * }
+	 * @return
+	 */
     @Bean
     public AuthorizationServerSettings providerSettings() {
         return AuthorizationServerSettings.builder().issuer("http://localhost:9000").build();

@@ -32,13 +32,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 基础provider
- *
- * @author zlt
+ * @author mugw
  * @version 1.0
- * @date 2023/11/18
- * <p>
-
+ * @description 认证授权服务配置
+ * AuthenticationProvider（主处理器）。
+ * @date 2024/7/8 15:31:30
  */
 @Setter
 @Getter

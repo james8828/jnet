@@ -6,11 +6,10 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import java.util.Map;
 
 /**
- * @author: zlt
- * @date: 2023/11/20
- * <p>
- * Blog: https://zlt2000.gitee.io
- * Github: https://github.com/zlt2000
+ * @author mugw
+ * @version 1.0
+ * @description
+ * @date 2024/7/8 15:31:30
  */
 public class CustomAccessToken extends OAuth2Authorization.Token<OAuth2AccessToken> {
     public CustomAccessToken(OAuth2AccessToken token, Map metadata) {

@@ -8,11 +8,10 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import java.util.Collection;
 
 /**
- * @author: zlt
- * @date: 2023/11/18
- * <p>
- * Blog: https://zlt2000.gitee.io
- * Github: https://github.com/zlt2000
+ * @author mugw
+ * @version 1.0
+ * @description
+ * @date 2024/7/8 15:31:30
  */
 @Getter
 public class PasswordAuthenticationToken extends BaseAuthenticationToken {

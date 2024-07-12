@@ -1,6 +1,7 @@
 package com.jnet.oauth2.server.converter;
 
 import com.jnet.oauth2.server.token.BaseAuthenticationToken;
+import com.jnet.oauth2.server.util.OAuthEndpointUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,11 +14,10 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 
 /**
- * @author: zlt
- * @date: 2023/11/18
- * <p>
- * Blog: https://zlt2000.gitee.io
- * Github: https://github.com/zlt2000
+ * @author mugw
+ * @version 1.0
+ * @description AuthenticationConverter（预处理器）
+ * @date 2024/7/8 15:31:30
  */
 public abstract class BaseAuthenticationConverter implements AuthenticationConverter {
     @Override

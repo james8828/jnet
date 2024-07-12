@@ -2,22 +2,22 @@ package com.jnet.oauth2.server.converter;
 
 import com.jnet.oauth2.server.token.BaseAuthenticationToken;
 import com.jnet.oauth2.server.token.PasswordAuthenticationToken;
+import com.jnet.oauth2.server.util.OAuthEndpointUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
 import java.util.List;
 
+
 /**
- * @author: zlt
- * @date: 2023/11/18
- * <p>
- * Blog: https://zlt2000.gitee.io
- * Github: https://github.com/zlt2000
+ * @author mugw
+ * @version 1.0
+ * @description 用户密码 AuthenticationConverter（预处理器）
+ * @date 2024/7/8 15:31:30
  */
 public class PasswordAuthenticationConverter extends BaseAuthenticationConverter {
 

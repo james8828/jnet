@@ -50,8 +50,6 @@ public class DynamicSecurityConfig {
         this.urlToRoles = urlToRoles;
     }
 
-    // ...省略其他配置...
-
     public DefaultFilterInvocationSecurityMetadataSource metadataSource() {
         LinkedHashMap<RequestMatcher, Collection<ConfigAttribute>> requestMap = new LinkedHashMap<>();
         this.urlToRoles.forEach((path, roles) -> {
