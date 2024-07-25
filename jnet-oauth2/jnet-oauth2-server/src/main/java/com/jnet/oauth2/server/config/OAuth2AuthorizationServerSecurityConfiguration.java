@@ -19,9 +19,12 @@ package com.jnet.oauth2.server.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.jnet.api.R;
+import com.jnet.common.core.security.SecurityComponentConfig;
 import com.jnet.oauth2.server.authorizationManager.PermissionAuthorizationManager;
 import com.jnet.oauth2.server.converter.CustomAccessTokenResponseHttpMessageConverter;
 import com.jnet.oauth2.server.provider.PasswordAuthenticationProvider;
+import jakarta.servlet.ServletOutputStream;
+import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -31,9 +34,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -45,14 +45,13 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
@@ -68,7 +67,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
  */
 @Configuration
 @EnableWebSecurity
-@Import({JwtConfiguration.class,OAuth2ComponentConfig.class})
+@Import({JwtConfiguration.class,OAuth2ComponentConfig.class, SecurityComponentConfig.class})
 public class OAuth2AuthorizationServerSecurityConfiguration {
 
 
@@ -125,7 +124,6 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 		 * 支持的客户端认证方法有 client_secret_basic、client_secret_post、private_key_jwt、client_secret_jwt 和 none（公共客户端）。
 		 */
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
 				.authorizationEndpoint(oAuth2AuthorizationEndpointConfigurer -> {
 			oAuth2AuthorizationEndpointConfigurer
@@ -164,11 +162,12 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 							msg = exception.getError().getErrorCode();
 						}
 						response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-						try (Writer writer = response.getWriter()) {
+						try (ServletOutputStream out = response.getOutputStream()){
 							ObjectMapper objectMapper = new ObjectMapper();
 							R<String> result = R.fail(msg);
-							writer.write(objectMapper.writeValueAsString(result));
-							writer.flush();
+							IOUtils.write(objectMapper.writeValueAsString(result), out, StandardCharsets.UTF_8);
+							out.flush();
+							IOUtils.close(out);
 						}
 					})
 					.authenticationProvider(passwordAuthenticationProvider);
@@ -180,9 +179,11 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 	@Bean
 	@Order(2)
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, PermissionAuthorizationManager customAuthorizationManager) throws Exception {
-		http
+		http.csrf((csrf) -> csrf.ignoringRequestMatchers("/h2-console/**"))
+				.headers((headers) -> headers.frameOptions(frameOptionsConfig -> frameOptionsConfig.sameOrigin()))
 				.authorizeHttpRequests((authorize) -> {
-					authorize.anyRequest().access(customAuthorizationManager);
+					authorize.requestMatchers("/h2-console/**").permitAll()
+							.anyRequest().access(customAuthorizationManager);
 				})
 				.oauth2ResourceServer((oauth2) -> oauth2.jwt(withDefaults()));
 		return http.build();
@@ -256,16 +257,5 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
     public AuthorizationServerSettings providerSettings() {
         return AuthorizationServerSettings.builder().issuer("http://localhost:9000").build();
     }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-		UserDetails userDetails = User.withDefaultPasswordEncoder()
-				.username("user")
-				.password("password")
-				.roles("USER")
-				.build();
-        return new InMemoryUserDetailsManager(userDetails);
-    }
-
 
 }

@@ -37,11 +37,12 @@ public abstract class BaseAuthenticationConverter implements AuthenticationConve
         Map<String, Object> additionalParameters = getAdditionalParameters(parameters, this.paramNames());
         BaseAuthenticationToken baseToken = this.getToken(parameters);
 
-        Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-
+        if (baseToken.getClientPrincipal()==null){
+            Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+            baseToken.setClientPrincipal(clientPrincipal);
+        }
         baseToken.setScopes(requestScopes);
         baseToken.setAdditionalParameters(additionalParameters);
-        baseToken.setClientPrincipal(clientPrincipal);
         return baseToken;
     };
 

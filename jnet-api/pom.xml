@@ -25,5 +25,9 @@
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatis-plus-spring-boot3-starter.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.jnet</groupId>
+            <artifactId>jnet-common</artifactId>
+        </dependency>
     </dependencies>
 </project>

@@ -3,8 +3,10 @@ package com.jnet.oauth2.server.provider;
 import com.jnet.oauth2.server.token.PasswordAuthenticationToken;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.SpringSecurityMessageSource;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +28,8 @@ import org.springframework.util.Assert;
 public class PasswordAuthenticationProvider extends BaseAuthenticationProvider {
     private UserDetailsService userDetailsService;
     private PasswordEncoder passwordEncoder;
+
+    protected MessageSourceAccessor messages = SpringSecurityMessageSource.getAccessor();
 
     public PasswordAuthenticationProvider(OAuth2AuthorizationService authorizationService
             , OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator
@@ -54,7 +58,8 @@ public class PasswordAuthenticationProvider extends BaseAuthenticationProvider {
             throw new OAuth2AuthenticationException(e.getMessage());
         }
         if (userDetails == null || !this.passwordEncoder.matches(password, userDetails.getPassword())) {
-            throw new OAuth2AuthenticationException("用户名或密码错误");
+            String msg = this.messages.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials", "Access is denied");
+            throw new OAuth2AuthenticationException(msg);
         }
         return new PasswordAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities());
     }

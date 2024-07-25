@@ -23,7 +23,7 @@ import java.util.Map;
 @Order(AopOrder.POOLED_INVOKER_ORDER)
 public class PooledInvoker {
 
-    //@Autowired
+
     private Map<String, TaskToolExecutor> executorMap;
 
     @Around("@annotation(com.scaffolding.example.threads.aop.Pooled) && @annotation(pooled)")

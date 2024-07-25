@@ -28,8 +28,6 @@ import java.util.Map;
  */
 public class OAuth2ComponentConfig {
 
-    public static final String  ENCODING_ID = "bcrypt";
-
     /**
      * AuthorizationService 使用redis 存储
      * @param securityProperties
@@ -57,25 +55,5 @@ public class OAuth2ComponentConfig {
     @Bean
     public AuthenticationConverter passwordAuthenticationConverter(RegisteredClientRepository registeredClientRepository) {
         return new PasswordAuthenticationConverter(registeredClientRepository);
-    }
-
-    @Bean
-    public static PasswordEncoder passwordEncoder() {
-        Map<String, PasswordEncoder> encoders = new HashMap<>();
-        encoders.put("bcrypt", new BCryptPasswordEncoder());
-        encoders.put("ldap", new LdapShaPasswordEncoder());
-        encoders.put("MD4", new Md4PasswordEncoder());
-        encoders.put("MD5", new MessageDigestPasswordEncoder("MD5"));
-        encoders.put("noop", NoOpPasswordEncoder.getInstance());
-        encoders.put("pbkdf2",Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
-        encoders.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
-        encoders.put("SHA-1", new MessageDigestPasswordEncoder("SHA-1"));
-        encoders.put("SHA-256", new MessageDigestPasswordEncoder("SHA-256"));
-        encoders.put("sha256", new StandardPasswordEncoder());
-        encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
-        Assert.isTrue(encoders.containsKey(ENCODING_ID), ENCODING_ID + " is not found in idToPasswordEncoder");
-        DelegatingPasswordEncoder delegatingPasswordEncoder = new DelegatingPasswordEncoder(ENCODING_ID, encoders);
-        delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(encoders.get(ENCODING_ID));
-        return delegatingPasswordEncoder;
     }
 }

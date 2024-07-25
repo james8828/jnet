@@ -39,9 +39,11 @@ public class PasswordAuthenticationConverter extends BaseAuthenticationConverter
     @Override
     protected BaseAuthenticationToken getToken(MultiValueMap<String, String> parameters) {
         String clientId = OAuthEndpointUtils.getParam(parameters, OAuth2ParameterNames.CLIENT_ID);
-        SecurityContextHolder.getContext().setAuthentication(new OAuth2ClientAuthenticationToken(this.registeredClientRepository.findByClientId(clientId), ClientAuthenticationMethod.NONE,null));
+        //SecurityContextHolder.getContext().setAuthentication(new OAuth2ClientAuthenticationToken(this.registeredClientRepository.findByClientId(clientId), ClientAuthenticationMethod.NONE,null));
         String username = OAuthEndpointUtils.getParam(parameters, OAuth2ParameterNames.USERNAME);
         String password = OAuthEndpointUtils.getParam(parameters, OAuth2ParameterNames.PASSWORD);
-        return new PasswordAuthenticationToken(username, password);
+        PasswordAuthenticationToken passwordAuthenticationToken = new PasswordAuthenticationToken(username, password);
+        passwordAuthenticationToken.setClientPrincipal(new OAuth2ClientAuthenticationToken(this.registeredClientRepository.findByClientId(clientId), ClientAuthenticationMethod.NONE,null));
+        return passwordAuthenticationToken;
     }
 }
