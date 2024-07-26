@@ -6,6 +6,8 @@ import com.jnet.oauth2.server.properties.SecurityProperties;
 import com.jnet.oauth2.server.provider.PasswordAuthenticationProvider;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.repository.init.ResourceReader;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,6 +19,9 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.Assert;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,4 +61,5 @@ public class OAuth2ComponentConfig {
     public AuthenticationConverter passwordAuthenticationConverter(RegisteredClientRepository registeredClientRepository) {
         return new PasswordAuthenticationConverter(registeredClientRepository);
     }
+
 }

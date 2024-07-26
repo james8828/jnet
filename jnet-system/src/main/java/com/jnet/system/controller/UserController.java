@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jnet.api.R;
-import com.jnet.api.system.auth.UserDetailsCustom;
 import com.jnet.api.system.domain.Role;
 import com.jnet.api.system.domain.User;
 import com.jnet.system.service.RoleService;
@@ -87,7 +86,7 @@ public class UserController {
     }
 
     @GetMapping("/loadUserByUsername")
-    public UserDetailsCustom loadUserByUsername(@RequestParam("username") String username) throws Exception{
+    public User loadUserByUsername(@RequestParam("username") String username) throws Exception{
         return userService.loadUserByUsername(username);
     }
 }

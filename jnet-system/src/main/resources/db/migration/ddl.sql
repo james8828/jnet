@@ -100,7 +100,9 @@ CREATE TABLE sys_user_role
   DEFAULT CHARSET = utf8mb4;
 
 insert into sys_user(user_name, password)
-values ('admin', '123456');
+values ('admin', '{bcrypt}$2a$10$vuR.WoFXNNuufU19I5isgO5VRRq5vAM8OsToIJ1HA1YsnADYjz4CW');
+insert into sys_user(user_name, password)
+values ('james', '{bcrypt}$2a$10$vuR.WoFXNNuufU19I5isgO5VRRq5vAM8OsToIJ1HA1YsnADYjz4CW');
 insert into sys_menu(menu_name, path, component, perms)
 values ('部门管理', 'dept', 'system/dept/index', 'system:dept:list');
 insert into sys_menu(menu_name, path, component, perms)

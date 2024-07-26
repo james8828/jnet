@@ -1,21 +1,11 @@
-package com.jnet.system.config;
+package com.jnet.common.core.security;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.io.Resources;
-import org.apache.ibatis.jdbc.ScriptRunner;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.*;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.util.Assert;
-
-
-import javax.sql.DataSource;
-import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,23 +13,9 @@ import java.util.Map;
  * @author mugw
  * @version 1.0
  * @description
- * @date 2024/7/22 18:06:35
+ * @date 2024/7/22 18:02:45
  */
-@Slf4j
-@Configuration
-public class InitConfig {
-
-    @Resource
-    private DataSource dataSource;
-    @PostConstruct
-    public void init() throws Exception {
-        log.info("dataSource:{}",dataSource);
-        Connection connection = dataSource.getConnection();
-        ScriptRunner runner = new ScriptRunner(connection);
-        runner.setErrorLogWriter(null);
-        runner.setLogWriter(null);
-        runner.runScript(Resources.getResourceAsReader("db/migration/ddl.sql"));
-    }
+public class SecurityComponentConfig {
 
     public static final String  ENCODING_ID = "bcrypt";
 
@@ -62,4 +38,5 @@ public class InitConfig {
         delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(encoders.get(ENCODING_ID));
         return delegatingPasswordEncoder;
     }
+
 }

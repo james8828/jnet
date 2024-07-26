@@ -1,8 +1,8 @@
 package com.jnet.api.system.vo;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jnet.api.enums.SexEnum;
 import com.jnet.api.system.domain.User;
-import com.jnet.common.core.enums.SexEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

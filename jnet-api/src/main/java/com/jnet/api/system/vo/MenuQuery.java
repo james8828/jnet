@@ -2,7 +2,6 @@ package com.jnet.api.system.vo;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jnet.api.system.domain.Menu;
-import com.jnet.common.core.enums.SexEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +22,6 @@ import java.util.List;
 public class MenuQuery<T> extends Page {
     private String userName;
     private String type;
-    private SexEnum sex;
     private Boolean enabled;
     private List<Long> roleIds;
 

@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jnet.api.R;
-import com.jnet.api.system.auth.GrantedAuthorityCustom;
-import com.jnet.api.system.auth.UserDetailsCustom;
 import com.jnet.system.constants.SystemConstants;
 import com.jnet.api.system.domain.Role;
 import com.jnet.api.system.domain.User;
@@ -18,7 +16,6 @@ import com.jnet.system.service.UserService;
 import com.jnet.system.mapper.UserMapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,22 +72,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public UserDetailsCustom loadUserByUsername(String username) throws Exception {
+    public User loadUserByUsername(String username) throws Exception {
         User user = getOne(Wrappers.<User>lambdaQuery().eq(User::getUserName, username).eq(User::getEnabled, true).eq(User::getDelFlag, false));
         if (user == null) {
             return null;
         }
         Map<Long, Set<Role>> roleMap = roleService.listRoleByUserId(Arrays.asList(user.getUserId()));
-        UserDetailsCustom userDetailsCustom = UserDetailsCustom.builder()
-                .accountNonExpired(false)
-                .accountNonLocked(false)
-                .authorities(roleMap.get(user.getUserId()).stream().map(role -> GrantedAuthorityCustom.builder().authority(role.getRoleKey()).build()).collect(Collectors.toSet()))
-                .credentialsNonExpired(false)
-                .enabled(user.getEnabled())
-                .password(user.getPassword())
-                .username(user.getUserName())
-                .build();
-        return userDetailsCustom;
+        user.setRoles(roleMap.get(user.getUserId()));
+        return user;
     }
 }
 

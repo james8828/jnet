@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean;
  * @date 2024/7/19 11:08:28
  */
 @EnableDiscoveryClient
-@SpringBootApplication
+@SpringBootApplication()
 @MapperScan(basePackages = "com.jnet.system.mapper")
 public class SystemApp {
 

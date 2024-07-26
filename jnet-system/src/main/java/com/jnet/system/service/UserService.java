@@ -1,7 +1,6 @@
 package com.jnet.system.service;
 
 import com.jnet.api.R;
-import com.jnet.api.system.auth.UserDetailsCustom;
 import com.jnet.api.system.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,5 +13,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface UserService extends IService<User> {
      R addOrUpdateUser(User params)throws Exception;
 
-     UserDetailsCustom loadUserByUsername(@RequestParam("username") String username) throws Exception;
+     User loadUserByUsername(@RequestParam("username") String username) throws Exception;
 }

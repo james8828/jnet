@@ -19,6 +19,7 @@ package com.jnet.oauth2.server.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.jnet.api.R;
+import com.jnet.common.core.security.JwtConfiguration;
 import com.jnet.common.core.security.SecurityComponentConfig;
 import com.jnet.oauth2.server.authorizationManager.PermissionAuthorizationManager;
 import com.jnet.oauth2.server.converter.CustomAccessTokenResponseHttpMessageConverter;
@@ -183,6 +184,7 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 				.headers((headers) -> headers.frameOptions(frameOptionsConfig -> frameOptionsConfig.sameOrigin()))
 				.authorizeHttpRequests((authorize) -> {
 					authorize.requestMatchers("/h2-console/**").permitAll()
+							.requestMatchers("/rsa/publicKey/**").permitAll()
 							.anyRequest().access(customAuthorizationManager);
 				})
 				.oauth2ResourceServer((oauth2) -> oauth2.jwt(withDefaults()));
