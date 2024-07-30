@@ -1,6 +1,8 @@
 package com.jnet.gateway.resource.server.feign;
 
 import com.jnet.api.R;
+import com.jnet.api.system.domain.Menu;
+import com.jnet.api.system.domain.Role;
 import com.jnet.api.system.domain.User;
 import com.jnet.api.system.vo.UserQuery;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -11,13 +13,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Set;
 
 
-@FeignClient(name = "SystemApp",path = "/v1/user", fallbackFactory = UserServiceFallbackFactory.class, dismiss404 = true)
-public interface UserService{
-    @PostMapping("/queryUser")
+@FeignClient(value = "SystemApp",path = "/v1", fallbackFactory = SystemServiceFallbackFactory.class, dismiss404 = true)
+public interface SystemService {
+    @PostMapping("/user/queryUser")
     R<List<User>> queryUser(@RequestBody UserQuery<User> query) throws Exception;
-    @GetMapping("/loadUserByUsername")
+    @GetMapping("/user/loadUserByUsername")
     User loadUserByUsername(@RequestParam("username") String username) throws UsernameNotFoundException;
-
+    @PostMapping("/menu/queryRolesByMenuId")
+    R<Set<Role>> queryRolesByMenuId(@RequestBody Long menuId) throws Exception;
+    @PostMapping("/menu/queryRolesByMenuId")
+    R<List<Menu>> queryMenuByRoleId(@RequestBody List<Long> roleIds) throws Exception;
 }

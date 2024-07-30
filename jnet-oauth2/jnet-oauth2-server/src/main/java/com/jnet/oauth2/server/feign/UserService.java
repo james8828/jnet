@@ -1,11 +1,9 @@
 package com.jnet.oauth2.server.feign;
 
 import com.jnet.api.R;
-import com.jnet.common.core.security.bean.UserDetailsCustom;
 import com.jnet.api.system.domain.User;
 import com.jnet.api.system.vo.UserQuery;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 

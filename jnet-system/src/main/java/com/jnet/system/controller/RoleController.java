@@ -50,7 +50,7 @@ public class RoleController {
     @GetMapping("/getRoleById")
     public R getRoleById(@RequestParam("id") Long  roleId) throws Exception{
         Role role = roleService.getById(roleId);
-        Map<Long, Set<Menu>> menuMap = menuService.listMenuByRoleId(Arrays.asList(roleId));
+        Map<Long, Set<Menu>> menuMap = menuService.mapMenuByRoleId(Arrays.asList(roleId));
         role.setMenus(menuMap.get(roleId));
         return R.success(role);
     }
@@ -66,7 +66,7 @@ public class RoleController {
         List<Long> roleIds = roles.stream().map(Role::getRoleId).collect(Collectors.toList());
         page.convert(role -> {
             try {
-                Map<Long, Set<Menu>> menuMap =  menuService.listMenuByRoleId(roleIds);
+                Map<Long, Set<Menu>> menuMap =  menuService.mapMenuByRoleId(roleIds);
                 role.setMenus(menuMap.get(role.getRoleId()));
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -81,7 +81,7 @@ public class RoleController {
         LambdaQueryWrapper<Role> queryWrapper = Wrappers.lambdaQuery(query.getRole());
         List<Role> roles = roleService.list(queryWrapper);
         List<Long> roleIds = roles.stream().map(Role::getRoleId).collect(Collectors.toList());
-        Map<Long, Set<Menu>> menuMap =  menuService.listMenuByRoleId(roleIds);
+        Map<Long, Set<Menu>> menuMap =  menuService.mapMenuByRoleId(roleIds);
         roles.forEach(role -> role.setMenus(menuMap.get(role.getRoleId())));
         return R.success(roles);
     }

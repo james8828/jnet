@@ -1,12 +1,15 @@
 package com.jnet.gateway.resource.server;
 
+import com.jnet.api.system.domain.Menu;
+import com.jnet.api.system.domain.Role;
+import com.jnet.api.system.domain.User;
+import com.jnet.gateway.resource.server.feign.SystemService;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.PathContainer;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.ReactiveAuthorizationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.server.authorization.AuthorizationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.pattern.PathPattern;
@@ -14,6 +17,8 @@ import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 
@@ -25,32 +30,64 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class PermissionReactiveAuthorizationManager implements ReactiveAuthorizationManager<AuthorizationContext>
-{
+public class PermissionReactiveAuthorizationManager implements ReactiveAuthorizationManager<AuthorizationContext> {
     private static final AuthorizationDecision DENY = new AuthorizationDecision(false);
     private static final AuthorizationDecision ACCEPT = new AuthorizationDecision(true);
+    @Resource
+    private SystemService systemService;
 
     @Override
     public Mono<AuthorizationDecision> check(Mono<Authentication> authentication, AuthorizationContext authorizationContext) {
-        Map<String, String[]> urlToRoles = new HashMap<>();
-        PathPatternParser parser = new PathPatternParser();
-        List<PathPattern> patterns = urlToRoles.keySet().stream().map(parser::parse).collect(Collectors.toList());
-        ServerHttpRequest serverHttpRequest = authorizationContext.getExchange().getRequest();
-        for (PathPattern pattern : patterns) {
-            if (pattern.matches(PathContainer.parsePath(serverHttpRequest.getURI().getPath()))) {
-                String[] roles = urlToRoles.get(pattern.getPatternString());
-                Set<String> roleSet = new HashSet<>(Arrays.asList(roles)); // 将String数组转换为Set
-                return authentication.flatMap(auth -> {
-                    Set<String> authorities = auth.getAuthorities().stream()
-                            .map(GrantedAuthority::getAuthority)
-                            .collect(Collectors.toSet());
-                    // 找到两个集合的交集
-                    authorities.retainAll(roleSet);
-                    return Mono.just(ACCEPT);
+        return authentication.map(auth -> {
+            log.info("用户：{}", auth.getName());
+            log.info("权限：{}", auth.getAuthorities());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getURI().getPath());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getMethod());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getHeaders());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getQueryParams());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getCookies());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getRemoteAddress());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getId());
+            log.info("请求：{}", authorizationContext.getExchange().getRequest().getHeaders().get("Authorization"));
+            try {
+                CompletableFuture<User> userCompletableFuture = CompletableFuture.supplyAsync(() -> {
+                    return systemService.loadUserByUsername(auth.getName());
                 });
+                User user = userCompletableFuture.get();
+                if (user != null) {
+                    Set<Role> roles = user.getRoles();
+                    if (roles != null && !roles.isEmpty()) {
+                        List<Long> roleIds = roles.stream().map(Role::getRoleId).collect(Collectors.toList());
+                        try {
+                            CompletableFuture<List<Menu>> menuCompletableFuture = CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return systemService.queryMenuByRoleId(roleIds).getData();
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                            List<Menu> menus = menuCompletableFuture.get();
+                            PathPatternParser parser = new PathPatternParser();
+                            List<PathPattern> patterns = menus.stream().map(Menu::getPath).map(parser::parse).collect(Collectors.toList());
+                            for (PathPattern pattern : patterns) {
+                                if (pattern.matches(PathContainer.parsePath(authorizationContext.getExchange().getRequest().getURI().getPath()))) {
+                                    return ACCEPT;
+                                }
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+
+                    }
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
             }
-        }
-        return Mono.just(DENY);
+
+            return DENY;
+        });
     }
 
 }

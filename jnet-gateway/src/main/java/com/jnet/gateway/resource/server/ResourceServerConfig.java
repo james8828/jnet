@@ -10,10 +10,8 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
-
 import static org.springframework.security.config.Customizer.withDefaults;
 
 
@@ -31,8 +29,10 @@ public class ResourceServerConfig {
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, PermissionReactiveAuthorizationManager customAuthorizationManager) {
         http
                 .authorizeExchange((authorize) -> authorize.anyExchange().access(customAuthorizationManager))
+                //.authorizeExchange((authorize) -> authorize.anyExchange().permitAll())
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
-                //.oauth2ResourceServer((oauth2) -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.jwkSetUri("http://localhost:9000/rsa/publicKey")));
+                /*从oauth2-server服务获取公钥
+                .oauth2ResourceServer((oauth2) -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.jwkSetUri("http://localhost:9000/rsa/publicKey")));*/
         return http.build();
     }
 

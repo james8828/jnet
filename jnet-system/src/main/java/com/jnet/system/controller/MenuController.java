@@ -5,12 +5,17 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jnet.api.R;
 import com.jnet.api.system.domain.Menu;
+import com.jnet.api.system.domain.Role;
 import com.jnet.system.service.MenuService;
 import com.jnet.api.system.vo.MenuQuery;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -57,4 +62,18 @@ public class MenuController {
         List<Menu> menus = menuService.list(queryWrapper);
         return R.success(menus);
     }
+
+    @PostMapping("/listRoleByMenuId")
+    public R<Set<Role>> listRoleByMenuId(@RequestBody Long menuId) throws Exception{
+        List<Long> menuIds = Arrays.asList(menuId);
+        Map<Long, Set<Role>> map = menuService.listRoleByMenuId(menuIds);
+        return R.success(map.get(menuId));
+    }
+
+    @PostMapping("/queryRolesByMenuId")
+    public R<List<Menu>> queryMenuByRoleId(@RequestBody List<Long> roleIds) throws Exception{
+        return R.success(menuService.queryMenuByRoleId(roleIds));
+
+    }
+
 }

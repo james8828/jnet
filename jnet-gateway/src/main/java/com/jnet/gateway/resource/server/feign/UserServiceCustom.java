@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class UserServiceCustom implements UserDetailsService {
 
     @Resource
-    private UserService userService;
+    private SystemService userService;
 
     @Override
     public UserDetailsCustom loadUserByUsername(String username) {

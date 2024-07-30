@@ -3,7 +3,7 @@ spring:
   main:
     web-application-type: reactive
   application:
-    name: gateway
+    name: GatewayApp
   cloud:
     nacos:
       config:
@@ -15,10 +15,10 @@ spring:
         server-addr: 192.168.52.108:8848
     gateway:
       routes:
-        - id: image
-          uri: lb://image
+        - id: SystemApp
+          uri: lb://SystemApp
           predicates:
-            - Path=/jnet/image/**
+            - Path=/system/**
       default-filters:
         - StripPrefix=1
   data:

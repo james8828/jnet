@@ -19,7 +19,7 @@ public class GatewayApp
         SpringApplication.run(GatewayApp.class, args);
     }
 
-    @Bean
+    //@Bean
     public RouteLocator myRoutes(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route(p -> p

@@ -104,9 +104,10 @@ values ('admin', '{bcrypt}$2a$10$vuR.WoFXNNuufU19I5isgO5VRRq5vAM8OsToIJ1HA1YsnAD
 insert into sys_user(user_name, password)
 values ('james', '{bcrypt}$2a$10$vuR.WoFXNNuufU19I5isgO5VRRq5vAM8OsToIJ1HA1YsnADYjz4CW');
 insert into sys_menu(menu_name, path, component, perms)
-values ('部门管理', 'dept', 'system/dept/index', 'system:dept:list');
+values ('用户管理', '/system/v1/user/**', 'system/user/index', 'system:user:list');
 insert into sys_menu(menu_name, path, component, perms)
-values ('测试', 'test', 'system/test/index', 'system:test:list');
+values ('部门管理', '/system/dept/**', 'system/dept/index', 'system:dept:list');
+
 
 
 
