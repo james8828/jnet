@@ -67,9 +67,11 @@
 	<logger name="com.alibaba.nacos" level="OFF">
 		<appender-ref ref="error"/>
 	</logger>
+	<logger name="com.alibaba.druid.sql" level="DEBUG"/>
+	<logger name="com.alibaba.druid.filter.stat" level="DEBUG"/>
 
 	<!-- Level: FATAL 0  ERROR 3  WARN 4  INFO 6  DEBUG 7 -->
-	<root level="INFO">
+	<root level="DEBUG">
 		<appender-ref ref="console"/>
 		<appender-ref ref="debug"/>
 		<appender-ref ref="error"/>

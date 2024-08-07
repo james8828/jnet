@@ -180,7 +180,7 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 	@Bean
 	@Order(2)
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, PermissionAuthorizationManager customAuthorizationManager) throws Exception {
-		http.csrf((csrf) -> csrf.ignoringRequestMatchers("/h2-console/**"))
+		http.csrf((csrf) -> csrf.ignoringRequestMatchers("/h2-console/**","/oauth2/token/**","/oauth2/authorize/**"))
 				.headers((headers) -> headers.frameOptions(frameOptionsConfig -> frameOptionsConfig.sameOrigin()))
 				.authorizeHttpRequests((authorize) -> {
 					authorize.requestMatchers("/h2-console/**").permitAll()

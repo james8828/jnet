@@ -15,5 +15,6 @@ public interface OpenSlideService {
 
     void processImage(UploadCompleteEvent event)throws Exception;
     void processImage2Tile(Integer imageType, Long imageId, Integer gamma, Integer firmUpNum, String titleGroup, String location, HttpServletResponse response)throws Exception;
+
 }
 

@@ -2,6 +2,7 @@ package com.jnet.gateway.resource.server;
 
 import com.jnet.common.core.security.JwtConfiguration;
 import com.jnet.common.core.security.SecurityComponentConfig;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -25,10 +26,25 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebFluxSecurity
 @Import({SecurityComponentConfig.class, JwtConfiguration.class})
 public class ResourceServerConfig {
+
+    @Value("${whitelists}")
+    private String[] whitelists;
+
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, PermissionReactiveAuthorizationManager customAuthorizationManager) {
-        http
-                .authorizeExchange((authorize) -> authorize.anyExchange().access(customAuthorizationManager))
+        /**
+         * CsrfWebFilter 是 Spring Security 5 中引入的一个组件，用于处理基于 WebFlux 的应用中的跨站请求伪造（Cross-Site Request Forgery, CSRF）保护。它是在非阻塞的 Web 应用程序中实现 CSRF 保护的关键组件之一。
+         * CsrfWebFilter 的作用
+         * CsrfWebFilter 主要负责以下任务：
+         * 生成 CSRF 令牌:
+         * 当客户端首次访问应用程序时，CsrfWebFilter 会生成一个唯一的 CSRF 令牌，并将其存储在客户端（通常是通过 cookie）。
+         * 验证 CSRF 令牌:
+         * 当客户端发送 POST、PUT、DELETE 等修改状态的请求时，CsrfWebFilter 会验证请求中的 CSRF 令牌是否有效。
+         * 如果请求中没有包含正确的 CSRF 令牌或者令牌无效，则请求会被拒绝
+         */
+        http.csrf(csrf -> csrf.disable())
+                .authorizeExchange((authorize) -> authorize.pathMatchers(whitelists).permitAll() // 公开路径
+                        .anyExchange().access(customAuthorizationManager))
                 //.authorizeExchange((authorize) -> authorize.anyExchange().permitAll())
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
                 /*从oauth2-server服务获取公钥

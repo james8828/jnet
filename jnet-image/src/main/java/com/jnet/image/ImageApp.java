@@ -1,8 +1,8 @@
 package com.jnet.image;
 
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.jnet.common.biz.thread.TaskToolExecutor;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.mybatis.spring.annotation.MapperScan;
 import org.openslide.OpenSlide;
@@ -24,24 +24,9 @@ public class ImageApp
         SpringApplication.run(ImageApp.class);
     }
 
-    /**
-     * 消息通知类线程池
-     *
-     * @return
-     */
-    @Bean(name = "msgExecutor", initMethod = "init", destroyMethod = "destroy")
-    public TaskToolExecutor msgExecutor() {
-        TaskToolExecutor msgExecutor = new TaskToolExecutor();
-        msgExecutor.setName("msgExecutor");
-        msgExecutor.setCoreSize(15);
-        msgExecutor.setMaxSize(32);
-        msgExecutor.setQueueSize(1024);
-        return msgExecutor;
-    }
-
     @Bean
     MeterRegistryCustomizer<MeterRegistry> configurer() {
-        return registry -> registry.config().commonTags("application", "staitech-file");
+        return registry -> registry.config().commonTags("application", "jnet-image");
     }
 
     @Bean
@@ -57,5 +42,10 @@ public class ImageApp
                 //.expireAfterAccess(17, TimeUnit.SECONDS)
                 .build();
         return loadingCache;
+    }
+
+    @Bean
+    public PaginationInnerInterceptor paginationInnerInterceptor() {
+        return new PaginationInnerInterceptor();
     }
 }

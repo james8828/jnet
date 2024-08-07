@@ -20,6 +20,4 @@ public interface AttachmentService extends IService<Attachment> {
     Attachment saveAttachment(String md5,String name,MultipartFile attachmentFile)throws Exception;
     Attachment saveAttachment(MultipartFile attachmentFile)throws Exception;
 
-    void foo();
-
 }

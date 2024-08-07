@@ -68,11 +68,23 @@ public class OpenSlideServiceImpl implements OpenSlideService {
      */
     private final int MIN_LEVEL_COUNT = 2;
 
+    /**
+     * 解析tile
+     * @param imageType
+     * @param imageId
+     * @param gamma
+     * @param firmUpNum
+     * @param titleGroup
+     * @param location
+     * @param response
+     * @throws Exception
+     */
     @Override
     public void processImage2Tile(Integer imageType, Long imageId, Integer gamma, Integer firmUpNum, String titleGroup, String location, HttpServletResponse response) throws Exception {
         if (StringUtils.isNotEmpty(location)) {
-            Image image = imageMapper.selectById(imageId);
-            String path = image.getImageUrl();
+            /*Image image = imageMapper.selectById(imageId);
+            String path = image.getImageUrl();*/
+            String path = "D:\\work\\dict\\jnet\\imageStore\\CMU-1.svs";
             //level-x-y.jpg
             String[] l = StringUtils.split(location, "-");
             int downSample = (int) Math.pow(2, (Integer.parseInt(l[0]) - 1));

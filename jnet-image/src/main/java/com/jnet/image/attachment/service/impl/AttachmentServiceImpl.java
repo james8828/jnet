@@ -4,22 +4,16 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.jnet.common.biz.thread.Pooled;
-import com.jnet.common.biz.thread.TaskToolExecutor;
-import com.jnet.common.biz.thread.Worker;
 import com.jnet.image.attachment.domain.Attachment;
 import com.jnet.image.attachment.mapper.AttachmentMapper;
 import com.jnet.image.attachment.service.AttachmentService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jnet.image.attachment.utils.FileUtils;
 import com.jnet.image.event.UploadCompleteEvent;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,10 +25,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-
 import static com.jnet.image.attachment.utils.UploadUtils.*;
 
 /**
@@ -155,39 +145,7 @@ public class AttachmentServiceImpl extends ServiceImpl<AttachmentMapper, Attachm
         return attachment;
     }
 
-    @Resource
-    private TaskToolExecutor msgExecutor;
 
-    @Override
-    public void foo() {
-        Worker<Object> worker = new Worker<>();
-        worker.setPoolOverAct(Pooled.PoolOverAct.BLOCK);
-        Runnable command = () -> {
-            try {
-                log.info("start:[{}]","foo");
-                Thread.sleep(5000);
-                log.info("end:[{}]","foo");
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        };
-        /*Callable<String> callable = () -> {
-            Thread.sleep(5000);
-            return "5555";
-        };
-        FutureTask<String> futureTask = new FutureTask<>(callable);
-        worker.setCommand(futureTask);*/
-        worker.setCommand(command);
-        msgExecutor.execute(worker);
-        /*try {
-            String s = futureTask.get();
-            log.info("{}",s);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }*/
-    }
 
 }
 

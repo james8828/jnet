@@ -15,7 +15,8 @@ import java.util.Date;
 @NoArgsConstructor
 @Data
 @Builder
-@TableName(value = "img_image")
+//@TableName(value = "img_image")
+@TableName(value = "fm_image")
 public class Image implements Serializable {
     /**
      * 图像ID

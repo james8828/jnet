@@ -1,7 +1,6 @@
 package com.jnet.image.attachment.controller;
 
 import com.jnet.api.R;
-import com.jnet.common.biz.thread.TaskToolExecutor;
 import com.jnet.image.attachment.domain.Attachment;
 import com.jnet.image.attachment.service.AttachmentService;
 import com.jnet.image.attachment.utils.BeanCopyUtil;
@@ -127,12 +126,5 @@ public class AttachmentController {
         QueryWrapper<Attachment> queryWrapper = Wrappers.query();
         queryWrapper.in("attachment_code",attachmentCodes);
         return R.success(attachmentService.list(queryWrapper));
-    }
-    @Resource
-    private TaskToolExecutor taskToolExecutor;
-    @PostMapping("/foo")
-    public R query()throws Exception {
-        attachmentService.foo();
-        return R.success(taskToolExecutor.monitor());
     }
 }

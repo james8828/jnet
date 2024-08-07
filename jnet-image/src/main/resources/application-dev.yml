@@ -4,17 +4,13 @@ spring:
     name: image
   cloud:
     nacos:
+      config:
+        import-check:
+          enabled: false
+        server-addr: 192.168.52.108:8848
       discovery:
-        server-addr: 127.0.0.1:8848
-        # nacos namespace
-        namespace: f7b24ec6-54ab-43fa-85bc-6f497fc4dfec
-        # nacos group
-        group: DEFAULT_GROUP
-        metadata:
-          response-timeout: 10000
-          connect-timeout: 3000
-      #username: nacos
-      #password: nacos
+        auto-registration: true
+        server-addr: 192.168.52.108:8848
   servlet:
     multipart:
       max-file-size: 50MB
@@ -24,12 +20,14 @@ spring:
       #Redis 连接的超时时间
       timeout: 5000
       #Redis 索引（0~15，默认为0）
-      database: 0
-      cluster:
-        #Redis 命令执行时最多转发次数
-        max-redirects: 3
-        nodes: 127.0.0.1:6371,127.0.0.1:6372,127.0.0.1:6373,127.0.0.1:6374,127.0.0.1:6375,127.0.0.1:6376
-      password: 1234
+      database: 10
+      host: 192.168.160.103
+      port: 6379
+      #      cluster:
+      #        #Redis 命令执行时最多转发次数
+      #        max-redirects: 3
+      #        nodes: 172.31.2.70:6371,172.31.2.70:6372,172.31.2.70:6373,172.31.2.70:6374,172.31.2.70:6375,172.31.2.70:6376
+      password: shengtong
     jedis:
       pool:
         max-active: 8
@@ -38,9 +36,12 @@ spring:
         min-idle: 0
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 123456
-    url: jdbc:mysql://127.0.0.1:3307/jnet?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+#    username: root
+#    password: 123456
+#    url: jdbc:mysql://127.0.0.1:3307/jnet?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:mysql://192.168.160.105:3306/filemanage1?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowMultiQueries=true&serverTimezone=GMT%2B8
+    username: shengtong
+    password: shengtong
     type: com.alibaba.druid.pool.DruidDataSource
     # Druid的其他属性配置
     druid:
@@ -87,7 +88,7 @@ mybatis-plus:
   global-config:
     db-config:
       logic-delete-value: 0
-      logic-not-delete-value: 1
+      logic-not-delete-value: 0
       logic-delete-field: delFlag
   mapper-locations: classpath:mapper/*.xml
 #prometheus配置

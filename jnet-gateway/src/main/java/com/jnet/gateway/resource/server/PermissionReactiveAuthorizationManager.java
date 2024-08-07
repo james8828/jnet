@@ -85,7 +85,6 @@ public class PermissionReactiveAuthorizationManager implements ReactiveAuthoriza
             } catch (ExecutionException e) {
                 throw new RuntimeException(e);
             }
-
             return DENY;
         });
     }
