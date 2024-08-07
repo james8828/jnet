@@ -7,7 +7,7 @@
 <script lang="ts" setup>
 import { reactive } from 'vue'
 import { VxeGridProps } from 'vxe-table'
-import serviceAxios from '@utils/serviceAxios'; // 假设 serviceAxios 是在同一个目录下的文件
+import serviceAxios from '@utils/serviceAxios';
 
 interface RowVO {
   id: number

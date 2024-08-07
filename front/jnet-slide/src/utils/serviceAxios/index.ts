@@ -11,6 +11,13 @@ const serviceAxios = axios.create({
 // 创建请求拦截
 serviceAxios.interceptors.request.use(
     (config) => {
+        // 从 localStorage 中获取 token
+        const access_token = localStorage.getItem('access_token');
+        const token_type = localStorage.getItem('token_type');
+        if (access_token) {
+            // 如果存在 token，则添加到请求头中
+            config.headers.Authorization = token_type + ` ` + access_token;
+        }
         // 设置请求头
         if (!config.headers?.['Content-Type']) {
             config.headers['Content-Type'] = 'application/json';

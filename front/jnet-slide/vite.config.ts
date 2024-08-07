@@ -34,8 +34,8 @@ export default defineConfig({
         // target: 'http://172.31.2.65:8080', // 后端测试环境服务地址
         changeOrigin: true
       },
-      '/jnet': {
-        target: 'http://127.0.0.1:7878', // 后端开发环境服务地址
+      '/oauth2Server': {
+        target: 'http://127.0.0.1:9001', // 后端开发环境服务地址
         //target: 'http://127.0.0.1:8787', // 后端开发环境服务地址
         // target: 'http://172.31.2.65:8080', // 后端测试环境服务地址
         changeOrigin: true

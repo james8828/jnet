@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 
 // 假设这些组件都采用基于模块的懒加载方式
-const Layout = () => import("@comps/layout");
+const HomePage = () => import("@comps/layout");
+const LoginPage = () => import("@views/login");
 const Viewer = () => import("@views/viewer");
 const slide = () => import("@views/slide");
 const grid = () => import("@comps/layout/main");
@@ -9,7 +10,13 @@ const grid = () => import("@comps/layout/main");
 // 定义路由表，采用嵌套路由的方式组织
 const routes: RouteRecordRaw[] = [
   {
-    path: '/',
+    path: '/login',
+    name: 'Login',
+    component: LoginPage,
+  },
+  {
+    path: '/Home',
+    name: 'Home',
     component: slide,
     meta: { title: 'slide', requiresAuth: false },
     children: [
