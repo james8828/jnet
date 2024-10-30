@@ -7,6 +7,8 @@ import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.*;
@@ -15,6 +17,8 @@ import org.springframework.util.Assert;
 
 
 import javax.sql.DataSource;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,10 +39,12 @@ public class InitConfig {
     public void init() throws Exception {
         log.info("dataSource:{}",dataSource);
         Connection connection = dataSource.getConnection();
-        ScriptRunner runner = new ScriptRunner(connection);
+        /*ScriptRunner runner = new ScriptRunner(connection);
         runner.setErrorLogWriter(null);
         runner.setLogWriter(null);
-        runner.runScript(Resources.getResourceAsReader("db/migration/ddl.sql"));
+        runner.runScript(Resources.getResourceAsReader("db/migration/ddl.sql"));*/
+        ClassPathResource resource = new ClassPathResource("db/migration/ddl.sql");
+        ScriptUtils.executeSqlScript(dataSource.getConnection(), resource);
     }
 
     public static final String  ENCODING_ID = "bcrypt";

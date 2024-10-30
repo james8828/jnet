@@ -31,6 +31,7 @@
     <mybatis-spring-boot-starter>3.0.2</mybatis-spring-boot-starter>
     <mybatis-plus-spring-boot3-starter.version>3.5.5</mybatis-plus-spring-boot3-starter.version>
     <mysql-connector-java>8.0.33</mysql-connector-java>
+    <postgresql-connector-java>42.7.1</postgresql-connector-java>
     <druid-spring-boot-starter>1.2.20</druid-spring-boot-starter>
     <commons-lang3>3.13.0</commons-lang3>
     <commons-collections4>4.4</commons-collections4>

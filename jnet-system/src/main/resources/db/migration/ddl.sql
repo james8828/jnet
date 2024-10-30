@@ -106,7 +106,7 @@ values ('james', '{bcrypt}$2a$10$vuR.WoFXNNuufU19I5isgO5VRRq5vAM8OsToIJ1HA1YsnAD
 insert into sys_menu(menu_name, path, component, perms)
 values ('用户管理', '/system/v1/user/**', 'system/user/index', 'system:user:list');
 insert into sys_menu(menu_name, path, component, perms)
-values ('部门管理', '/system/dept/**', 'system/dept/index', 'system:dept:list');
+values ('部门管理', '/imageService/**', 'system/dept/index', 'system:dept:list');
 
 
 
@@ -121,6 +121,8 @@ insert into sys_role_menu(role_id, menu_id)
 values (1, 1);
 insert into sys_role_menu(role_id, menu_id)
 values (1, 2);
+insert into sys_role_menu(role_id, menu_id)
+values (1, 3);
 
 
 insert into sys_user_role(role_id, user_id)

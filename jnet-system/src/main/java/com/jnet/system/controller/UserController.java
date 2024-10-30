@@ -63,10 +63,13 @@ public class UserController {
         Page<User> page = userService.page(query,queryWrapper);
         List<User> users = page.getRecords();
         List<Long> userIds = users.stream().map(User::getUserId).collect(Collectors.toList());
+        Map<Long, Set<Role>> roleMap =  roleService.listRoleByUserId(userIds);
         page.convert(user -> {
             try {
-                Map<Long, Set<Role>> roleMap =  roleService.listRoleByUserId(userIds);
-                user.setRoles(roleMap.get(user.getUserId()));
+                Set<Role> roles = roleMap.get(user.getUserId());
+                user.setRoles(roles);
+                user.setRoleNames(roles.stream().map(Role::getRoleName).collect(Collectors.joining(",")));
+                user.setPassword(null);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

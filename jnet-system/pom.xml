@@ -33,6 +33,10 @@
             <artifactId>jnet-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.jnet</groupId>
+            <artifactId>jnet-common-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
@@ -47,6 +51,11 @@
             <version>${mysql-connector-java}</version>
         </dependency>
         <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql-connector-java}</version>
+        </dependency>
+        <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid-spring-boot-starter</artifactId>
             <version>${druid-spring-boot-starter}</version>
@@ -55,11 +64,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
             <version>${redisson.version}</version>
-        </dependency>
+        </dependency>-->
         <!--监控报警-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
