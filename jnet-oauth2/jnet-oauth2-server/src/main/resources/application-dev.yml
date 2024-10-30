@@ -1,7 +1,7 @@
 
 spring:
   application:
-    name: Oauth2ServerApp
+    name: Oauth2Service
   cloud:
     nacos:
       config:

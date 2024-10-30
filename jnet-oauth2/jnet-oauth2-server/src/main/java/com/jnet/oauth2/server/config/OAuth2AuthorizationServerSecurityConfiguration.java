@@ -46,6 +46,8 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -53,6 +55,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
@@ -208,6 +212,15 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 	 */
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
+		// 构建令牌设置对象，用于配置OAuth2令牌的各种设置
+		TokenSettings tokenSettings = TokenSettings.builder()
+				// 设置访问令牌格式为自包含，意味着所有信息都包含在令牌本身
+				.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+				// 设置访问令牌的有效期为30分钟
+				.accessTokenTimeToLive(Duration.ofMinutes(30))
+				// 设置刷新令牌的有效期为60分钟
+				.refreshTokenTimeToLive(Duration.ofMinutes(60))
+				.build();
 		RegisteredClient loginClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("login-client")
 				.clientSecret("{noop}openid-connect")
@@ -228,13 +241,17 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 				.scope("message:read")
 				.scope("message:write")
 				.build();
+		// 设置客户端密钥过期时间为当前时间加上30天
+		Instant clientSecretExpiresAt = Instant.now().plus(30, java.time.temporal.ChronoUnit.DAYS);
 		RegisteredClient frontClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("front-client")
 				.clientSecret("{noop}front-secret")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
 				.authorizationGrantType(new AuthorizationGrantType("password"))
+				.clientSecretExpiresAt(clientSecretExpiresAt)
 				.scope("message:read")
 				.scope("message:write")
+				.tokenSettings(tokenSettings)
 				.build();
         return new InMemoryRegisteredClientRepository(loginClient, registeredClient,frontClient);
     }

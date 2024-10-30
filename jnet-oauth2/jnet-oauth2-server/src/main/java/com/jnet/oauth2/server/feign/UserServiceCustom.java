@@ -1,10 +1,12 @@
 package com.jnet.oauth2.server.feign;
 
+import com.jnet.api.feign.UserService;
 import com.jnet.api.system.domain.User;
 import com.jnet.common.core.security.bean.GrantedAuthorityCustom;
 import com.jnet.common.core.security.bean.UserDetailsCustom;
 import jakarta.annotation.Resource;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.stream.Collectors;
 
@@ -22,7 +24,12 @@ public class UserServiceCustom implements UserDetailsService {
 
     @Override
     public UserDetailsCustom loadUserByUsername(String username) {
-        User user = userService.loadUserByUsername(username);
+        User user = null;
+        try {
+            user = userService.loadUserByUsername(username);
+        } catch (Exception e) {
+            throw new UsernameNotFoundException(e.getMessage());
+        }
         if (user == null) {
             return null;
         }
