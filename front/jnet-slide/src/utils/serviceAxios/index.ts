@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // 创建 axios 请求实例
 const serviceAxios = axios.create({
-    //baseURL: process.env.API_BASE_URL || '', // 使用环境变量设置基础请求地址
-    baseURL: '', // 使用环境变量设置基础请求地址
+    baseURL: process.env.API_BASE_URL || '', // 使用环境变量设置基础请求地址
+    //baseURL: '', // 使用环境变量设置基础请求地址
     timeout: 10000, // 请求超时设置
     withCredentials: false, // 跨域请求是否需要携带 cookie
 });
@@ -14,6 +14,7 @@ serviceAxios.interceptors.request.use(
         // 从 localStorage 中获取 token
         const access_token = localStorage.getItem('access_token');
         const token_type = localStorage.getItem('token_type');
+        //debugger
         if (access_token) {
             // 如果存在 token，则添加到请求头中
             config.headers.Authorization = token_type + ` ` + access_token;
@@ -27,6 +28,7 @@ serviceAxios.interceptors.request.use(
         return config;
     },
     (error) => {
+        debugger
         return Promise.reject(error);
     }
 );
@@ -38,7 +40,22 @@ serviceAxios.interceptors.response.use(
         // 处理自己的业务逻辑，比如判断 token 是否过期等等
         return data;
     },
-    (error) => {
+    (error): Promise<never> => {
+        // 处理失败响应
+        // if (error.response) {
+        //     // 服务器返回了非 2xx 的状态码
+        //     console.error('请求失败，状态码:', error.response.status);
+        //     console.error('请求失败，响应数据:', error.response.data);
+        //     return Promise.reject(error.response);
+        // } else if (error.request) {
+        //     // 客户端没有收到响应
+        //     console.error('请求失败，未收到响应:', error.request);
+        //     return Promise.reject(error.request);
+        // } else {
+        //     // 发送请求时发生了一些错误
+        //     console.error('请求失败，其他错误:', error.message);
+        //     return Promise.reject(error.message);
+        // }
         const message = getErrorMessage(error);
         return Promise.reject(message);
     }

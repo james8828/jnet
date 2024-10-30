@@ -1,12 +1,5 @@
 <template>
   <div>
-    <el-button @click="showUploadDialog = true">上传文件</el-button>
-    <el-dialog v-model="showUploadDialog" title="文件上传" width="50%">
-      <FileChunkUploader
-          @upload-success="handleUploadSuccess"
-          @upload-error="handleUploadError"
-      />
-    </el-dialog>
     <vxe-grid v-bind="gridOptions"></vxe-grid>
   </div>
 </template>
@@ -15,7 +8,6 @@
 import { ref,reactive } from 'vue'
 import { VxeGridProps } from 'vxe-table'
 import serviceAxios from '@utils/serviceAxios'
-import FileChunkUploader from '@comps/fileChunkUploader'
 
 interface RowVO {
   id: number
@@ -26,19 +18,6 @@ interface RowVO {
   age: number
   address: string
 }
-
-const showUploadDialog = ref(false);
-
-const handleUploadSuccess = () => {
-  console.log('文件上传成功');
-  showUploadDialog.value = false;
-};
-
-const handleUploadError = () => {
-  console.error('文件上传失败');
-  showUploadDialog.value = false;
-};
-
 
 const gridOptions = reactive<VxeGridProps<RowVO>>({
   border: true,
@@ -65,10 +44,11 @@ const gridOptions = reactive<VxeGridProps<RowVO>>({
   },
   columns: [
     { type: 'seq', width: 70 },
-    { field: 'name', title: 'Name' },
-    { field: 'fileName', title: 'fileName' },
-    { field: 'role', title: 'Role' },
-    { field: 'address', title: 'Address', showOverflow: true }
+    { field: 'userName', title: '用户名' },
+    { field: 'enabled', title: '启用状态' },
+    { field: 'sex', title: '性别' },
+    { field: 'roleNames', title: '角色' },
+    { field: 'createTime', title: '创建时间', showOverflow: true }
   ]
 })
 </script>

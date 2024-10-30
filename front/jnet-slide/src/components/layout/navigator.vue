@@ -16,9 +16,8 @@ const navigate = (path: string) => {
         <template #title>
           <el-icon><List /></el-icon> slide manage
         </template>
-        <el-menu-item index="1-1" @click="navigate('/viewer')">slide list</el-menu-item>
-        <el-menu-item index="1-2" @click="navigate('/grid')">table</el-menu-item>
-        <el-menu-item index="1-3" @click="navigate('/slide')">grid</el-menu-item>
+        <el-menu-item index="1-1" @click="navigate('/viewer')">viewer</el-menu-item>
+        <el-menu-item index="1-2" @click="navigate('/slide')">slide info</el-menu-item>
       </el-sub-menu>
       <el-sub-menu index="2">
         <template #title>
@@ -42,9 +41,8 @@ const navigate = (path: string) => {
           <el-icon><setting /></el-icon>system control
         </template>
         <el-menu-item-group>
-          <template #title>Group 1</template>
-          <el-menu-item index="3-1">Option 1</el-menu-item>
-          <el-menu-item index="3-2">Option 2</el-menu-item>
+          <el-menu-item index="3-1" @click="navigate('/user')">用户</el-menu-item>
+          <el-menu-item index="3-2" @click="navigate('/role')">角色</el-menu-item>
         </el-menu-item-group>
         <el-menu-item-group title="Group 2">
           <el-menu-item index="3-3">Option 3</el-menu-item>

@@ -1,8 +1,3 @@
-<script setup lang="ts">
-
-import {Setting} from "@element-plus/icons-vue";
-</script>
-
 <template>
   <div class="toolbar">
     <el-dropdown>
@@ -11,9 +6,8 @@ import {Setting} from "@element-plus/icons-vue";
       </el-icon>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item>View</el-dropdown-item>
-          <el-dropdown-item>Add</el-dropdown-item>
-          <el-dropdown-item>Delete</el-dropdown-item>
+          <el-dropdown-item>info</el-dropdown-item>
+          <el-dropdown-item @click="logout('/')">退出</el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
@@ -21,6 +15,16 @@ import {Setting} from "@element-plus/icons-vue";
   </div>
 </template>
 
+<script setup lang="ts">
+
+import {Setting} from "@element-plus/icons-vue";
+import { useRouter } from "vue-router"
+const router = useRouter()
+
+const logout = (path: string) => {
+  router.push({ path: path });
+}
+</script>
 <style scoped>
 
 </style>

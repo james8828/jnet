@@ -21,6 +21,14 @@ export default defineConfig({
     //extensions: [".ts", ".js", ".vue", ".json", ".mjs"],
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
   },
+  define: {
+    'process.env': {
+      API_BASE_URL: '/', //设置接口代理base path
+      AUTH_SERVICE_URL: '/oauth2Service',
+      SYSTEM_SERVICE_URL: '/system',
+      IMAGE_SERVICE_URL: '/imageService'
+    }
+  },
   plugins: [vue()],
   server: {
     port: 4000, // 服务端口号
@@ -29,12 +37,24 @@ export default defineConfig({
     proxy: {
 
       // 本地开发环境通过代理实现跨域，生产环境使用 nginx 转发
-      '/image': {
-        target: 'http://127.0.0.1:9004', // 后端开发环境服务地址
+      // '/image': {
+      //   target: 'http://127.0.0.1:9004', // 后端开发环境服务地址
+      //   // target: 'http://172.31.2.65:8080', // 后端测试环境服务地址
+      //   changeOrigin: true
+      // },
+      '/oauth2Service': {
+        target: 'http://127.0.0.1:9001', // 后端开发环境服务地址
+        //target: 'http://127.0.0.1:8787', // 后端开发环境服务地址
         // target: 'http://172.31.2.65:8080', // 后端测试环境服务地址
         changeOrigin: true
       },
-      '/oauth2Server': {
+      '/imageService': {
+        target: 'http://127.0.0.1:9001', // 后端开发环境服务地址
+        //target: 'http://127.0.0.1:8787', // 后端开发环境服务地址
+        // target: 'http://172.31.2.65:8080', // 后端测试环境服务地址
+        changeOrigin: true
+      },
+      '/system': {
         target: 'http://127.0.0.1:9001', // 后端开发环境服务地址
         //target: 'http://127.0.0.1:8787', // 后端开发环境服务地址
         // target: 'http://172.31.2.65:8080', // 后端测试环境服务地址

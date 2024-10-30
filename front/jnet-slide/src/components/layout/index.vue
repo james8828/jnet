@@ -1,5 +1,5 @@
 <template>
-  <el-container class="layout-container-demo" style="height: 500px">
+  <el-container class="layout-container-demo" style="height: 600px">
     <el-aside width="200px">
       <navigator />
     </el-aside>
@@ -17,7 +17,6 @@
 <script lang="ts" setup>
 import Navigator from "@comps/layout/navigator.vue";
 import Header from "@comps/layout/header.vue";
-import Main from "@comps/layout/main.vue";
 
 
 </script>
@@ -25,12 +24,12 @@ import Main from "@comps/layout/main.vue";
 <style scoped>
 .layout-container-demo .el-header {
   position: relative;
-  background-color: var(--el-color-primary-light-7);
+  //background-color: var(--el-color-primary-light-7);
   color: var(--el-text-color-primary);
 }
 .layout-container-demo .el-aside {
   color: var(--el-text-color-primary);
-  background: var(--el-color-primary-light-8);
+  //background: var(--el-color-primary-light-8);
 }
 .layout-container-demo .el-menu {
   border-right: none;

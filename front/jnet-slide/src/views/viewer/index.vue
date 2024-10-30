@@ -44,7 +44,7 @@ import 'ol/ol.css'
 import { ref, onMounted } from "vue";
 import {createRegularPolygon, createBox, DrawEvent} from "ol/interaction/draw"
 import {Geometry} from "ol/geom";
-import serviceAxios from "../utils/request.ts";
+import serviceAxios from "@/utils/request.ts";
 import axios from 'axios'
 
 

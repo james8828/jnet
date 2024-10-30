@@ -1,24 +1,25 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 
 // 假设这些组件都采用基于模块的懒加载方式
-const HomePage = () => import("@comps/layout");
+const HomePage = () => import('@comps/layout');
 const LoginPage = () => import("@views/login");
 const Viewer = () => import("@views/viewer");
 const slide = () => import("@views/slide");
-const grid = () => import("@comps/layout/main");
+const user = () => import("@views/system/user");
+const role = () => import("@views/system/role");
 
 // 定义路由表，采用嵌套路由的方式组织
 const routes: RouteRecordRaw[] = [
   {
-    path: '/login',
+    path: '/',
     name: 'Login',
     component: LoginPage,
   },
   {
     path: '/Home',
     name: 'Home',
-    component: slide,
-    meta: { title: 'slide', requiresAuth: false },
+    component: HomePage,
+    meta: { title: 'Home', requiresAuth: false },
     children: [
       {
         path: '/viewer',
@@ -26,15 +27,18 @@ const routes: RouteRecordRaw[] = [
         component: Viewer,
         meta: { title: 'Viewer', requiresAuth: false }
       },{
-        path: '/grid',
-        // name: 'Viewer',
-        component: grid,
-        meta: { title: 'grid', requiresAuth: false }
-      },{
         path: '/slide',
         // name: 'Viewer',
         component: slide,
         meta: { title: 'slide', requiresAuth: false }
+      },{
+        path: '/user',
+        component: user,
+        meta: { title: 'user', requiresAuth: false }
+      },{
+        path: '/role',
+        component: role,
+        meta: { title: 'role', requiresAuth: false }
       }
     ],
   },
