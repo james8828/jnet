@@ -1,7 +1,8 @@
 package com.jnet.oauth2.server.feign;
 
-import com.jnet.api.feign.UserService;
+
 import com.jnet.api.system.domain.User;
+import com.jnet.api.feign.SystemService;
 import com.jnet.common.core.security.bean.GrantedAuthorityCustom;
 import com.jnet.common.core.security.bean.UserDetailsCustom;
 import jakarta.annotation.Resource;
@@ -20,13 +21,13 @@ import java.util.stream.Collectors;
 public class UserServiceCustom implements UserDetailsService {
 
     @Resource
-    private UserService userService;
+    private SystemService systemService;
 
     @Override
     public UserDetailsCustom loadUserByUsername(String username) {
         User user = null;
         try {
-            user = userService.loadUserByUsername(username);
+            user = systemService.loadUserByUsername(username);
         } catch (Exception e) {
             throw new UsernameNotFoundException(e.getMessage());
         }
