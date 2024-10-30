@@ -3,7 +3,7 @@ package com.jnet.gateway.resource.server;
 import com.jnet.api.system.domain.Menu;
 import com.jnet.api.system.domain.Role;
 import com.jnet.api.system.domain.User;
-import com.jnet.gateway.resource.server.feign.SystemService;
+import com.jnet.api.feign.SystemService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.PathContainer;
@@ -51,7 +51,11 @@ public class PermissionReactiveAuthorizationManager implements ReactiveAuthoriza
             log.info("请求：{}", authorizationContext.getExchange().getRequest().getHeaders().get("Authorization"));
             try {
                 CompletableFuture<User> userCompletableFuture = CompletableFuture.supplyAsync(() -> {
-                    return systemService.loadUserByUsername(auth.getName());
+                    try {
+                        return systemService.loadUserByUsername(auth.getName());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 });
                 User user = userCompletableFuture.get();
                 if (user != null) {
