@@ -52,6 +52,9 @@ public class User implements Serializable {
     private Set<Role> roles;
 
     @TableField(exist = false)
+    private String roleNames;
+
+    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
     @Override
