@@ -1,18 +1,32 @@
 package com.jnet.gateway.resource.server;
 
+import cn.hutool.json.JSONUtil;
+import com.jnet.api.R;
 import com.jnet.common.core.security.JwtConfiguration;
 import com.jnet.common.core.security.SecurityComponentConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.WebFilterExchange;
+import org.springframework.security.web.server.authentication.ServerAuthenticationFailureHandler;
+import reactor.core.publisher.Mono;
+
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
+import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 
@@ -22,6 +36,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
  * @description
  * @date 2024/7/25 15:05:03
  */
+@Slf4j
 @Configuration
 @EnableWebFluxSecurity
 @Import({SecurityComponentConfig.class, JwtConfiguration.class})
@@ -43,8 +58,12 @@ public class ResourceServerConfig {
          * 如果请求中没有包含正确的 CSRF 令牌或者令牌无效，则请求会被拒绝
          */
         http.csrf(csrf -> csrf.disable())
+                .cors(ServerHttpSecurity.CorsSpec::disable)
+                .headers(hSpec -> hSpec.frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable))
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authorizeExchange((authorize) -> authorize.pathMatchers(whitelists).permitAll() // 公开路径
                         .anyExchange().access(customAuthorizationManager))
+
                 //.authorizeExchange((authorize) -> authorize.anyExchange().permitAll())
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
                 /*从oauth2-server服务获取公钥
@@ -61,6 +80,28 @@ public class ResourceServerConfig {
     @Bean
     public ReactiveJwtDecoder reactiveJwtDecoder(KeyPair keyPair) {
         return NimbusReactiveJwtDecoder.withPublicKey((RSAPublicKey) keyPair.getPublic()).build();
+    }
+
+    class CustomAuthenticationFailureHandler implements ServerAuthenticationFailureHandler {
+
+        @Override
+        public Mono<Void> onAuthenticationFailure(WebFilterExchange exchange, AuthenticationException ex) {
+            // 获取当前请求的响应对象
+            ServerHttpResponse response = exchange.getExchange().getResponse();
+
+            // 设置 HTTP 响应状态码为 401 Unauthorized
+            response.setStatusCode(OK);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+            // 创建一个 JSON 对象来表示失败的原因
+            R errorResponse = R.fail(HttpStatus.UNAUTHORIZED.value(),ex.getMessage());
+
+            // 设置响应的内容类型为 JSON
+            DataBuffer buffer = response.bufferFactory().wrap(JSONUtil.toJsonPrettyStr(errorResponse).getBytes(StandardCharsets.UTF_8));
+
+            // 写入响应体
+            return response.writeWith(Mono.just(buffer));
+        }
     }
 
 }

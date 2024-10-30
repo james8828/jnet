@@ -18,10 +18,14 @@ spring:
           uri: lb://SystemApp
           predicates:
             - Path=/system/**
-        - id: Oauth2ServerApp
-          uri: lb://Oauth2ServerApp
+        - id: Oauth2Service
+          uri: lb://Oauth2Service
           predicates:
-            - Path=/oauth2Server/**
+            - Path=/oauth2Service/**
+        - id: ImageService
+          uri: lb://ImageService
+          predicates:
+            - Path=/imageService/**
       default-filters:
         - StripPrefix=1
   data:
@@ -58,7 +62,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-whitelists: /oauth2Server/oauth2/token/**,/oauth2Server/oauth2/authorize/**,/oauth2Server/rsa/publicKey
+whitelists: /oauth2Service/oauth2/token/**,/oauth2Service/oauth2/authorize/**,/oauth2Service/rsa/publicKey
 
 
 
