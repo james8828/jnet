@@ -44,5 +44,10 @@ public class ImageConstant {
     public static final String MARCO_PATH = File.separator+"marco";
 
 
+    public static final String MD5_SEPARATOR  = "|";
+    public static final Integer COMPUTE_MD5_BYTES = 4096;
+
+
+
 
 }

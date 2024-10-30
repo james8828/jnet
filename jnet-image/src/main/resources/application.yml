@@ -1,7 +1,7 @@
 server:
   port: 9004
   servlet:
-    context-path: /image
+    context-path: /
   tomcat:
     max-swallow-size: 100MB # 最重要的是这一行
 

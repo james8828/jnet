@@ -48,17 +48,28 @@ public class AttachmentController {
         return array;
     }
 
+    /**
+     * 初始化分片上传任务
+     * @return
+     * @throws Exception
+     */
+    @GetMapping("/initiateMultipartUpload")
+    public R initiateMultipartUpload() throws Exception {
+        return R.success(attachmentService.initiateMultipartUpload());
+    }
+
     @PostMapping("/uploadChunk")
     public R uploadChunk(@RequestParam("name") String name,
-                            @RequestParam("md5") String md5,
-                            @RequestParam("size") Long size,
-                            @RequestParam("chunks") Integer chunks,
-                            @RequestParam("chunk") Integer chunk,
-                            @RequestParam("file") MultipartFile file) throws Exception {
-        if (chunks != null && chunks != 0) {
-            attachmentService.uploadChunk(name, md5,size,chunks,chunk,file);
+                         @RequestParam("uploadId") String uploadId,
+                         @RequestParam("chunkMd5") String chunkMd5,
+                         @RequestParam("chunkSize") Long chunkSize,
+                         @RequestParam("chunkTotal") Integer chunkTotal,
+                         @RequestParam("chunkIndex") Integer chunkIndex,
+                         @RequestParam("chunk") MultipartFile chunk) throws Exception {
+        if (chunkTotal != null && chunkTotal != 0) {
+            attachmentService.uploadChunk(name,uploadId, chunkMd5,chunkSize,chunkTotal,chunkIndex,chunk);
         } else {
-            upload(name,md5,file);
+            upload(name,chunkMd5,chunk);
         }
         return R.success();
     }

@@ -16,7 +16,7 @@ import java.util.Date;
 @Data
 @Builder
 //@TableName(value = "img_image")
-@TableName(value = "fm_image")
+@TableName(value = "image")
 public class Image implements Serializable {
     /**
      * 图像ID
