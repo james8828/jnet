@@ -1,0 +1,12 @@
+server:
+  port: 9004
+  servlet:
+    context-path: /
+  tomcat:
+    max-swallow-size: 100MB # 最重要的是这一行
+
+spring:
+  profiles:
+    active: pg
+  application:
+    name: jnet-image-service

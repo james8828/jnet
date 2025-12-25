@@ -26,10 +26,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * 测量标注管理
  * @author mugw
  * @version 1.0
- * @description 测量标注管理
- * @date 2025/5/21 14:33:43
+ * @since 2025/5/21 14:33:43
  */
 @Service
 public class MeasureServiceImpl extends ServiceImpl<MeasureMapper, Measure>

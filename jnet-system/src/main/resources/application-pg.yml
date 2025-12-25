@@ -45,9 +45,9 @@ spring:
         trace: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://192.168.52.224:5500/anno_database
+    url: jdbc:postgresql://localhost:5432/jnet
     username: postgres
-    password: stdev123
+    password: 123456
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       maximum-pool-size: 20

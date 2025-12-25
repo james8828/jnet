@@ -195,7 +195,7 @@ public class AnnotationController {
     @GetMapping("exportGeoJson")
     public void exportGeoJson(@RequestParam Long slideId) throws Exception {
 
-        return annotationService.exportGeoJson(slideId);
+//        return annotationService.exportGeoJson(slideId);
     }
 
 }

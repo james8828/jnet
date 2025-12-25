@@ -14,8 +14,7 @@ import java.util.Map;
 /**
  * @author mugw
  * @version 1.0
- * @description
- * @date 2024/7/22 18:06:35
+ * @since  2024/7/22 18:06:35
  */
 @Slf4j
 @Configuration
