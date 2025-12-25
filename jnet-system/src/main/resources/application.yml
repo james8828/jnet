@@ -1,0 +1,19 @@
+server:
+  port: 9002
+  servlet:
+#    context-path: /system
+    context-path: /
+  tomcat:
+    max-swallow-size: 100MB
+
+spring:
+  profiles:
+    active: pg
+  application:
+    name: jnet-system-service
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config

@@ -1,0 +1,71 @@
+spring:
+  main:
+    web-application-type: reactive
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+        server-addr: 192.168.52.108:8848
+      discovery:
+        auto-registration: true
+        server-addr: 192.168.52.108:8848
+    gateway:
+      routes:
+        - id: jnet-system-service
+          uri: lb://jnet-system-service
+          predicates:
+            - Path=/system/**
+        - id: jnet-oauth2-service
+          uri: lb://jnet-oauth2-service
+          predicates:
+            - Path=/oauth2-service/**
+        - id: jnet-image-service
+          uri: lb://jnet-image-service
+          predicates:
+            - Path=/image-service/**
+        - id: jnet-anno-service
+          uri: lb://jnet-anno-service
+          predicates:
+            - Path=/anno-service/**
+      default-filters:
+        - StripPrefix=1
+  data:
+    redis:
+      #Redis 连接的超时时间
+      timeout: 5000
+      #Redis 索引（0~15，默认为0）
+      database: 10
+      host: 192.168.160.103
+      port: 6379
+      #      cluster:
+      #        #Redis 命令执行时最多转发次数
+      #        max-redirects: 3
+      #        nodes: 172.31.2.70:6371,172.31.2.70:6372,172.31.2.70:6373,172.31.2.70:6374,172.31.2.70:6375,172.31.2.70:6376
+      password: shengtong
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+#prometheus配置
+info:
+  alen: alen
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+whitelists: /oauth2-service/oauth2/token/**,/oauth2-service/oauth2/authorize/**,/oauth2-service/rsa/publicKey,/image-service/slide/getThumbnailImage/**,/image-service/slide/tile/**
+
+
+
+

@@ -1,0 +1,79 @@
+
+spring:
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+        server-addr: 192.168.52.108:8848
+      discovery:
+        auto-registration: true
+        server-addr: 192.168.52.108:8848
+    openfeign:
+      client:
+        config:
+          default:
+            #        Feign 支持四种日志级别：
+            #        NONE：不记录任何日志。
+            #        BASIC：仅记录请求方法和 URL 以及响应状态码和执行时间。
+            #        HEADERS：记录 BASIC 级别的信息，外加请求和响应的头信息。
+            #        FULL：记录 HEADERS 级别的信息，外加请求和响应的正文
+            loggerLevel: FULL
+            connectTimeout: 10000
+            readTimeout: 10000
+    compression:
+      request:
+        enabled: false
+      response:
+        enabled: false
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  data:
+    redis:
+      #Redis 连接的超时时间
+      timeout: 5000
+      #Redis 索引（0~15，默认为0）
+      database: 10
+      host: 192.168.160.103
+      port: 6379
+#      cluster:
+#        #Redis 命令执行时最多转发次数
+#        max-redirects: 3
+#        nodes: 172.31.2.70:6371,172.31.2.70:6372,172.31.2.70:6373,172.31.2.70:6374,172.31.2.70:6375,172.31.2.70:6376
+      password: shengtong
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+  thymeleaf:
+    check-template-location: false
+    cache: false
+    prefix: classpath:/templates/
+    encoding: UTF-8 #编码
+    suffix: .html #模板后缀
+    mode: HTML #模板
+#prometheus配置
+info:
+  alen: alen
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+file:
+  path: ../
+filePath: ../
+
+
+

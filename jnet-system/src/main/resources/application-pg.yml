@@ -1,0 +1,101 @@
+
+spring:
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  security:
+    enabled: false
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+        server-addr: 192.168.52.108:8848
+      discovery:
+        auto-registration: true
+        server-addr: 192.168.52.108:8848
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  data:
+    redis:
+      #Redis 连接的超时时间
+      timeout: 5000
+      #Redis 索引（0~15，默认为0）
+      database: 10
+      host: 192.168.160.103
+      port: 6379
+#      cluster:
+#        #Redis 命令执行时最多转发次数
+#        max-redirects: 3
+#        nodes: 172.31.2.70:6371,172.31.2.70:6372,172.31.2.70:6373,172.31.2.70:6374,172.31.2.70:6375,172.31.2.70:6376
+      password: shengtong
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
+        trace: true
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://192.168.52.224:5500/anno_database
+    username: postgres
+    password: stdev123
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 5000
+      validation-timeout: 5000
+      auto-commit: true
+      pool-name: "HikariCP"
+      connection-test-query: "SELECT 1"
+      register-mbeans: true
+  thymeleaf:
+    check-template-location: false
+    cache: false
+    prefix: classpath:/templates/
+    encoding: UTF-8 #编码
+    suffix: .html #模板后缀
+    mode: HTML #模板
+mybatis-plus:
+  global-config:
+    db-config:
+      logic-delete-value: true
+      logic-not-delete-value: false
+      logic-delete-field: delFlag
+    enable-sql-runner: true
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+#prometheus配置
+info:
+  alen: alen
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+file:
+  path: ../
+filePath: ../
+
+
+

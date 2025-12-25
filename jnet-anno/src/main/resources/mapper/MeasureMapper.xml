@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jnet.anno.mapper.MeasureMapper">
+
+    <resultMap id="BaseResultMap" type="com.jnet.anno.domain.Measure">
+            <id property="measureId" column="measure_id" jdbcType="BIGINT"/>
+            <result property="slideId" column="slide_id" jdbcType="BIGINT"/>
+            <result property="annotationType" column="annotation_type" jdbcType="VARCHAR"/>
+            <result property="area" column="area" jdbcType="VARCHAR"/>
+            <result property="perimeter" column="perimeter" jdbcType="VARCHAR"/>
+            <result property="number" column="number" jdbcType="BIGINT"/>
+            <result property="measureType" column="measure_type" jdbcType="INTEGER"/>
+            <result property="measureRelation" column="measure_relation" jdbcType="VARCHAR"/>
+            <result property="measureName" column="measure_name" jdbcType="VARCHAR"/>
+            <result property="measureNumber" column="measure_number" jdbcType="INTEGER"/>
+            <result property="meanDistance" column="mean_distance" jdbcType="DOUBLE"/>
+            <result property="maxDistance" column="max_distance" jdbcType="DOUBLE"/>
+            <result property="minDistance" column="min_distance" jdbcType="DOUBLE"/>
+            <result property="innerAngle" column="inner_angle" jdbcType="VARCHAR"/>
+            <result property="exteriorAngle" column="exterior_angle" jdbcType="VARCHAR"/>
+            <result property="centerPoint" column="center_point" jdbcType="VARCHAR"/>
+            <result property="locationType" column="location_type" jdbcType="VARCHAR"/>
+            <result property="radius" column="radius" jdbcType="VARCHAR"/>
+            <result property="contour" column="contour" jdbcType="OTHER"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="measureFullName" column="measure_full_name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        measure_id,slide_id,annotation_type,
+        area,perimeter,number,
+        measure_type,measure_relation,measure_name,
+        measure_number,mean_distance,max_distance,
+        min_distance,inner_angle,exterior_angle,
+        center_point,location_type,radius,
+        contour,create_by,create_time,
+        update_by,update_time,measure_full_name
+    </sql>
+</mapper>
