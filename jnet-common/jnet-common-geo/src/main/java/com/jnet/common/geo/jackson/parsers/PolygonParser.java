@@ -26,14 +26,41 @@ public class PolygonParser extends BaseParser implements GeometryParser<Polygon>
     }
 
     public Polygon polygonFromJsonArrayOfRings(JsonNode arrayOfRings) {
-        LinearRing shell = linearRingsFromJson(arrayOfRings.get(0));
-        int size = arrayOfRings.size();
-        LinearRing[] holes = new LinearRing[size - 1];
-        for (int i = 1; i < size; i++) {
-            holes[i - 1] = linearRingsFromJson(arrayOfRings.get(i));
+        // 验证输入参数
+        if (arrayOfRings == null) {
+            throw new IllegalArgumentException("Input arrayOfRings cannot be null");
         }
+
+        // 验证数组是否至少包含一个元素（shell）
+        if (arrayOfRings.size() < 1) {
+            throw new IllegalArgumentException("Array of rings must contain at least one element for shell");
+        }
+
+        // 获取并验证shell
+        JsonNode shellNode = arrayOfRings.get(0);
+        if (shellNode == null) {
+            throw new IllegalArgumentException("Shell ring cannot be null");
+        }
+        LinearRing shell = linearRingsFromJson(shellNode);
+
+        int size = arrayOfRings.size();
+        LinearRing[] holes;
+        if (size > 1) {
+            holes = new LinearRing[size - 1];
+            for (int i = 1; i < size; i++) {
+                JsonNode holeNode = arrayOfRings.get(i);
+                if (holeNode == null) {
+                    throw new IllegalArgumentException("Hole ring at index " + i + " cannot be null");
+                }
+                holes[i - 1] = linearRingsFromJson(holeNode);
+            }
+        } else {
+            holes = new LinearRing[0]; // 空洞数组，当没有holes时
+        }
+
         return geometryFactory.createPolygon(shell, holes);
     }
+
 
     private LinearRing linearRingsFromJson(JsonNode coordinates) {
         assert coordinates.isArray() : "expected coordinates array";

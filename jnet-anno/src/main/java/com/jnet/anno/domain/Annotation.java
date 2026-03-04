@@ -48,14 +48,13 @@ public class Annotation implements Serializable {
     /**
      * 标签id
      */
-    @TableField("category_id")
     private Long tagId;
 
     /**
      * 轮廓坐标625
      */
     @NotNull(message = "{ARGUMENT_INVALID}")
-    @TableField("contour40000")
+    @TableField("contour")
     private Geometry geometry;
 
     /**
@@ -97,10 +96,7 @@ public class Annotation implements Serializable {
     /**
      * geojson中数据id
      */
-    @TableField("id")
     private String jsonId;
-
-    private Long singleSlideId;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

@@ -22,13 +22,14 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
 public class SlideServiceImpl extends ServiceImpl<SlideMapper, Slide> implements SlideService {
 
     private final int MIN_LEVEL_COUNT = 2;
-    private final String PYRAMIDAL_TIFF_SUFFIX = ".tif";
+    private final String PYRAMIDAL_TIFF_SUFFIX = ".trans";
 
 
     /**
@@ -42,7 +43,7 @@ public class SlideServiceImpl extends ServiceImpl<SlideMapper, Slide> implements
         for (Slide slide : slides) {
             log.info("处理解析失败的切片信息：[{}]", slide);
             extractSlideMetadata(slide);
-            if (slide.getStatus() == ImageConstant.IMAGE_PROCESS_PARSE_FAIL) {
+            if (Objects.equals(slide.getStatus(), ImageConstant.IMAGE_PROCESS_PARSE_FAIL)) {
                 String filePath = slide.getSlidePath();
                 String outputPath = filePath + PYRAMIDAL_TIFF_SUFFIX;
                 boolean flag = convertToPyramidalTIFF(filePath, outputPath);

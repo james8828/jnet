@@ -393,6 +393,7 @@ new CustomAuthority("resource", "book", "read"); // => resource:book:read
 1、组织机构
 
 2、人员、角色、权限、菜单 基础RBAC管理数据管理
+待重构，数据库实体保留在服务内，api中创建新的req、resp类进行数据传输
 
 3、字典
 
@@ -405,3 +406,4 @@ new CustomAuthority("resource", "book", "read"); // => resource:book:read
 # 前端
 
 todo 前端文件命名格式及代码规范待完善
+

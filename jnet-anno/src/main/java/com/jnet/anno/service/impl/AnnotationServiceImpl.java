@@ -252,11 +252,15 @@ public class AnnotationServiceImpl extends ServiceImpl<AnnotationMapper, Annotat
             throw new Exception(MessageSource.M("NO_ANNOTATION_DATA"));
         }
         Geometry geometry = annotation.getGeometry();
-        if (geometry instanceof GeometryCollection) {
-            Geometry firstGeometry = geometry.getGeometryN(0);
-            annotation.setGeometry(firstGeometry);
-            double area = firstGeometry.getArea();
-            double length = firstGeometry.getLength();
+        if (geometry instanceof Polygon) {
+            GeometryFactory geometryFactory = geometry.getFactory();
+            // 获取外环
+            LinearRing exteriorRing = ((Polygon)geometry).getExteriorRing();
+            // 创建不带内环的新 Polygon（第二个参数为 null 或空数组）
+            Polygon polygon = geometryFactory.createPolygon(exteriorRing, new LinearRing[0]);
+            annotation.setGeometry(polygon);
+            double area = polygon.getArea();
+            double length = polygon.getLength();
             annotation.setArea(BigDecimal.valueOf(area * Constant.IMAGE_RESOLUTION_SQUARE));
             annotation.setPerimeter(BigDecimal.valueOf(length * Constant.IMAGE_RESOLUTION));
         }
