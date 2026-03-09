@@ -34,10 +34,7 @@ spring:
         max-idle: 8
         min-idle: 0
   datasource:
-#    url: jdbc:postgres_jts://192.168.52.224:5500/anno_database
-#    username: postgres
-#    password: stdev123
-    url: jdbc:postgres_jts://192.168.52.183:5500/postgres
+    url: jdbc:postgres_jts://localhost:5432/jnet
     username: postgres
     password: 123456
     driver-class-name: com.jnet.common.geo.jdbc.JtsWrapper

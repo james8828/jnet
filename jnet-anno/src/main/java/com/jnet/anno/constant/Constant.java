@@ -1,42 +1,17 @@
 package com.jnet.anno.constant;
 
 /**
+ * 标注业务常量
  * @author mugw
  * @version 1.0
- * @description 标注业务常量
- * @date 2025/5/14 13:44:14
+ * @since 2025/5/14 13:44:14
  */
 public class Constant {
 
 
 
-    /**
-     * image 图像切片状态：0-上传中；1-上传失败；2-解析中；3-解析失败；4-解析成功
-     */
-    public static final String IMAGE_STATUS_ENABLE = "4";
-    public static final String IMAGE_PROCESS_PARSING = "2";
-    public static final String IMAGE_PROCESS_PARSE_FAIL = "3";
-    public static final String IMAGE_PROCESS_UPLOAD_FAIL = "1";
-    public static final String IMAGE_PROCESS_UPLOADING = "0";
-    public static final Integer IMAGE_SOURCE_UPLOAD = 1;
-    public static final Integer IMAGE_SOURCE_SERVER = 2;
-
-    /**
-     * 图像名称解析状态
-     */
-    public static final Integer IMAGE_NAME_PARSE_FAIL = 0;
-    public static final Integer IMAGE_NAME_PARSE_SUCC = 1;
-
     public static final Double IMAGE_RESOLUTION = 0.262;
     public static final Double IMAGE_RESOLUTION_SQUARE = 0.262*0.262;
-
-    /**
-     * 项目成员角色常量
-     */
-    public static final int ROLE_ADMIN = 1;    // 机构管理员
-    public static final int ROLE_OWNER = 2;    // 项目负责人
-    public static final int ROLE_MEMBER = 3;   // 项目参与用户
-    public static final int ROLE_OTHER = 4;    // 其他用户
 
     /**
      * 轮廓数据常量
