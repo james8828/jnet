@@ -15,8 +15,9 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jackson-datatype-jts.version>2.15.0</jackson-datatype-jts.version>
-        <jts-core.version>1.17.1</jts-core.version>
+        <jts-core.version>1.19.0</jts-core.version>
         <postgis-jdbc.version>2.5.0</postgis-jdbc.version>
+        <jackson-datatype-jts.version>2.4</jackson-datatype-jts.version>
     </properties>
 
     <dependencies>
@@ -38,11 +39,6 @@
             <version>${mybatis-plus-spring-boot3-starter.version}</version>
             <scope>compile</scope>
         </dependency>
-        <!--<dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-afterburner</artifactId>
-            <version>2.6.7</version>
-        </dependency>-->
         <dependency>
             <groupId>net.postgis</groupId>
             <artifactId>postgis-jdbc</artifactId>
@@ -62,13 +58,12 @@
             <groupId>org.locationtech.jts</groupId>
             <artifactId>jts-core</artifactId>
             <version>${jts-core.version}</version>
-            <!--<scope>compile</scope>-->
         </dependency>
-        <!--<dependency>
+        <dependency>
             <groupId>com.bedatadriven</groupId>
             <artifactId>jackson-datatype-jts</artifactId>
-            <version>2.4</version>
-        </dependency>-->
+            <version>${jackson-datatype-jts.version}</version>
+        </dependency>
 
     </dependencies>
 </project>

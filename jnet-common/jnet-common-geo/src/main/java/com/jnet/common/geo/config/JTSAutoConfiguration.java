@@ -27,13 +27,12 @@ import java.util.Date;
 /**
  * @author mugw
  * @version 1.0
- * @description
- * @date 2025/5/21 10:19:32
+ * @since  2025/5/21 10:19:32
  */
 @Configuration
 public class JTSAutoConfiguration {
 
-    @Bean
+    /*@Bean
     public ObjectMapper customObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         JtsModule3D jtsModule3D = new JtsModule3D();
@@ -53,7 +52,7 @@ public class JTSAutoConfiguration {
         javaTimeModule.addDeserializer(LocalTime.class, new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_TIME_PATTERN)));
         mapper.registerModule(javaTimeModule);
         return mapper;
-    }
+    }*/
 
 
     @Bean
