@@ -35,10 +35,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.jnet</groupId>
-            <artifactId>jnet-common-geo</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
