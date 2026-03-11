@@ -24,7 +24,12 @@ import com.jnet.common.core.security.SecurityComponentConfig;
 import com.jnet.oauth2.server.authorizationManager.PermissionAuthorizationManager;
 import com.jnet.oauth2.server.converter.CustomAccessTokenResponseHttpMessageConverter;
 import com.jnet.oauth2.server.provider.PasswordAuthenticationProvider;
+import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +40,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -43,21 +50,26 @@ import org.springframework.security.oauth2.server.authorization.client.InMemoryR
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationEndpointConfigurer;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2TokenIntrospectionEndpointConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,23 +82,27 @@ import static org.springframework.security.config.Customizer.withDefaults;
  * https://springdoc.cn/spring-authorization-server/core-model-components.html#registered-client
  * @date 2024/7/8 15:31:30
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @Import({JwtConfiguration.class,OAuth2ComponentConfig.class, SecurityComponentConfig.class})
 public class OAuth2AuthorizationServerSecurityConfiguration {
 
+	private AuthenticationConverter authenticationConverter;
+
+	private PasswordAuthenticationProvider passwordAuthenticationProvider;
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, AuthenticationConverter authenticationConverter, PasswordAuthenticationProvider passwordAuthenticationProvider) throws Exception {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,AuthenticationConverter authenticationConverter,
+																	  PasswordAuthenticationProvider passwordAuthenticationProvider) throws Exception {
 		/**
 		 * https://springdoc.cn/spring-authorization-server/configuration-model.html
 		 * OAuth2AuthorizationServerConfigurer 提供以下配置选项。
 		 *
 		 * @Bean
 		 * public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-		 * 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-		 * 		new OAuth2AuthorizationServerConfigurer();
+		 * 	OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 		 * 	http.apply(authorizationServerConfigurer);
 		 *
 		 * 	authorizationServerConfigurer
@@ -128,58 +144,95 @@ public class OAuth2AuthorizationServerSecurityConfiguration {
 		 * 默认情况下，OAuth2令牌端点、OAuth2令牌内省（Introspection）端点和 OAuth2令牌撤销端点 都需要客户端认证。
 		 * 支持的客户端认证方法有 client_secret_basic、client_secret_post、private_key_jwt、client_secret_jwt 和 none（公共客户端）。
 		 */
+		this.authenticationConverter = authenticationConverter;
+		this.passwordAuthenticationProvider = passwordAuthenticationProvider;
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-				.authorizationEndpoint(oAuth2AuthorizationEndpointConfigurer -> {
-			oAuth2AuthorizationEndpointConfigurer
-					.authorizationRequestConverter(authenticationConverter)
-					.authorizationResponseHandler((request, response, authentication) -> {
-							OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
-									(OAuth2AccessTokenAuthenticationToken) authentication;
-
-							OAuth2AccessToken accessToken = accessTokenAuthentication.getAccessToken();
-							OAuth2RefreshToken refreshToken = accessTokenAuthentication.getRefreshToken();
-							Map<String, Object> additionalParameters = accessTokenAuthentication.getAdditionalParameters();
-
-							OAuth2AccessTokenResponse.Builder builder =
-									OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
-											.tokenType(accessToken.getTokenType())
-											.scopes(accessToken.getScopes());
-							if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
-								builder.expiresIn(ChronoUnit.SECONDS.between(accessToken.getIssuedAt(), accessToken.getExpiresAt()));
-							}
-							if (refreshToken != null) {
-								builder.refreshToken(refreshToken.getTokenValue());
-							}
-							if (!CollectionUtils.isEmpty(additionalParameters)) {
-								builder.additionalParameters(additionalParameters);
-							}
-							OAuth2AccessTokenResponse accessTokenResponse = builder.build();
-							ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-							CustomAccessTokenResponseHttpMessageConverter converter = new CustomAccessTokenResponseHttpMessageConverter(new ObjectMapper());
-							converter.write(accessTokenResponse, null, httpResponse);
-						})
-					.errorResponseHandler((request, response, authException) -> {
-						String msg = null;
-						if (StringUtils.hasText(authException.getMessage())) {
-							msg = authException.getMessage();
-						} else if (authException instanceof OAuth2AuthenticationException exception) {
-							msg = exception.getError().getErrorCode();
-						}
-						response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-						try (ServletOutputStream out = response.getOutputStream()){
-							ObjectMapper objectMapper = new ObjectMapper();
-							R<String> result = R.fail(msg);
-							IOUtils.write(objectMapper.writeValueAsString(result), out, StandardCharsets.UTF_8);
-							out.flush();
-							IOUtils.close(out);
-						}
-					})
-					.authenticationProvider(passwordAuthenticationProvider);
-		});
+				//.tokenIntrospectionEndpoint(this::configureIntrospectionEndpoint)//todo 内省
+				.authorizationEndpoint(this::configure);
 		http.exceptionHandling((exceptions) -> exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
         return http.build();
     }
+
+	private void configure(OAuth2AuthorizationEndpointConfigurer authorizationEndpoint){
+		authorizationEndpoint
+				.authorizationRequestConverter(authenticationConverter)
+				.authorizationResponseHandler(this::configureAuthorizationResponseHandler)
+				.errorResponseHandler(this::configureErrorResponseHandler)
+				.authenticationProvider(passwordAuthenticationProvider);
+	}
+
+	private void configureAuthorizationResponseHandler(HttpServletRequest request, HttpServletResponse response,
+						   Authentication authentication)throws IOException {
+		OAuth2AccessTokenAuthenticationToken accessTokenAuthentication =
+				(OAuth2AccessTokenAuthenticationToken) authentication;
+
+		OAuth2AccessToken accessToken = accessTokenAuthentication.getAccessToken();
+		OAuth2RefreshToken refreshToken = accessTokenAuthentication.getRefreshToken();
+		Map<String, Object> additionalParameters = accessTokenAuthentication.getAdditionalParameters();
+
+		OAuth2AccessTokenResponse.Builder builder =
+				OAuth2AccessTokenResponse.withToken(accessToken.getTokenValue())
+						.tokenType(accessToken.getTokenType())
+						.scopes(accessToken.getScopes());
+		if (accessToken.getIssuedAt() != null && accessToken.getExpiresAt() != null) {
+			builder.expiresIn(ChronoUnit.SECONDS.between(accessToken.getIssuedAt(), accessToken.getExpiresAt()));
+		}
+		if (refreshToken != null) {
+			builder.refreshToken(refreshToken.getTokenValue());
+		}
+		if (!CollectionUtils.isEmpty(additionalParameters)) {
+			builder.additionalParameters(additionalParameters);
+		}
+		OAuth2AccessTokenResponse accessTokenResponse = builder.build();
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		CustomAccessTokenResponseHttpMessageConverter converter = new CustomAccessTokenResponseHttpMessageConverter(new ObjectMapper());
+		converter.write(accessTokenResponse, null, httpResponse);
+	}
+
+	private void configureErrorResponseHandler(HttpServletRequest request, HttpServletResponse response,
+						   AuthenticationException authException)throws IOException{
+		String msg = null;
+		if (StringUtils.hasText(authException.getMessage())) {
+			msg = authException.getMessage();
+		} else if (authException instanceof OAuth2AuthenticationException exception) {
+			msg = exception.getError().getErrorCode();
+		}
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		try (ServletOutputStream out = response.getOutputStream()){
+			ObjectMapper objectMapper = new ObjectMapper();
+			R<String> result = R.fail(msg);
+			IOUtils.write(objectMapper.writeValueAsString(result), out, StandardCharsets.UTF_8);
+			out.flush();
+			IOUtils.close(out);
+		}
+	}
+
+	/**
+	 * 内省配置
+	 * @param introspectionEndpoint  OAuth2TokenIntrospectionEndpointConfigurer
+	 * @throws Exception
+	 */
+	private void configureIntrospectionEndpoint(OAuth2TokenIntrospectionEndpointConfigurer introspectionEndpoint) {
+		introspectionEndpoint.introspectionResponseHandler(this::configureIntrospectionResponseHandler);
+	}
+
+	private void configureIntrospectionResponseHandler(HttpServletRequest request, HttpServletResponse response,
+													   Authentication authentication){
+		// 自定义响应格式（可选）
+		ObjectMapper mapper = new ObjectMapper();
+		log.info("内省认证成功：{}", authentication);
+		/*Map<String, Object> result = new HashMap<>();
+		result.put("active", true);
+		result.put("username", authentication.getName());
+		result.put("scopes", authentication.getScopes());
+		result.put("client_id", authentication.getClientRegistrationId());
+		result.put("exp", authentication.getPrincipal());*/
+
+		/*ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		httpResponse.write(mapper.writeValueAsBytes(authentication));*/
+	}
+
 
 	@Bean
 	@Order(2)

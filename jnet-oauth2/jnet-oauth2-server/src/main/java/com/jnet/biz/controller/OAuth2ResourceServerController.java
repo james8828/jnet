@@ -16,20 +16,32 @@
 
 package com.jnet.biz.controller;
 
+import com.jnet.api.R;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
+@RequestMapping("/auth")
 public class OAuth2ResourceServerController {
 
-	@GetMapping("/")
-	public String index(@AuthenticationPrincipal Jwt jwt) {
-		return String.format("Hello, %s!", jwt.getSubject());
+	@GetMapping("/jwt")
+	public R index(@AuthenticationPrincipal Jwt jwt) {
+		return R.success(jwt.getSubject());
+	}
+
+	/**
+	 * springboot security获取当前登录用户信息
+	 * @return
+	 */
+	@GetMapping("/auth")
+	public R index() {
+		//springboot security获取当前登录用户信息
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		return R.success(authentication.getPrincipal());
 	}
 
 	@GetMapping("/message")

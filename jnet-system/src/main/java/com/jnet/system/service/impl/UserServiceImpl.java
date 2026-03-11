@@ -73,7 +73,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public User loadUserByUsername(String username) throws Exception {
-        User user = getOne(Wrappers.<User>lambdaQuery().eq(User::getUserName, username).eq(User::getEnabled, true).eq(User::getDelFlag, false));
+        User user = getOne(Wrappers.<User>lambdaQuery()
+                .eq(User::getUserName, username)
+                .eq(User::getEnabled, true));
         if (user == null) {
             return null;
         }

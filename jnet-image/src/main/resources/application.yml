@@ -7,4 +7,6 @@ server:
 
 spring:
   profiles:
-    active: dev
+    active: pg
+  application:
+    name: jnet-image-service

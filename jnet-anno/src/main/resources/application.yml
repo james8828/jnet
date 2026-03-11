@@ -1,8 +1,10 @@
 server:
-  port: 7878
+  port: 9005
   servlet:
-    context-path: /jnet
+    context-path: /
 
 spring:
   profiles:
     active: dev
+  application:
+    name: jnet-anno-service

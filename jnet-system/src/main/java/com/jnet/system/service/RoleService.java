@@ -3,6 +3,7 @@ package com.jnet.system.service;
 import com.jnet.api.R;
 import com.jnet.api.system.domain.Role;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.jnet.system.vo.RoleVo;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,6 @@ import java.util.Set;
 */
 public interface RoleService extends IService<Role> {
 
-    R addOrUpdateRole(Role params)throws Exception;
+    R addOrUpdateRole(RoleVo params)throws Exception;
     Map<Long, Set<Role>> listRoleByUserId(List<Long> userIds)throws Exception;
 }

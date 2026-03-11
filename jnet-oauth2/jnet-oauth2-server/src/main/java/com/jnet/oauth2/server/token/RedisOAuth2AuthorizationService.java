@@ -69,25 +69,35 @@ public class RedisOAuth2AuthorizationService implements OAuth2AuthorizationServi
 		}
 	};
 
-	@Override
+	/**
+	 * 保存OAuth2授权信息到Redis
+	 * 根据不同的授权类型（state, authorization code, refresh token, access token）将授权信息保存到相应的Redis键中
+	 * 每种类型都有其特定的键和可能的过期时间
+	 *
+	 * @param authorization OAuth2授权信息，包含授权的相关属性和令牌信息
+	 */
 	public void save(OAuth2Authorization authorization) {
+		// 处理state参数
 		if (isState(authorization)) {
 			String token = authorization.getAttribute("state");
 			this.redisBucketSet(OAuth2ParameterNames.STATE, token, authorization, Duration.ofMinutes(STATE_TIMEOUT_MINUTES));
 		}
 
+		// 处理授权码
 		if (isCode(authorization)) {
 			OAuth2AuthorizationCode authorizationCode = authorization.getToken(OAuth2AuthorizationCode.class).getToken();
 			Duration duration = this.getExpireSeconds(authorizationCode);
 			this.redisBucketSet(OAuth2ParameterNames.CODE, authorizationCode.getTokenValue(), authorization, duration);
 		}
 
+		// 处理刷新令牌
 		if (isRefreshToken(authorization)) {
 			OAuth2RefreshToken refreshToken = authorization.getRefreshToken().getToken();
 			Duration duration = this.getExpireSeconds(refreshToken);
 			this.redisBucketSet(OAuth2ParameterNames.REFRESH_TOKEN, refreshToken.getTokenValue(), authorization, duration);
 		}
 
+		// 处理访问令牌
 		if (isAccessToken(authorization)) {
 			Duration duration = this.saveAccessToken(authorization);
 			OAuth2AccessToken accessToken = authorization.getAccessToken().getToken();
@@ -97,6 +107,7 @@ public class RedisOAuth2AuthorizationService implements OAuth2AuthorizationServi
 			this.redisListAdd(this.getUnameListKey(authorization), accessToken.getTokenValue(), duration);
 		}
 	}
+
 
 	private Duration saveAccessToken(OAuth2Authorization authorization) {
 		return this.saveAccessToken(authorization, false);

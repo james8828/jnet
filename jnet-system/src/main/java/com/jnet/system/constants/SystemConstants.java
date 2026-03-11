@@ -7,6 +7,7 @@ package com.jnet.system.constants;
  * @date 2024/7/19 11:47:58
  */
 public class SystemConstants {
+    public static final String VERSION = "v1";
     //user
     public static final String ADD_USER_ERROR = "新增用户失败";
     public static final String ADD_USER_SUCCESS = "新增用户成功";

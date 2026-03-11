@@ -7,11 +7,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jnet.api.R;
 import com.jnet.api.system.domain.Menu;
 import com.jnet.api.system.domain.Role;
+import com.jnet.system.constants.SystemConstants;
 import com.jnet.system.service.MenuService;
 import com.jnet.system.service.RoleService;
-import com.jnet.api.system.vo.RoleQuery;
+import com.jnet.api.system.vo.RolePageQuery;
+import com.jnet.system.vo.RoleVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -28,7 +31,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController()
-@RequestMapping("/v1/role")
+@RequestMapping(SystemConstants.VERSION + "/role")
 public class RoleController {
 
     @Resource
@@ -37,18 +40,18 @@ public class RoleController {
     private MenuService menuService;
 
     @PostMapping("/addOrUpdateRole")
-    public R addOrUpdateRole(@RequestBody Role params) throws Exception{
+    public R addOrUpdateRole(@RequestBody RoleVo params) throws Exception{
         return roleService.addOrUpdateRole(params);
     }
 
-    @DeleteMapping("/deleteRoleById")
-    public R deleteRoleById(@RequestParam("id") Long roleId) throws Exception{
+    @DeleteMapping("/delete/{roleId}")
+    public R deleteRoleById(@PathVariable("roleId") Long roleId) throws Exception{
         boolean result = roleService.updateById(Role.builder().roleId(roleId).delFlag(true).build());
         return R.success(result);
     }
 
-    @GetMapping("/getRoleById")
-    public R getRoleById(@RequestParam("id") Long  roleId) throws Exception{
+    @GetMapping("/getRole/{roleId}")
+    public R getRoleById(@PathVariable("roleId") Long roleId) throws Exception{
         Role role = roleService.getById(roleId);
         Map<Long, Set<Menu>> menuMap = menuService.mapMenuByRoleId(Arrays.asList(roleId));
         role.setMenus(menuMap.get(roleId));
@@ -56,30 +59,28 @@ public class RoleController {
     }
 
     @PostMapping("/pageRole")
-    public R<Page<Role>> pageRole(@RequestBody RoleQuery<Role> query) throws Exception{
-        LambdaQueryWrapper<Role> queryWrapper = Wrappers.lambdaQuery(query.getRole());
-        if (CollectionUtils.isNotEmpty(query.getRoleIds())){
-            queryWrapper.exists("select menu_id from role_menu where role_menu.role_id = sys_role.role_id and role_menu.role_id in (?)",query.getRoleIds());
-        }
-        Page<Role> page = roleService.page(query,queryWrapper);
+    public R<Page<Role>> pageRole(@RequestBody RolePageQuery query) throws Exception{
+        Page<Role> page = Page.of(query.getCurrentPage(), query.getPageSize());
+        roleService.page(page,Wrappers.<Role>lambdaQuery()
+                .like(StringUtils.isNotEmpty(query.getRoleName()), Role::getRoleName, query.getRoleName())
+                .like(StringUtils.isNotEmpty(query.getRoleKey()), Role::getRoleKey, query.getRoleKey())
+                .eq(query.getEnabled()!=null,Role::getEnabled, query.getEnabled()));
         List<Role> roles = page.getRecords();
         List<Long> roleIds = roles.stream().map(Role::getRoleId).collect(Collectors.toList());
+        Map<Long, Set<Menu>> menuMap =  menuService.mapMenuByRoleId(roleIds);
         page.convert(role -> {
-            try {
-                Map<Long, Set<Menu>> menuMap =  menuService.mapMenuByRoleId(roleIds);
-                role.setMenus(menuMap.get(role.getRoleId()));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            role.setMenus(menuMap.get(role.getRoleId()));
             return role;
         });
         return R.success(page);
     }
 
     @PostMapping("/queryRole")
-    public R<List<Role>> queryRole(@RequestBody RoleQuery<Role> query) throws Exception{
-        LambdaQueryWrapper<Role> queryWrapper = Wrappers.lambdaQuery(query.getRole());
-        List<Role> roles = roleService.list(queryWrapper);
+    public R<List<Role>> queryRole(@RequestBody RolePageQuery query) throws Exception{
+        List<Role> roles = roleService.list(Wrappers.<Role>lambdaQuery()
+                .like(StringUtils.isNotEmpty(query.getRoleName()), Role::getRoleName, query.getRoleName())
+                .like(StringUtils.isNotEmpty(query.getRoleKey()), Role::getRoleKey, query.getRoleKey())
+                .eq(query.getEnabled()!=null,Role::getEnabled, query.getEnabled()));
         List<Long> roleIds = roles.stream().map(Role::getRoleId).collect(Collectors.toList());
         Map<Long, Set<Menu>> menuMap =  menuService.mapMenuByRoleId(roleIds);
         roles.forEach(role -> role.setMenus(menuMap.get(role.getRoleId())));

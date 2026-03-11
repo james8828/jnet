@@ -12,15 +12,18 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import feign.Feign;
+import feign.Logger;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
+import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.context.annotation.*;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,10 +40,24 @@ import java.util.stream.Collectors;
  * @date 2024/7/30 15:18:23
  */
 @Configuration
+@ConditionalOnClass(Feign.class)
+@AutoConfigureBefore(FeignAutoConfiguration.class)
 public class FeignConfig {
 
     @Bean
-    //@ConditionalOnMissingBean
+    public Logger.Level feignLevel(){
+        return Logger.Level.FULL;
+    }
+
+//    @Bean
+//    public Decoder feignDecoder() {
+//        return new ResponseEntityDecoder(new SpringDecoder(() -> {
+//            return new HttpMessageConverters(mappingJackson2HttpMessageConverter());
+//        }));
+//    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public HttpMessageConverters messageConverters(ObjectProvider<HttpMessageConverter<?>> converters, MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         List<HttpMessageConverter<?>> list = converters.orderedStream().collect(Collectors.toList());
         list.add(mappingJackson2HttpMessageConverter);
@@ -48,12 +65,11 @@ public class FeignConfig {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
-        return new MappingJackson2HttpMessageConverter(objectMapper());
+        return new MappingJackson2HttpMessageConverter(objectMapper);
     }
 
-    @Bean
-    //@Primary
     public ObjectMapper objectMapper() {
         ObjectMapper om = new ObjectMapper();
         JavaTimeModule javaTimeModule = new JavaTimeModule();
@@ -66,8 +82,9 @@ public class FeignConfig {
         javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
         javaTimeModule.addDeserializer(LocalTime.class, new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_TIME_PATTERN)));
         om.registerModule(javaTimeModule);
-        om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        //om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         om.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
+        om.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return om;
     }
 

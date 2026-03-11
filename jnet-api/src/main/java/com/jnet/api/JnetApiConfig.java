@@ -1,9 +1,9 @@
 package com.jnet.api;
 
+import com.jnet.api.config.FeignClientInterceptor;
 import com.jnet.api.config.FeignConfig;
 import com.jnet.api.config.SwaggerConfig;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -15,8 +15,9 @@ import org.springframework.context.annotation.Import;
 //自动装配注解
 @AutoConfiguration
 //导入配置类
-@Import({FeignConfig.class, SwaggerConfig.class})
+@Import({FeignConfig.class, SwaggerConfig.class, FeignClientInterceptor.class})
 //开启feign
-@EnableFeignClients
+//@EnableFeignClients
 public class JnetApiConfig {
+
 }

@@ -1,4 +1,4 @@
-/*
+package com.jnet.api.interceptor;/*
 package com.jnet.api.interceptor;
 
 import cn.staitech.common.core.annotation.dict.DictCache;

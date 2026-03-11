@@ -6,6 +6,7 @@ import com.jnet.oauth2.server.properties.SecurityProperties;
 import com.jnet.oauth2.server.provider.PasswordAuthenticationProvider;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.repository.init.ResourceReader;
 import org.springframework.security.core.userdetails.UserDetailsService;

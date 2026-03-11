@@ -9,3 +9,7 @@ server:
 spring:
   profiles:
     active: dev
+  application:
+    name: jnet-oauth2-service
+
+

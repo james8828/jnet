@@ -1,7 +1,7 @@
 package com.jnet.gateway.resource.server.feign;
 
 import com.jnet.api.system.domain.User;
-import com.jnet.api.feign.SystemService;
+import com.jnet.api.feign.SystemServiceClient;
 import com.jnet.common.core.security.bean.GrantedAuthorityCustom;
 import com.jnet.common.core.security.bean.UserDetailsCustom;
 import jakarta.annotation.Resource;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class UserServiceCustom implements UserDetailsService {
 
     @Resource
-    private SystemService systemService;
+    private SystemServiceClient systemService;
 
     @Override
     public UserDetailsCustom loadUserByUsername(String username) {

@@ -73,11 +73,12 @@
 	</appender>
 	<!--<logger name="org.redisson" level="DEBUG"/>-->
 	<!-- 将 Redisson 日志输出到文件 -->
-	<logger name="org.redisson" level="INFO" additivity="true">
+	<logger name="org.redisson" level="OFF" additivity="true">
 		<appender-ref ref="FILE_APPENDER"/>
 	</logger>
+	<logger name="com.jnet.api.feign" level="info"/>
 
-	<logger name="com.alibaba.nacos" level="INFO">
+	<logger name="com.alibaba.nacos" level="OFF">
 		<appender-ref ref="error"/>
 	</logger>
 

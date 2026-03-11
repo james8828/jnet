@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jnet.api.R;
+import com.jnet.api.feign.Oauth2ServiceClient;
 import com.jnet.api.system.domain.Role;
 import com.jnet.api.system.domain.User;
+import com.jnet.system.constants.SystemConstants;
 import com.jnet.system.service.RoleService;
 import com.jnet.system.service.UserService;
 import com.jnet.api.system.vo.UserQuery;
@@ -28,34 +30,38 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController()
-@RequestMapping("/v1/user")
+@RequestMapping(SystemConstants.VERSION + "/user")
 public class UserController {
     @Resource
     private UserService userService;
     @Resource
     private RoleService roleService;
+    @Resource
+    private Oauth2ServiceClient oauth2ServiceClient;
 
     @PostMapping("/addOrUpdateUser")
-    public R addOrUpdateUser(@RequestBody User params) throws Exception{
-        return userService.addOrUpdateUser(params);
+    public R addOrUpdateUser(@RequestBody User user) throws Exception{
+        return userService.addOrUpdateUser(user);
     }
 
-    @DeleteMapping("/deleteUserById")
-    public R deleteUser(@RequestParam("id") Long  userId) throws Exception{
+    @DeleteMapping("/{userId}")
+    public R deleteUserById(@PathVariable("userId") Long  userId) throws Exception{
         boolean result = userService.updateById(User.builder().userId(userId).delFlag(true).build());
         return R.success(result);
     }
 
-    @GetMapping("/getUserById")
-    public R getUserById(@RequestParam("id") Long  userId) throws Exception{
+    @GetMapping("/{userId}")
+    public R getUserById(@PathVariable("userId") Long  userId) throws Exception{
         User user = userService.getById(userId);
         Map<Long, Set<Role>> roleMap = roleService.listRoleByUserId(Arrays.asList(userId));
         user.setRoles(roleMap.get(userId));
+        user.setPassword(null);
         return R.success(user);
     }
 
     @PostMapping("/pageUser")
     public R<Page<User>> pageUser(@RequestBody UserQuery<User> query) throws Exception{
+        R r = oauth2ServiceClient.getJwt();
         LambdaQueryWrapper<User> queryWrapper = Wrappers.lambdaQuery(query.getUser());
         if (CollectionUtils.isNotEmpty(query.getRoleIds())){
             queryWrapper.exists("select role_id from user_role where user_role.user_id = sys_user.user_id and user_role.role_id in (?)",query.getRoleIds());
@@ -90,6 +96,7 @@ public class UserController {
 
     @GetMapping("/loadUserByUsername")
     public User loadUserByUsername(@RequestParam("username") String username) throws Exception{
-        return userService.loadUserByUsername(username);
+        User user = userService.loadUserByUsername(username);
+        return user;
     }
 }

@@ -39,7 +39,7 @@ public class DynamicSecurityConfig {
     private Map<String, String[]> urlToRoles = new HashMap<>();
 
     public DynamicSecurityConfig() {
-        this.urlToRoles.put("/message/**",new String[]{"ROLE_GUEST", "ROLE_USER", "ROLE_ADMIN"});
+        this.urlToRoles.put("/auth/**",new String[]{"ROLE_GUEST", "ROLE_USER", "ROLE_ADMIN"});
     }
 
     public Map<String, String[]> getUrlToRoles() {

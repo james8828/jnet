@@ -9,7 +9,6 @@ package com.jnet.oauth2.server;
  * Github: https://github.com/zlt2000
  */
 public interface SecurityConstants {
-    String PROJECT_LICENSE= "http://zlt2000.gitee.io/";
 
     /**
      * 用户信息分隔符

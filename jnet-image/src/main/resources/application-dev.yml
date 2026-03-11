@@ -1,7 +1,5 @@
 
 spring:
-  application:
-    name: ImageService
   cloud:
     nacos:
       config:
@@ -108,6 +106,8 @@ management:
       application: ${spring.application.name}
 file:
   path: ../
+  # 上传文件路径
+  upload-dir: /upload
 filePath: D:\work\dict\jnet\imageStore\
 
 

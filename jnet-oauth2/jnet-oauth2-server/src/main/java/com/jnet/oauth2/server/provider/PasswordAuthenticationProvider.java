@@ -1,5 +1,6 @@
 package com.jnet.oauth2.server.provider;
 
+import com.jnet.common.core.security.bean.UserDetailsCustom;
 import com.jnet.oauth2.server.token.PasswordAuthenticationToken;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,10 +19,11 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 
 /**
- * 用户名密码 provider
+ *
  * @author james
  * @version 1.0
  * @date 2023/11/18
+ * @description 认证核心类，用户名密码 provider
  */
 @Setter
 @Getter
@@ -35,7 +37,7 @@ public class PasswordAuthenticationProvider extends BaseAuthenticationProvider {
             , OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator
             , UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         super(authorizationService, tokenGenerator);
-        Assert.notNull(userDetailsService, "userDetailsServiceFactory cannot be null");
+        Assert.notNull(userDetailsService, "userDetailsService cannot be null");
         Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
@@ -51,9 +53,10 @@ public class PasswordAuthenticationProvider extends BaseAuthenticationProvider {
         PasswordAuthenticationToken authToken = (PasswordAuthenticationToken) authentication;
         String username = (String) authToken.getPrincipal();
         String password = authToken.getCredentials();
-        UserDetails userDetails;
+        UserDetailsCustom userDetails;
         try {
-            userDetails = this.userDetailsService.loadUserByUsername(username);
+            userDetails = (UserDetailsCustom) this.userDetailsService.loadUserByUsername(username);
+
         } catch (AuthenticationException e) {
             throw new OAuth2AuthenticationException(e.getMessage());
         }

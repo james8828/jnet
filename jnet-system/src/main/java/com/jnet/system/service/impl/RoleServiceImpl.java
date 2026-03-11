@@ -13,16 +13,16 @@ import com.jnet.api.system.domain.UserRole;
 import com.jnet.system.exception.SystemException;
 import com.jnet.system.mapper.RoleMenuMapper;
 import com.jnet.system.mapper.UserRoleMapper;
+import com.jnet.system.service.RoleMenuService;
 import com.jnet.system.service.RoleService;
 import com.jnet.system.mapper.RoleMapper;
+import com.jnet.system.vo.RoleVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -38,27 +38,36 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role>
     @Resource
     private RoleMenuMapper roleMenuMapper;
     @Resource
+    private RoleMenuService roleMenuService;
+    @Resource
     private UserRoleMapper userRoleMapper;
 
+    @Transactional
     @Override
-    public R addOrUpdateRole(Role params) throws Exception {
-        boolean flag = saveOrUpdate(params);
+    public R addOrUpdateRole(RoleVo params) throws Exception {
+        Role role = new Role();
+        role.setRoleId(params.getRoleId());
+        role.setRoleName(params.getRoleName());
+        role.setRoleKey(params.getRoleKey());
+        role.setEnabled(params.getEnabled());
+        if (role.getRoleId()!=null){
+            // todo
+            role.setUpdateTime(new Date());
+        }
+        boolean flag = saveOrUpdate(role);
         if (!flag){
             log.error("{}:[{}]",SystemConstants.ADD_ROLE_ERROR,params);
             throw new SystemException(SystemConstants.ADD_ROLE_ERROR);
         }
-        Set<Menu> menuList = params.getMenus();
+        Set<Long> menuIds = params.getMenus();
         //删除历史角色菜单关系，添加新的角色菜单关系
-        if (CollectionUtils.isNotEmpty(menuList)){
-            LambdaQueryWrapper<RoleMenu> queryWrapper = Wrappers.lambdaQuery();
-            queryWrapper.eq(RoleMenu::getRoleId, params.getRoleId());
-            Integer delResult = roleMenuMapper.delete(queryWrapper);
-            List<RoleMenu> roleMenus = menuList.stream()
-                    .map(menu -> RoleMenu.builder().roleId(params.getRoleId()).menuId(menu.getMenuId()).build() )
+        if (CollectionUtils.isNotEmpty(menuIds)){
+            Integer delResult = roleMenuMapper.delete(Wrappers.<RoleMenu>lambdaQuery()
+                    .eq(RoleMenu::getRoleId, params.getRoleId()));
+            List<RoleMenu> roleMenus = menuIds.stream()
+                    .map(id-> RoleMenu.builder().roleId(role.getRoleId()).menuId(id).build() )
                     .collect(Collectors.toList());
-            for (RoleMenu roleMenu : roleMenus){
-                roleMenuMapper.insert(roleMenu);
-            }
+            roleMenuService.saveBatch(roleMenus);
         }
         log.info("{}:[{}]",SystemConstants.ADD_ROLE_SUCCESS,params);
         return R.success();

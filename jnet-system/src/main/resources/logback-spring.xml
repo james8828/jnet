@@ -73,7 +73,7 @@
 	</appender>
 	<!--<logger name="org.redisson" level="DEBUG"/>-->
 	<!-- 将 Redisson 日志输出到文件 -->
-	<logger name="org.redisson" level="DEBUG" additivity="true">
+	<logger name="org.redisson" level="OFF" additivity="true">
 		<appender-ref ref="FILE_APPENDER"/>
 	</logger>
 

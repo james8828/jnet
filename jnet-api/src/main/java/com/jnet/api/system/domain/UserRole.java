@@ -1,6 +1,7 @@
 package com.jnet.api.system.domain;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 
@@ -22,6 +23,7 @@ public class UserRole implements Serializable {
     /**
      * 用户id
      */
+    @TableId
     private Long userId;
 
     /**

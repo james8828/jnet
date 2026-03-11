@@ -8,7 +8,9 @@ server:
 
 spring:
   profiles:
-    active: mysql
+    active: pg
+  application:
+    name: jnet-system-service
 springdoc:
   api-docs:
     path: /v3/api-docs

@@ -1,7 +1,5 @@
 
 spring:
-  application:
-    name: Oauth2Service
   cloud:
     nacos:
       config:
@@ -11,6 +9,23 @@ spring:
       discovery:
         auto-registration: true
         server-addr: 192.168.52.108:8848
+    openfeign:
+      client:
+        config:
+          default:
+            #        Feign 支持四种日志级别：
+            #        NONE：不记录任何日志。
+            #        BASIC：仅记录请求方法和 URL 以及响应状态码和执行时间。
+            #        HEADERS：记录 BASIC 级别的信息，外加请求和响应的头信息。
+            #        FULL：记录 HEADERS 级别的信息，外加请求和响应的正文
+            loggerLevel: FULL
+            connectTimeout: 10000
+            readTimeout: 10000
+    compression:
+      request:
+        enabled: false
+      response:
+        enabled: false
   servlet:
     multipart:
       max-file-size: 50MB

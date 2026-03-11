@@ -24,6 +24,8 @@ public class UserDetailsCustom implements UserDetails {
     private boolean accountNonExpired;
     private boolean accountNonLocked;
     private boolean credentialsNonExpired;
+    private Long userId;
+
 
 
     @Override

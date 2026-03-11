@@ -57,6 +57,7 @@ public class ResourceServerConfig {
          * 当客户端发送 POST、PUT、DELETE 等修改状态的请求时，CsrfWebFilter 会验证请求中的 CSRF 令牌是否有效。
          * 如果请求中没有包含正确的 CSRF 令牌或者令牌无效，则请求会被拒绝
          */
+        //todo 调用认证服务自省endpoint，获取当前用户信息
         http.csrf(csrf -> csrf.disable())
                 .cors(ServerHttpSecurity.CorsSpec::disable)
                 .headers(hSpec -> hSpec.frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable))

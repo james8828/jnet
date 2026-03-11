@@ -33,19 +33,19 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu>
     @Override
     public Map<Long, Set<Menu>> mapMenuByRoleId(List<Long> roleIds) throws Exception {
         Map<Long, Set<Menu>> result = new HashMap<>();
-        LambdaQueryWrapper<RoleMenu> queryWrapper = Wrappers.lambdaQuery();
-        queryWrapper.in(RoleMenu::getRoleId, roleIds);
-        List<RoleMenu> roleMenus = roleMenuMapper.selectList(queryWrapper);
+        List<RoleMenu> roleMenus = roleMenuMapper.selectList(Wrappers.<RoleMenu>lambdaQuery().in(RoleMenu::getRoleId, roleIds));
         if (CollectionUtils.isNotEmpty(roleMenus)){
             List<Long> menuIds = roleMenus.stream().map(RoleMenu::getMenuId).collect(Collectors.toList());
-            List<Menu> menus = listByIds(menuIds);
-            Map<Long, Menu> menuMap = menus.stream().collect(Collectors.toMap(Menu::getMenuId, menu -> menu));
-            Map<Long, List<RoleMenu>> temp =roleMenus.stream().collect(Collectors.groupingBy(RoleMenu::getRoleId));
-            temp.forEach((k,v)->{
-                if (CollectionUtils.isNotEmpty(v)){
-                    Set<Menu> rs = v.stream().map(x-> menuMap.get(x.getRoleId())).collect(Collectors.toSet());
-                    result.put(k, rs);
+            List<Menu> menuList = listByIds(menuIds);
+            Map<Long, Menu> menuMap = menuList.stream().collect(Collectors.toMap(Menu::getMenuId, menu -> menu));
+            //遍历roleMenus,组装roleId为key，Set<Menu>为value的map
+            roleMenus.forEach(roleMenu -> {
+                Set<Menu> menus = result.get(roleMenu.getRoleId());
+                if (menus == null){
+                    menus = new HashSet<>();
                 }
+                menus.add(menuMap.get(roleMenu.getMenuId()));
+                result.put(roleMenu.getRoleId(), menus);
             });
         }
         return result;

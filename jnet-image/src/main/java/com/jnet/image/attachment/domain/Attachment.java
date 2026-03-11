@@ -16,18 +16,39 @@ import java.util.Date;
  * 附件表
  * @TableName ta_attachment
  */
-@TableName(value ="img_attachment")
+@TableName(value ="t_attachment")
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class Attachment implements Serializable {
+public class Attachment implements Serializable, Cloneable{
+
+    public Attachment() {
+    }
+
+    public Attachment(Long attachmentId, Long bizId, String attachmentName, String attachmentCode, Long attachmentSize, String attachmentPath, String attachmentMd5, String attachmentExt, Long createBy, Date createTime, Long updateBy, Date updateTime) {
+        this.attachmentId = attachmentId;
+        this.bizId = bizId;
+        this.attachmentName = attachmentName;
+        this.attachmentCode = attachmentCode;
+        this.attachmentSize = attachmentSize;
+        this.attachmentPath = attachmentPath;
+        this.attachmentMd5 = attachmentMd5;
+        this.attachmentExt = attachmentExt;
+        this.createBy = createBy;
+        this.createTime = createTime;
+        this.updateBy = updateBy;
+        this.updateTime = updateTime;
+    }
+
     /**
      * 主键id
      */
     @TableId(type = IdType.AUTO)
     private Long attachmentId;
 
+    /**
+     * 业务id
+     */
+    private Long bizId;
     /**
      * 附件名称
      */
@@ -71,6 +92,15 @@ public class Attachment implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    @Override
+    public Attachment clone() {
+        try {
+            return (Attachment) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Clone not supported", e);
+        }
+    }
 
     @Override
     public boolean equals(Object that) {

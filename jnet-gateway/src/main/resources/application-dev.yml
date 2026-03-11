@@ -1,8 +1,6 @@
 spring:
   main:
     web-application-type: reactive
-  application:
-    name: GatewayApp
   cloud:
     nacos:
       config:
@@ -14,18 +12,22 @@ spring:
         server-addr: 192.168.52.108:8848
     gateway:
       routes:
-        - id: SystemApp
-          uri: lb://SystemApp
+        - id: jnet-system-service
+          uri: lb://jnet-system-service
           predicates:
             - Path=/system/**
-        - id: Oauth2Service
-          uri: lb://Oauth2Service
+        - id: jnet-oauth2-service
+          uri: lb://jnet-oauth2-service
           predicates:
-            - Path=/oauth2Service/**
-        - id: ImageService
-          uri: lb://ImageService
+            - Path=/oauth2-service/**
+        - id: jnet-image-service
+          uri: lb://jnet-image-service
           predicates:
-            - Path=/imageService/**
+            - Path=/image-service/**
+        - id: jnet-anno-service
+          uri: lb://jnet-anno-service
+          predicates:
+            - Path=/anno-service/**
       default-filters:
         - StripPrefix=1
   data:
@@ -62,7 +64,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-whitelists: /oauth2Service/oauth2/token/**,/oauth2Service/oauth2/authorize/**,/oauth2Service/rsa/publicKey
+whitelists: /oauth2-service/oauth2/token/**,/oauth2-service/oauth2/authorize/**,/oauth2-service/rsa/publicKey,/image-service/slide/getThumbnailImage/**,/image-service/slide/tile/**
 
 
 

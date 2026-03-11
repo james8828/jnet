@@ -3,7 +3,7 @@ package com.jnet.gateway.resource.server;
 import com.jnet.api.system.domain.Menu;
 import com.jnet.api.system.domain.Role;
 import com.jnet.api.system.domain.User;
-import com.jnet.api.feign.SystemService;
+import com.jnet.api.feign.SystemServiceClient;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.PathContainer;
@@ -31,10 +31,15 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class PermissionReactiveAuthorizationManager implements ReactiveAuthorizationManager<AuthorizationContext> {
+    // 可以写死用于测试，后续建议通过 @Value 或配置中心注入
+    private static final List<String> WHITE_LIST = Arrays.asList(
+            "/image-service/slide/getThumbnailImage/**"
+    );
+
     private static final AuthorizationDecision DENY = new AuthorizationDecision(false);
     private static final AuthorizationDecision ACCEPT = new AuthorizationDecision(true);
     @Resource
-    private SystemService systemService;
+    private SystemServiceClient systemService;
 
     @Override
     public Mono<AuthorizationDecision> check(Mono<Authentication> authentication, AuthorizationContext authorizationContext) {
@@ -49,6 +54,21 @@ public class PermissionReactiveAuthorizationManager implements ReactiveAuthoriza
             log.info("请求：{}", authorizationContext.getExchange().getRequest().getRemoteAddress());
             log.info("请求：{}", authorizationContext.getExchange().getRequest().getId());
             log.info("请求：{}", authorizationContext.getExchange().getRequest().getHeaders().get("Authorization"));
+            String path = authorizationContext.getExchange().getRequest().getURI().getPath();
+            log.info("请求路径：{}", path);
+
+            // 白名单匹配逻辑
+            PathPatternParser parser = new PathPatternParser();
+            List<PathPattern> whitePatterns = WHITE_LIST.stream()
+                    .map(parser::parse)
+                    .collect(Collectors.toList());
+
+            for (PathPattern pattern : whitePatterns) {
+                if (pattern.matches(PathContainer.parsePath(path))) {
+                    log.info("路径 {} 匹配白名单，跳过权限检查", path);
+                    return ACCEPT; // 直接放行
+                }
+            }
             try {
                 CompletableFuture<User> userCompletableFuture = CompletableFuture.supplyAsync(() -> {
                     try {
@@ -71,7 +91,6 @@ public class PermissionReactiveAuthorizationManager implements ReactiveAuthoriza
                                 }
                             });
                             List<Menu> menus = menuCompletableFuture.get();
-                            PathPatternParser parser = new PathPatternParser();
                             List<PathPattern> patterns = menus.stream().map(Menu::getPath).map(parser::parse).collect(Collectors.toList());
                             for (PathPattern pattern : patterns) {
                                 if (pattern.matches(PathContainer.parsePath(authorizationContext.getExchange().getRequest().getURI().getPath()))) {
