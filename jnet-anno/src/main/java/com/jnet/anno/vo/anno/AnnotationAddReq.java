@@ -1,6 +1,8 @@
 package com.jnet.anno.vo.anno;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -43,7 +45,6 @@ public class AnnotationAddReq {
      * 轮廓坐标625
      */
     @NotNull(message = "{ARGUMENT_INVALID}")
-    @TableField("contour")
     private Geometry geometry;
 
     /**

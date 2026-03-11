@@ -1,6 +1,15 @@
 
 spring:
   jackson:
+    # 序列化配置
+    serialization:
+      fail-on-empty-beans: false
+      write-dates-as-timestamps: false
+    # 反序列化配置
+    deserialization:
+      fail-on-unknown-properties: false
+      accept-single-value-as-array: true
+    # 日期格式
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
   security:
@@ -18,6 +27,22 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate  # 生产环境建议使用 validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        spatial:
+          enabled: true
+        type:
+          descriptor:
+            sql:
+              SqlTypes:
+                GEOMETRY: org.hibernate.type.descriptor.sql.GeometrySqlDescriptor
+    open-in-view: false  # 性能优化
   data:
     redis:
       #Redis 连接的超时时间
@@ -34,10 +59,10 @@ spring:
         max-idle: 8
         min-idle: 0
   datasource:
-    url: jdbc:postgres_jts://localhost:5432/jnet
+    url: jdbc:postgresql://localhost:5432/jnet
     username: postgres
     password: 123456
-    driver-class-name: com.jnet.common.geo.jdbc.JtsWrapper
+    driver-class-name: org.postgresql.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       maximum-pool-size: 20
@@ -57,16 +82,6 @@ spring:
     encoding: UTF-8 #编码
     suffix: .html #模板后缀
     mode: HTML #模板
-mybatis-plus:
-  global-config:
-    db-config:
-      logic-delete-value: true
-      logic-not-delete-value: false
-      logic-delete-field: delFlag
-  mapper-locations: classpath:mapper/*.xml
-#  type-handlers-package: "com.jnet.anno.common.mybatis.jts"
-  configuration:
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
 #prometheus配置
 info:
   alen: alen

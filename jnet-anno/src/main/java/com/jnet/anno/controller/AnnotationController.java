@@ -1,11 +1,13 @@
 package com.jnet.anno.controller;
 
 import com.jnet.anno.domain.Annotation;
+import com.jnet.anno.domain.SpatialAnnotation;
 import com.jnet.anno.netty.message.AnnotationFeature;
-import com.jnet.anno.service.AnnotationService;
+import com.jnet.anno.repository.SpatialAnnotationRepository;
+import com.jnet.anno.service.SpatialAnalysisService;
+import com.jnet.anno.utils.MessageSource;
 import com.jnet.anno.utils.annotation.AnnotationMessageGenerator;
 import com.jnet.anno.utils.annotation.UndoRedoReq;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.jnet.anno.vo.anno.*;
 import com.jnet.api.R;
 import com.jnet.common.core.utils.SecurityUtils;
@@ -22,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author mugw
@@ -35,7 +38,11 @@ import java.util.List;
 public class AnnotationController {
 
     @Resource
-    private AnnotationService annotationService;
+    private SpatialAnalysisService annotationService;
+    @Resource
+    private SpatialAnnotationRepository annotationRepository;
+    @Resource
+    private SpatialAnnotationRepository spatialAnnotationRepository;
 
     @Operation(summary = "添加标注", description = "返回用户列表", responses = {
             @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationAddReq.class))),
@@ -111,9 +118,41 @@ public class AnnotationController {
     })
     @PostMapping("/selectLists")
     public R<List<AnnotationFeature>> selectLists(@Validated @RequestBody AnnotationReq req) throws Exception {
-        List<Annotation> annotations = annotationService.list(Wrappers.<Annotation>lambdaQuery().eq(Annotation::getSlideId, req.getSlideId()));
-        List<AnnotationFeature> resp = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : AnnotationMessageGenerator.generateFeatures(annotations);
+        Long slideId = req.getSlideId();
+        if (slideId == null) {
+            throw new IllegalArgumentException(MessageSource.M("ARGUMENT_INVALID"));
+        }
+        List<SpatialAnnotation> annotations = annotationRepository.findBySlideId(slideId);
+        List<AnnotationFeature> resp = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : AnnotationMessageGenerator.generateFeatures(annotations.stream()
+                .map(this::convertToFeature)
+                .collect(Collectors.toList()));
         return R.success(resp);
+    }
+
+    /**
+     * 将 SpatialAnnotation 转换为 AnnotationFeature
+     */
+    private Annotation convertToFeature(SpatialAnnotation spatial) {
+        if (spatial == null) {
+            return null;
+        }
+
+        Annotation anno = new Annotation();
+        anno.setAnnotationId(spatial.getAnnotationId());
+        anno.setSlideId(spatial.getSlideId());
+        anno.setGeometry(spatial.getContour());
+        anno.setArea(spatial.getArea());
+        anno.setPerimeter(spatial.getPerimeter());
+        anno.setDescription(spatial.getDescription());
+        anno.setTagId(spatial.getTagId());
+        anno.setLocationType(spatial.getLocationType());
+        anno.setAnnotationType(spatial.getAnnotationType());
+        anno.setCreateBy(spatial.getCreateBy());
+        anno.setUpdateBy(spatial.getUpdateBy());
+        anno.setCreateTime(spatial.getCreateTime());
+        anno.setUpdateTime(spatial.getUpdateTime());
+
+        return anno;
     }
 
     @Operation(summary = "合并、裁剪轮廓", description = "返回用户列表", responses = {
@@ -140,7 +179,7 @@ public class AnnotationController {
     })
     @PostMapping("/checkTagUsageStatus")
     public R<Boolean> checkTagUsageStatus(@RequestParam("id") Long id) throws Exception {
-        long count = annotationService.count(Wrappers.<Annotation>lambdaQuery().eq(Annotation::getTagId, id));
+        long count = spatialAnnotationRepository.countByTagId(id).orElse(0L);
         return R.success(count > 0);
     }
 
@@ -150,11 +189,19 @@ public class AnnotationController {
     })
     @PostMapping("/checkUserOperation")
     public R<Boolean> checkUserOperation(@RequestBody CheckUserOperation req) throws Exception {
-        long count = annotationService.count(Wrappers.<Annotation>lambdaQuery()
-                .eq(Annotation::getCreateBy, req.getUserId())
-                .in(Annotation::getSlideId, req.getSlideId()));
+        List<Long> slideIds = req.getSlideId();
+        Long userId = req.getUserId();
+
+        if (CollectionUtils.isEmpty(slideIds) || userId == null) {
+            throw new IllegalArgumentException(MessageSource.M("ARGUMENT_INVALID"));
+        }
+
+        long count = spatialAnnotationRepository.countBySlideIdInAndCreateBy(slideIds, userId)
+                .orElse(0L);
+
         return R.success(count > 0);
     }
+
 
     @Operation(summary = "撤销", description = "返回用户列表", responses = {
             @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationAddReq.class))),
@@ -192,10 +239,5 @@ public class AnnotationController {
         return annotationService.checkUndoAndRedoStatus(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());
     }
 
-    @GetMapping("exportGeoJson")
-    public void exportGeoJson(@RequestParam Long slideId) throws Exception {
-
-//        return annotationService.exportGeoJson(slideId);
-    }
 
 }
