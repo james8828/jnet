@@ -3,19 +3,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.jnet</groupId>
-  <artifactId>jnet-parent</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <artifactId>jnet-algorithm-parent</artifactId>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
 
   <name>jnet-parent</name>
   <modules>
     <module>jnet-anno</module>
     <module>jnet-api</module>
-    <module>jnet-image</module>
-    <module>jnet-common</module>
-    <module>jnet-gateway</module>
-    <module>jnet-oauth2</module>
-    <module>jnet-system</module>
+    <module>jnet-datapool</module>
   </modules>
 
   <properties>
@@ -25,7 +21,7 @@
     <maven.compiler.target>21</maven.compiler.target>
     <java.version>21</java.version>
 
-    <jnet.version>1.0-SNAPSHOT</jnet.version>
+    <jnet.version>1.0.0</jnet.version>
     <spring-cloud.version>2023.0.3</spring-cloud.version>
     <com-alibaba-cloud.version>2022.0.0.0</com-alibaba-cloud.version>
     <springboot.version>3.2.7</springboot.version>
@@ -157,29 +153,29 @@
         <artifactId>jnet-api</artifactId>
         <version>1.0-SNAPSHOT</version>
       </dependency>
+      
+      <!-- 新的 Common 依赖包 -->
       <dependency>
         <groupId>com.jnet</groupId>
-        <artifactId>jnet-common</artifactId>
+        <artifactId>common-core</artifactId>
         <version>${jnet.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.jnet</groupId>
-        <artifactId>jnet-common-security</artifactId>
+        <artifactId>common-mybatis</artifactId>
         <version>${jnet.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.jnet</groupId>
-        <artifactId>jnet-common-core</artifactId>
+        <artifactId>common-redis</artifactId>
         <version>${jnet.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.jnet</groupId>
-        <artifactId>jnet-common-geo</artifactId>
-        <version>${jnet.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.jnet</groupId>
-        <artifactId>jnet-domain-system</artifactId>
+        <artifactId>common-security</artifactId>
         <version>${jnet.version}</version>
       </dependency>
       <!-- 添加apache common依赖 -->

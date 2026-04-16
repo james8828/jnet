@@ -1,8 +1,9 @@
 
 from openslide.deepzoom import DeepZoomGenerator
-from PIL import Image
 import math
 import openslide
+import os
+from PIL import Image,ImageCms
 
 class DeepZoomGeneratorCustom(DeepZoomGenerator):
     def __init__(self, osr, tile_size=254, overlap=1, limit_bounds=False, level_tiles=None):
@@ -18,11 +19,11 @@ class DeepZoomGeneratorCustom(DeepZoomGenerator):
     )
 
     def __init__(
-        self,
-        osr: openslide.AbstractSlide,
-        tile_size: int = 254,
-        overlap: int = 1,
-        limit_bounds: bool = False,
+            self,
+            osr: openslide.AbstractSlide,
+            tile_size: int = 254,
+            overlap: int = 1,
+            limit_bounds: bool = False,
     ):
         """
         Create a DeepZoomGeneratorCustom extends the DeepZoomGenerator .
@@ -83,8 +84,9 @@ class DeepZoomGeneratorCustom(DeepZoomGenerator):
         z_dimensions = [z_size]
         while z_size[0] > tile_size or z_size[1] > tile_size:
             z_size = tuple(max(1, int(math.ceil(z / 2))) for z in z_size)
-            if z_size[0] < tile_size or z_size[1] < tile_size: break
+            if z_size[0] < tile_size and z_size[1] < tile_size: break
             z_dimensions.append(z_size)
+        z_dimensions.append(z_size)
         # Narrow the type, for self.level_dimensions
         self._z_dimensions = self._pairs_from_n_tuples(tuple(reversed(z_dimensions)))
 
@@ -122,4 +124,54 @@ class DeepZoomGeneratorCustom(DeepZoomGenerator):
         self._bg_color = '#' + self._osr.properties.get(
             openslide.PROPERTY_NAME_BACKGROUND_COLOR, 'ffffff'
         )
-    
+
+
+    def process_single_tile(self, level, x, y, output_dir):
+        """
+        处理单个瓦片
+        """
+        try:
+            # Read tile
+            args, z_size = self._get_tile_info(level, (x, y))
+            tile = self._osr.read_region(*args)
+
+            # 检查tile是否为空或无效
+            if tile is None:
+                return f"Tile {level}-{x}-{y} is None"
+            
+            # 如果tile是透明的，应用背景色
+            if tile.mode == 'RGBA':
+                # 创建一个RGB图像作为背景
+                bg = Image.new('RGB', tile.size, self._bg_color)
+                # 将透明图层合成到背景上
+                if tile.mode == 'RGBA':
+                    bg.paste(tile, mask=tile.split()[-1])  # 使用alpha通道作为掩码
+                else:
+                    bg.paste(tile)
+                tile = bg
+
+            # Apply on solid background
+            # bg = Image.new('RGB', tile.size, self._bg_color)
+            # tile = Image.composite(tile, bg, tile)
+            # Scale to the correct size
+            if tile.size != z_size:
+                # Image.Resampling added in Pillow 9.1.0
+                # Image.LANCZOS removed in Pillow 10
+                tile.thumbnail(z_size, getattr(Image, 'Resampling', Image).LANCZOS)
+            # 获取颜色配置文件，如果不存在则跳过颜色转换
+            try:
+                profile = self._osr.color_profile
+                if profile:
+                    rgbp = ImageCms.createProfile("sRGB")
+                    # 应用颜色转换
+                    transform = ImageCms.buildTransform(profile, rgbp, "RGB", "RGB")
+                    result = ImageCms.applyTransform(tile, transform)
+                else:
+                    result = tile
+            except Exception:
+                # 如果颜色配置文件有问题，则直接使用原始图像
+                result = tile
+            tile_path = os.path.join(output_dir, f"{level}-{x}-{y}.jpg")
+            result.save(tile_path, "JPEG", quality=90)
+        except Exception as e:
+            return f"Error processing tile {level}-{x}-{y}: {e}"
