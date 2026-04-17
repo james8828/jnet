@@ -1,0 +1,923 @@
+-- ============================================================================
+-- 病理AI数据池管理系统 - 数据库建表脚本
+-- 数据库: PostgreSQL 14+
+-- 扩展: PostGIS (用于矢量标注空间数据存储)
+-- 创建日期: 2024-04-16
+-- ============================================================================
+
+-- 启用 PostGIS 扩展（用于矢量标注的空间数据存储）
+-- # CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- 启用 pg_trgm 扩展（用于模糊查询优化）
+-- # CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- ============================================================================
+-- 1. 项目管理表 (biz_project)
+-- ============================================================================
+CREATE TABLE biz_project (
+    project_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    manager_id BIGINT,
+    ethics_code VARCHAR(100),
+    privacy_level SMALLINT DEFAULT 1,
+    description TEXT,
+    target_classes JSONB,
+    status VARCHAR(20) DEFAULT 'active',
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    del_flag BOOLEAN DEFAULT FALSE
+);
+
+COMMENT ON TABLE biz_project IS '项目管理表';
+COMMENT ON COLUMN biz_project.project_id IS '主键ID';
+COMMENT ON COLUMN biz_project.name IS '项目名称';
+COMMENT ON COLUMN biz_project.code IS '项目编码（唯一）';
+COMMENT ON COLUMN biz_project.manager_id IS '负责人ID';
+COMMENT ON COLUMN biz_project.ethics_code IS '伦理批件号';
+COMMENT ON COLUMN biz_project.privacy_level IS '隐私级别 (1:公开, 2:脱敏, 3:绝密)';
+COMMENT ON COLUMN biz_project.description IS '项目描述';
+COMMENT ON COLUMN biz_project.target_classes IS '目标检测类别配置 (JSONB)';
+COMMENT ON COLUMN biz_project.status IS '状态 (active/archived/deleted)';
+COMMENT ON COLUMN biz_project.create_by IS '创建人ID';
+COMMENT ON COLUMN biz_project.create_time IS '创建时间';
+COMMENT ON COLUMN biz_project.update_by IS '更新人ID';
+COMMENT ON COLUMN biz_project.update_time IS '更新时间';
+COMMENT ON COLUMN biz_project.del_flag IS '删除标志';
+
+-- 索引优化
+CREATE INDEX idx_project_status ON biz_project(status);
+CREATE INDEX idx_project_manager ON biz_project(manager_id);
+
+-- ============================================================================
+-- 2. 采集批次表 (biz_batch)
+-- ============================================================================
+CREATE TABLE biz_batch (
+    batch_id BIGSERIAL PRIMARY KEY,
+    project_id BIGINT NOT NULL REFERENCES biz_project(project_id) ON DELETE CASCADE,
+    batch_code VARCHAR(100) NOT NULL,
+    batch_name VARCHAR(200),
+    scanner_model VARCHAR(100),
+    staining_protocol VARCHAR(100),
+    storage_root_path VARCHAR(500),
+    total_images INT DEFAULT 0,
+    upload_status VARCHAR(20) DEFAULT 'pending',
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_batch IS '采集批次表';
+COMMENT ON COLUMN biz_batch.batch_id IS '主键ID';
+COMMENT ON COLUMN biz_batch.project_id IS '所属项目ID';
+COMMENT ON COLUMN biz_batch.batch_code IS '批次编号';
+COMMENT ON COLUMN biz_batch.batch_name IS '批次名称';
+COMMENT ON COLUMN biz_batch.scanner_model IS '扫描仪型号';
+COMMENT ON COLUMN biz_batch.staining_protocol IS '染色协议';
+COMMENT ON COLUMN biz_batch.storage_root_path IS '原始存储根路径';
+COMMENT ON COLUMN biz_batch.total_images IS '批次内图像总数';
+COMMENT ON COLUMN biz_batch.upload_status IS '上传状态 (pending/uploading/completed/failed)';
+
+-- 索引优化
+CREATE INDEX idx_batch_project ON biz_batch(project_id);
+CREATE INDEX idx_batch_code ON biz_batch(batch_code);
+
+-- ============================================================================
+-- 3. 图像表 (biz_image)
+-- ============================================================================
+CREATE TABLE biz_image (
+    image_id BIGSERIAL PRIMARY KEY,
+    batch_id BIGINT NOT NULL REFERENCES biz_batch(batch_id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    pathology_id VARCHAR(100),
+    patient_id VARCHAR(100),
+    format VARCHAR(20),
+    lifecycle_status VARCHAR(20) DEFAULT 'Raw',
+    annotation_progress INT DEFAULT 0,
+    width INT,
+    height INT,
+    mpp_x FLOAT,
+    mpp_y FLOAT,
+    magnification INT,
+    file_size BIGINT,
+    scanner_info JSONB,
+    metadata JSONB,
+    thumbnail_url VARCHAR(500),
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    del_flag BOOLEAN DEFAULT FALSE
+);
+
+COMMENT ON TABLE biz_image IS '图像表';
+COMMENT ON COLUMN biz_image.image_id IS '主键ID（图像ID）';
+COMMENT ON COLUMN biz_image.batch_id IS '所属批次ID';
+COMMENT ON COLUMN biz_image.filename IS '文件名';
+COMMENT ON COLUMN biz_image.file_path IS '文件存储路径';
+COMMENT ON COLUMN biz_image.pathology_id IS '病理报告号';
+COMMENT ON COLUMN biz_image.patient_id IS '患者ID（脱敏处理）';
+COMMENT ON COLUMN biz_image.format IS '格式 (SVS/NDPI/JPG/PNG)';
+COMMENT ON COLUMN biz_image.lifecycle_status IS '生命周期状态 (Raw/Indexed/Processing/Annotated/Verified/Predicted/Archived)';
+COMMENT ON COLUMN biz_image.annotation_progress IS '标注进度 (0-100)';
+COMMENT ON COLUMN biz_image.width IS '图像宽度（像素）';
+COMMENT ON COLUMN biz_image.height IS '图像高度（像素）';
+COMMENT ON COLUMN biz_image.mpp_x IS 'X轴物理分辨率 (um/px)';
+COMMENT ON COLUMN biz_image.mpp_y IS 'Y轴物理分辨率 (um/px)';
+COMMENT ON COLUMN biz_image.magnification IS '放大倍数';
+COMMENT ON COLUMN biz_image.file_size IS '文件大小（字节）';
+COMMENT ON COLUMN biz_image.scanner_info IS '扫描仪详细信息 (JSONB)';
+COMMENT ON COLUMN biz_image.metadata IS '扩展元数据 (JSONB)';
+COMMENT ON COLUMN biz_image.thumbnail_url IS '缩略图URL';
+
+-- 索引优化
+CREATE INDEX idx_image_batch ON biz_image(batch_id);
+CREATE INDEX idx_image_search ON biz_image(batch_id, lifecycle_status);
+CREATE INDEX idx_pathology_trgm ON biz_image USING gin(pathology_id gin_trgm_ops);
+CREATE INDEX idx_patient_id ON biz_image(patient_id);
+CREATE INDEX idx_lifecycle_status ON biz_image(lifecycle_status);
+
+-- ============================================================================
+-- 4. 标签定义表 (biz_tag)
+-- ============================================================================
+CREATE TABLE biz_tag (
+    tag_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    category VARCHAR(50),
+    parent_id BIGINT REFERENCES biz_tag(tag_id) ON DELETE SET NULL,
+    color_code VARCHAR(20),
+    sort_order INT DEFAULT 0,
+    is_system BOOLEAN DEFAULT FALSE,
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_tag IS '标签定义表';
+COMMENT ON COLUMN biz_tag.tag_id IS '主键ID';
+COMMENT ON COLUMN biz_tag.name IS '标签名称';
+COMMENT ON COLUMN biz_tag.code IS '标签编码（唯一）';
+COMMENT ON COLUMN biz_tag.category IS '标签分类';
+COMMENT ON COLUMN biz_tag.parent_id IS '父标签ID（实现层级结构）';
+COMMENT ON COLUMN biz_tag.color_code IS '前端展示颜色';
+COMMENT ON COLUMN biz_tag.sort_order IS '排序序号';
+COMMENT ON COLUMN biz_tag.is_system IS '是否系统标签';
+
+-- 索引优化
+CREATE INDEX idx_tag_category ON biz_tag(category);
+CREATE INDEX idx_tag_parent ON biz_tag(parent_id);
+
+-- ============================================================================
+-- 5. 图像标签关联表 (biz_image_tag_rel)
+-- ============================================================================
+CREATE TABLE biz_image_tag_rel (
+    rel_id BIGSERIAL PRIMARY KEY,
+    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
+    tag_id BIGINT NOT NULL REFERENCES biz_tag(tag_id) ON DELETE CASCADE,
+    confidence FLOAT,
+    tagged_by BIGINT,
+    tag_source VARCHAR(20),
+    vector_annotation_id BIGINT,
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_image_tag_rel IS '图像标签关联表';
+COMMENT ON COLUMN biz_image_tag_rel.rel_id IS '主键ID';
+COMMENT ON COLUMN biz_image_tag_rel.image_id IS '图像ID';
+COMMENT ON COLUMN biz_image_tag_rel.tag_id IS '标签ID';
+COMMENT ON COLUMN biz_image_tag_rel.confidence IS '置信度 (0-1)';
+COMMENT ON COLUMN biz_image_tag_rel.tagged_by IS '打标人ID';
+COMMENT ON COLUMN biz_image_tag_rel.tag_source IS '标签来源 (AI_PRE_ANNOTATION/MANUAL/SYSTEM_AUTO)';
+COMMENT ON COLUMN biz_image_tag_rel.vector_annotation_id IS '关联矢量标注ID（可选）';
+
+-- 索引优化
+CREATE UNIQUE INDEX idx_rel_unique ON biz_image_tag_rel(image_id, tag_id, tagged_by) 
+    WHERE tagged_by IS NOT NULL;
+CREATE INDEX idx_rel_tag ON biz_image_tag_rel(tag_id, image_id);
+CREATE INDEX idx_rel_image ON biz_image_tag_rel(image_id, tag_id);
+CREATE INDEX idx_rel_vector ON biz_image_tag_rel(vector_annotation_id) 
+    WHERE vector_annotation_id IS NOT NULL;
+
+-- ============================================================================
+-- 6. 任务执行表 (biz_task)
+-- ============================================================================
+CREATE TABLE biz_task (
+    task_id BIGSERIAL PRIMARY KEY,
+    task_no VARCHAR(50) NOT NULL UNIQUE,
+    type VARCHAR(20) NOT NULL,
+    project_id BIGINT REFERENCES biz_project(project_id) ON DELETE CASCADE,
+    model_version VARCHAR(50),
+    config_snapshot JSONB,
+    progress FLOAT DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    result_summary JSONB,
+    error_message TEXT,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    duration_seconds INT,
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_task IS '任务执行表';
+COMMENT ON COLUMN biz_task.task_id IS '主键ID';
+COMMENT ON COLUMN biz_task.task_no IS '任务编号（唯一）';
+COMMENT ON COLUMN biz_task.type IS '任务类型 (TRAINING/PREDICTION/PRE_ANNOTATION)';
+COMMENT ON COLUMN biz_task.project_id IS '所属项目ID';
+COMMENT ON COLUMN biz_task.model_version IS '关联的模型版本';
+COMMENT ON COLUMN biz_task.config_snapshot IS '任务配置快照 (JSONB)';
+COMMENT ON COLUMN biz_task.progress IS '当前进度 (0-100)';
+COMMENT ON COLUMN biz_task.status IS '状态 (PENDING/RUNNING/SUCCESS/FAILED/CANCELLED)';
+COMMENT ON COLUMN biz_task.result_summary IS '结果摘要 (JSONB)';
+COMMENT ON COLUMN biz_task.error_message IS '错误信息';
+COMMENT ON COLUMN biz_task.start_time IS '开始时间';
+COMMENT ON COLUMN biz_task.end_time IS '结束时间';
+COMMENT ON COLUMN biz_task.duration_seconds IS '耗时（秒）';
+
+-- 索引优化
+CREATE INDEX idx_task_project ON biz_task(project_id, type);
+CREATE INDEX idx_task_status ON biz_task(status);
+
+-- ============================================================================
+-- 7. 模型注册表 (biz_model)
+-- ============================================================================
+CREATE TABLE biz_model (
+    model_id BIGSERIAL PRIMARY KEY,
+    model_name VARCHAR(100) NOT NULL,
+    version VARCHAR(20) NOT NULL,
+    base_model VARCHAR(50),
+    project_id BIGINT REFERENCES biz_project(project_id) ON DELETE CASCADE,
+    training_task_id BIGINT REFERENCES biz_task(task_id) ON DELETE SET NULL,
+    metrics JSONB,
+    weights_path VARCHAR(500),
+    is_best BOOLEAN DEFAULT FALSE,
+    dataset_snapshot JSONB,
+    hyperparams JSONB,
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_model IS '模型注册表';
+COMMENT ON COLUMN biz_model.model_id IS '主键ID';
+COMMENT ON COLUMN biz_model.model_name IS '模型名称';
+COMMENT ON COLUMN biz_model.version IS '版本号';
+COMMENT ON COLUMN biz_model.base_model IS '基座模型';
+COMMENT ON COLUMN biz_model.project_id IS '所属项目ID';
+COMMENT ON COLUMN biz_model.training_task_id IS '关联的训练任务ID';
+COMMENT ON COLUMN biz_model.metrics IS '性能指标 (JSONB)';
+COMMENT ON COLUMN biz_model.weights_path IS '权重文件路径';
+COMMENT ON COLUMN biz_model.is_best IS '是否为当前最优模型';
+COMMENT ON COLUMN biz_model.dataset_snapshot IS '训练数据集快照 (JSONB)';
+COMMENT ON COLUMN biz_model.hyperparams IS '超参数配置 (JSONB)';
+
+-- 索引优化
+CREATE INDEX idx_model_project ON biz_model(project_id);
+CREATE UNIQUE INDEX idx_model_version ON biz_model(model_name, version);
+
+-- ============================================================================
+-- 8. 预测结果表 (biz_prediction)
+-- ============================================================================
+CREATE TABLE biz_prediction (
+    prediction_id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT NOT NULL REFERENCES biz_task(task_id) ON DELETE CASCADE,
+    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
+    detections JSONB,
+    geojson_path VARCHAR(500),
+    overlay_img_path VARCHAR(500),
+    object_count INT DEFAULT 0,
+    positive_rate FLOAT,
+    inference_time_ms INT,
+    review_status VARCHAR(20) DEFAULT 'PENDING',
+    reviewer_id BIGINT,
+    review_comment TEXT,
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_prediction IS '预测结果表';
+COMMENT ON COLUMN biz_prediction.prediction_id IS '主键ID';
+COMMENT ON COLUMN biz_prediction.task_id IS '关联预测任务ID';
+COMMENT ON COLUMN biz_prediction.image_id IS '关联图像ID';
+COMMENT ON COLUMN biz_prediction.detections IS '检测结果数组 (JSONB)';
+COMMENT ON COLUMN biz_prediction.geojson_path IS 'GeoJSON文件路径';
+COMMENT ON COLUMN biz_prediction.overlay_img_path IS '叠加标注框的可视化图像路径';
+COMMENT ON COLUMN biz_prediction.object_count IS '检出目标数量';
+COMMENT ON COLUMN biz_prediction.positive_rate IS '阳性率';
+COMMENT ON COLUMN biz_prediction.inference_time_ms IS '推理耗时（毫秒）';
+COMMENT ON COLUMN biz_prediction.review_status IS '质检状态 (PENDING/APPROVED/REJECTED)';
+COMMENT ON COLUMN biz_prediction.reviewer_id IS '质检员ID';
+COMMENT ON COLUMN biz_prediction.review_comment IS '质检备注';
+
+-- 索引优化
+CREATE INDEX idx_pred_task ON biz_prediction(task_id);
+CREATE INDEX idx_pred_image ON biz_prediction(image_id);
+CREATE INDEX idx_review_status ON biz_prediction(review_status);
+
+-- ============================================================================
+-- 9. 矢量标注表 (biz_annotation)
+-- ============================================================================
+CREATE TABLE biz_annotation (
+    annotation_id BIGSERIAL PRIMARY KEY,
+    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
+    tag_id BIGINT NOT NULL REFERENCES biz_tag(tag_id) ON DELETE CASCADE,
+    parent_annotation_id BIGINT REFERENCES biz_annotation(annotation_id) ON DELETE SET NULL,
+    annotation_type VARCHAR(20) NOT NULL,
+    
+    -- 空间数据存储（二选一，推荐 geom）
+    geom GEOMETRY(Geometry, 0),  -- PostGIS几何字段（主存储，支持空间索引和查询）
+    coordinates_geojson JSONB,   -- GeoJSON备份（可选，用于前端快速渲染，可为NULL）
+    
+    -- LOD多分辨率支持
+    lod_level INT DEFAULT 0,     -- LOD层级 (0=原始精度, 1-5=简化层级，数字越大越简化)
+    simplified_geom GEOMETRY(Geometry, 0),  -- 简化后的几何（用于低分辨率快速渲染）
+    bbox GEOMETRY(Geometry, 0),  -- 边界框（用于快速筛选、视口裁剪和碰撞检测）
+    
+    -- 标注属性
+    confidence FLOAT,
+    area_pixels BIGINT,
+    perimeter FLOAT,
+    centroid_x FLOAT,
+    centroid_y FLOAT,
+    created_by BIGINT,
+    creation_source VARCHAR(20),
+    review_status VARCHAR(20) DEFAULT 'PENDING',
+    reviewed_by BIGINT,
+    review_time TIMESTAMP,
+    version INT DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    sort_order INT DEFAULT 0,
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_annotation IS '矢量标注表';
+COMMENT ON COLUMN biz_annotation.annotation_id IS '主键ID（标注对象ID）';
+COMMENT ON COLUMN biz_annotation.image_id IS '关联图像ID';
+COMMENT ON COLUMN biz_annotation.tag_id IS '关联标签ID';
+COMMENT ON COLUMN biz_annotation.parent_annotation_id IS '父标注ID（支持层级标注，如：脏器->组织）';
+COMMENT ON COLUMN biz_annotation.annotation_type IS '标注类型 (POINT/LINESTRING/POLYGON/MULTIPOLYGON)';
+COMMENT ON COLUMN biz_annotation.geom IS 'PostGIS几何字段（主存储，支持空间索引和精确查询）';
+COMMENT ON COLUMN biz_annotation.coordinates_geojson IS 'GeoJSON格式坐标（可选备份，用于前端快速渲染，可为NULL避免冗余）';
+COMMENT ON COLUMN biz_annotation.lod_level IS 'LOD层级 (0=原始精度, 1-5=简化层级，数字越大越简化，用于多分辨率渲染)';
+COMMENT ON COLUMN biz_annotation.simplified_geom IS '简化后的几何（用于低分辨率快速渲染，减少数据传输量）';
+COMMENT ON COLUMN biz_annotation.bbox IS '边界框（用于快速筛选、视口裁剪和碰撞检测）';
+COMMENT ON COLUMN biz_annotation.confidence IS '置信度 (0-1)';
+COMMENT ON COLUMN biz_annotation.area_pixels IS '标注区域面积（像素²）';
+COMMENT ON COLUMN biz_annotation.perimeter IS '周长';
+COMMENT ON COLUMN biz_annotation.centroid_x IS '质心X坐标';
+COMMENT ON COLUMN biz_annotation.centroid_y IS '质心Y坐标';
+COMMENT ON COLUMN biz_annotation.created_by IS '创建人ID';
+COMMENT ON COLUMN biz_annotation.creation_source IS '来源 (AI_PRE_ANNOTATION/MANUAL_DRAWING/AUTO_SEGMENTATION)';
+COMMENT ON COLUMN biz_annotation.review_status IS '审核状态 (PENDING/APPROVED/REJECTED/MODIFIED)';
+COMMENT ON COLUMN biz_annotation.reviewed_by IS '审核人ID';
+COMMENT ON COLUMN biz_annotation.review_time IS '审核时间';
+COMMENT ON COLUMN biz_annotation.version IS '版本号（支持修改历史）';
+COMMENT ON COLUMN biz_annotation.is_active IS '是否有效';
+COMMENT ON COLUMN biz_annotation.sort_order IS '排序序号（同一层级内的显示顺序）';
+
+-- 索引优化
+CREATE INDEX idx_vec_spatial ON biz_annotation USING GIST(geom);
+CREATE INDEX idx_vec_image ON biz_annotation(image_id, is_active);
+CREATE INDEX idx_vec_tag ON biz_annotation(tag_id, is_active);
+CREATE INDEX idx_vec_parent ON biz_annotation(parent_annotation_id) WHERE parent_annotation_id IS NOT NULL;
+CREATE INDEX idx_vec_review ON biz_annotation(review_status, image_id) 
+    WHERE review_status = 'PENDING';
+CREATE INDEX idx_vec_image_tag ON biz_annotation(image_id, tag_id, is_active);
+CREATE INDEX idx_vec_create_time ON biz_annotation(create_time DESC);
+CREATE INDEX idx_vec_update_time ON biz_annotation(update_time DESC);
+
+-- LOD多分辨率索引
+CREATE INDEX idx_vec_lod ON biz_annotation(image_id, lod_level, is_active);
+CREATE INDEX idx_vec_bbox ON biz_annotation USING GIST(bbox) WHERE bbox IS NOT NULL;
+
+-- ============================================================================
+-- 初始化示例数据（可选）
+-- ============================================================================
+
+-- 插入示例标签
+INSERT INTO biz_tag (name, code, category, parent_id, color_code, sort_order, is_system) VALUES
+('器官', 'ORGAN_ROOT', 'category', NULL, '#000000', 1, TRUE),
+('肺', 'ORGAN_LUNG', 'organ', 1, '#FF5733', 1, FALSE),
+('肝', 'ORGAN_LIVER', 'organ', 1, '#33FF57', 2, FALSE),
+('肺腺癌', 'LUNG_ADENOCARCINOMA', 'disease', 2, '#FF33F5', 1, FALSE),
+('肺鳞癌', 'LUNG_SQUAMOUS_CELL', 'disease', 2, '#3357FF', 2, FALSE),
+('肝癌', 'LIVER_CANCER', 'disease', 3, '#F5FF33', 1, FALSE),
+('病变', 'LESION_ROOT', 'category', NULL, '#000000', 2, TRUE),
+('PD-L1阳性', 'PD_L1_POSITIVE', 'indicator', 7, '#FF8C33', 1, FALSE),
+('Ki-67高表达', 'KI67_HIGH', 'indicator', 7, '#8C33FF', 2, FALSE);
+
+-- ============================================================================
+-- 层级标注查询示例
+-- ============================================================================
+
+-- 场景1: 查询某脏器（如“肺”）下的所有组织标注
+-- 假设：肺的标注ID为100，需要查询其下所有子标注
+WITH RECURSIVE annotation_tree AS (
+    -- 锚点：找到父标注（脏器）
+    SELECT 
+        ann.annotation_id,
+        ann.image_id,
+        ann.tag_id,
+        ann.parent_annotation_id,
+        ann.annotation_type,
+        ann.geom,
+        t.name as tag_name,
+        t.category as tag_category,
+        1 as level
+    FROM biz_annotation ann
+    JOIN biz_tag t ON ann.tag_id = t.tag_id
+    WHERE ann.annotation_id = 100  -- 脏器标注ID
+      AND ann.is_active = true
+    
+    UNION ALL
+    
+    -- 递归：查找所有子标注（组织）
+    SELECT 
+        child.annotation_id,
+        child.image_id,
+        child.tag_id,
+        child.parent_annotation_id,
+        child.annotation_type,
+        child.geom,
+        t.name as tag_name,
+        t.category as tag_category,
+        parent.level + 1 as level
+    FROM biz_annotation child
+    JOIN annotation_tree parent ON child.parent_annotation_id = parent.annotation_id
+    JOIN biz_tag t ON child.tag_id = t.tag_id
+    WHERE child.is_active = true
+)
+SELECT * FROM annotation_tree
+ORDER BY level, annotation_id;
+
+-- 场景2: 查询某图像下所有顶级标注（无父标注的脏器）
+SELECT 
+    ann.annotation_id,
+    ann.tag_id,
+    t.name as tag_name,
+    t.category,
+    ann.annotation_type,
+    ST_AsText(ann.geom) as geometry_wkt,
+    ann.area_pixels,
+    ann.confidence
+FROM biz_annotation ann
+JOIN biz_tag t ON ann.tag_id = t.tag_id
+WHERE ann.image_id = 456
+  AND ann.parent_annotation_id IS NULL  -- 顶级标注
+  AND ann.is_active = true
+ORDER BY ann.sort_order, ann.create_time;
+
+-- 场景3: 统计某脏器下的组织数量和类型分布
+SELECT 
+    parent.tag_id as organ_tag_id,
+    parent_tag.name as organ_name,
+    COUNT(child.annotation_id) as tissue_count,
+    STRING_AGG(DISTINCT child_tag.name, ', ') as tissue_types
+FROM biz_annotation parent
+JOIN biz_tag parent_tag ON parent.tag_id = parent_tag.tag_id
+LEFT JOIN biz_annotation child ON child.parent_annotation_id = parent.annotation_id
+LEFT JOIN biz_tag child_tag ON child.tag_id = child_tag.tag_id
+WHERE parent.image_id = 456
+  AND parent.parent_annotation_id IS NULL  -- 顶级脏器
+  AND parent.is_active = true
+GROUP BY parent.tag_id, parent_tag.name
+ORDER BY tissue_count DESC;
+
+-- 场景4: 空间查询 - 查找某区域内的所有标注及其层级关系
+WITH target_region AS (
+    SELECT ST_GeomFromText('POLYGON((100 100, 500 100, 500 500, 100 500, 100 100))', 0) as geom
+)
+SELECT 
+    ann.annotation_id,
+    ann.parent_annotation_id,
+    ann.tag_id,
+    t.name as tag_name,
+    ann.annotation_type,
+    ST_AsText(ann.geom) as geometry_wkt,
+    CASE 
+        WHEN ann.parent_annotation_id IS NULL THEN '脏器'
+        ELSE '组织'
+    END as annotation_level,
+    ST_Area(ann.geom) as area_pixels
+FROM biz_annotation ann
+JOIN biz_tag t ON ann.tag_id = t.tag_id
+CROSS JOIN target_region tr
+WHERE ann.image_id = 456
+  AND ann.is_active = true
+  AND ST_Intersects(ann.geom, tr.geom)  -- 空间相交
+ORDER BY ann.parent_annotation_id NULLS FIRST, ann.sort_order;
+
+-- 场景5: 获取完整的标注树结构（JSON格式）
+SELECT 
+    ann.annotation_id,
+    ann.tag_id,
+    t.name as tag_name,
+    ann.parent_annotation_id,
+    ann.annotation_type,
+    json_build_object(
+        'id', ann.annotation_id,
+        'tagId', ann.tag_id,
+        'tagName', t.name,
+        'type', ann.annotation_type,
+        'geometry', ST_AsGeoJSON(ann.geom)::json,
+        'children', COALESCE(children.data, '[]'::json)
+    ) as annotation_node
+FROM biz_annotation ann
+JOIN biz_tag t ON ann.tag_id = t.tag_id
+LEFT JOIN LATERAL (
+    SELECT json_agg(
+        json_build_object(
+            'id', child.annotation_id,
+            'tagId', child.tag_id,
+            'tagName', child_tag.name,
+            'type', child.annotation_type,
+            'geometry', ST_AsGeoJSON(child.geom)::json
+        )
+    ) as data
+    FROM biz_annotation child
+    JOIN biz_tag child_tag ON child.tag_id = child_tag.tag_id
+    WHERE child.parent_annotation_id = ann.annotation_id
+      AND child.is_active = true
+) children ON true
+WHERE ann.image_id = 456
+  AND ann.parent_annotation_id IS NULL  -- 只返回顶级节点
+  AND ann.is_active = true
+ORDER BY ann.sort_order;
+
+-- ============================================================================
+-- LOD 多分辨率渲染优化
+-- ============================================================================
+
+-- 场景1: 根据缩放级别自动选择 LOD 层级
+-- 前端缩放级别与 LOD 映射关系：
+--   zoom < 5:  lod_level = 5 (最简化)
+--   zoom 5-8:  lod_level = 4
+--   zoom 8-11: lod_level = 3
+--   zoom 11-14: lod_level = 2
+--   zoom 14-17: lod_level = 1
+--   zoom >= 17: lod_level = 0 (原始精度)
+
+CREATE OR REPLACE FUNCTION get_annotations_by_zoom(
+    p_image_id BIGINT,
+    p_zoom_level INT,
+    p_min_x FLOAT DEFAULT NULL,
+    p_min_y FLOAT DEFAULT NULL,
+    p_max_x FLOAT DEFAULT NULL,
+    p_max_y FLOAT DEFAULT NULL
+) RETURNS TABLE (
+    annotation_id BIGINT,
+    tag_id BIGINT,
+    tag_name VARCHAR(100),
+    parent_annotation_id BIGINT,
+    annotation_type VARCHAR(20),
+    geom GEOMETRY,
+    lod_level INT,
+    area_pixels BIGINT,
+    confidence FLOAT
+) AS $$
+DECLARE
+    v_lod_level INT;
+BEGIN
+    -- 根据缩放级别计算 LOD 层级
+    v_lod_level := CASE 
+        WHEN p_zoom_level < 5 THEN 5
+        WHEN p_zoom_level < 8 THEN 4
+        WHEN p_zoom_level < 11 THEN 3
+        WHEN p_zoom_level < 14 THEN 2
+        WHEN p_zoom_level < 17 THEN 1
+        ELSE 0
+    END;
+    
+    RETURN QUERY
+    SELECT 
+        ann.annotation_id,
+        ann.tag_id,
+        t.name as tag_name,
+        ann.parent_annotation_id,
+        ann.annotation_type,
+        COALESCE(ann.simplified_geom, ann.geom) as geom,  -- 优先使用简化几何
+        ann.lod_level,
+        ann.area_pixels,
+        ann.confidence
+    FROM biz_annotation ann
+    JOIN biz_tag t ON ann.tag_id = t.tag_id
+    WHERE ann.image_id = p_image_id
+      AND ann.is_active = true
+      AND ann.lod_level <= v_lod_level  -- 返回当前层级及更简化的数据
+      AND (
+          -- 视口裁剪（可选）
+          p_min_x IS NULL OR 
+          ST_Intersects(ann.bbox, ST_MakeEnvelope(p_min_x, p_min_y, p_max_x, p_max_y, 0))
+      )
+    ORDER BY ann.lod_level ASC, ann.area_pixels DESC;  -- 先显示大目标
+END;
+$$ LANGUAGE plpgsql;
+
+-- 使用示例：
+-- SELECT * FROM get_annotations_by_zoom(456, 10);  -- zoom=10，返回 lod_level <= 3
+-- SELECT * FROM get_annotations_by_zoom(456, 18, 100, 100, 500, 500);  -- 带视口裁剪
+
+
+-- 场景2: 自动生成 LOD 简化几何（批量处理）
+CREATE OR REPLACE FUNCTION generate_lod_geometries(
+    p_image_id BIGINT,
+    p_max_lod INT DEFAULT 5
+) RETURNS VOID AS $$
+DECLARE
+    rec RECORD;
+    v_simplified GEOMETRY;
+    v_bbox GEOMETRY;
+BEGIN
+    -- 遍历所有标注，生成简化几何和边界框
+    FOR rec IN 
+        SELECT annotation_id, geom 
+        FROM biz_annotation 
+        WHERE image_id = p_image_id 
+          AND is_active = true
+          AND geom IS NOT NULL
+          AND lod_level = 0  -- 只处理原始精度标注
+    LOOP
+        -- 生成边界框
+        v_bbox := ST_Envelope(rec.geom);
+        
+        -- 更新原始标注的 bbox 和 lod_level
+        UPDATE biz_annotation
+        SET bbox = v_bbox,
+            lod_level = 0
+        WHERE annotation_id = rec.annotation_id;
+        
+        -- 生成不同 LOD 层级的简化几何（作为独立记录）
+        FOR i IN 1..p_max_lod LOOP
+            -- 使用 Douglas-Peucker 算法简化
+            v_simplified := ST_SimplifyPreserveTopology(
+                rec.geom, 
+                10 * POWER(2, i)  -- 容差随 LOD 增加而增大
+            );
+            
+            -- 插入简化版本
+            INSERT INTO biz_annotation (
+                image_id, tag_id, parent_annotation_id, annotation_type,
+                geom, simplified_geom, bbox, lod_level,
+                area_pixels, perimeter, centroid_x, centroid_y,
+                created_by, creation_source, is_active, create_time, update_time
+            )
+            SELECT 
+                image_id, tag_id, parent_annotation_id, annotation_type,
+                rec.geom, v_simplified, v_bbox, i,
+                ST_Area(rec.geom), ST_Perimeter(rec.geom),
+                ST_X(ST_Centroid(rec.geom)), ST_Y(ST_Centroid(rec.geom)),
+                created_by, 'AUTO_LOD_GENERATION', true, NOW(), NOW()
+            FROM biz_annotation
+            WHERE annotation_id = rec.annotation_id;
+        END LOOP;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 使用示例：
+-- SELECT generate_lod_geometries(456, 5);  -- 为图像456生成5个LOD层级
+
+
+-- ============================================================================
+-- 增量加载优化（Progressive Loading）
+-- ============================================================================
+
+-- 按优先级分批加载标注，先显示重要/大的标注，再逐步加载细节
+
+CREATE OR REPLACE FUNCTION get_annotations_progressive(
+    p_image_id BIGINT,
+    p_batch_size INT DEFAULT 100,
+    p_offset INT DEFAULT 0,
+    p_min_area FLOAT DEFAULT 0  -- 最小面积过滤（可选）
+) RETURNS TABLE (
+    annotation_id BIGINT,
+    tag_id BIGINT,
+    tag_name VARCHAR(100),
+    parent_annotation_id BIGINT,
+    geom GEOMETRY,
+    priority INT,
+    area_pixels BIGINT,
+    confidence FLOAT,
+    total_count BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH filtered_annotations AS (
+        SELECT 
+            ann.annotation_id,
+            ann.tag_id,
+            t.name as tag_name,
+            ann.parent_annotation_id,
+            COALESCE(ann.simplified_geom, ann.geom) as geom,
+            CASE 
+                WHEN ann.area_pixels > 100000 THEN 1  -- 优先级1：超大目标
+                WHEN ann.area_pixels > 10000 THEN 2   -- 优先级2：大目标
+                WHEN ann.area_pixels > 1000 THEN 3    -- 优先级3：中等目标
+                ELSE 4                                 -- 优先级4：小目标
+            END as priority,
+            ann.area_pixels,
+            ann.confidence,
+            COUNT(*) OVER() as total_count
+        FROM biz_annotation ann
+        JOIN biz_tag t ON ann.tag_id = t.tag_id
+        WHERE ann.image_id = p_image_id
+          AND ann.is_active = true
+          AND ann.lod_level <= 2  -- 只加载中低精度
+          AND (p_min_area = 0 OR ann.area_pixels >= p_min_area)
+    )
+    SELECT 
+        fa.annotation_id,
+        fa.tag_id,
+        fa.tag_name,
+        fa.parent_annotation_id,
+        fa.geom,
+        fa.priority,
+        fa.area_pixels,
+        fa.confidence,
+        fa.total_count
+    FROM filtered_annotations fa
+    ORDER BY fa.priority ASC, fa.area_pixels DESC
+    LIMIT p_batch_size
+    OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 使用示例：分3批加载
+-- 第1批：SELECT * FROM get_annotations_progressive(456, 100, 0);       -- 最重要的100个
+-- 第2批：SELECT * FROM get_annotations_progressive(456, 100, 100);     -- 次要的100个
+-- 第3批：SELECT * FROM get_annotations_progressive(456, 100, 200);     -- 其余
+-- 过滤小目标：SELECT * FROM get_annotations_progressive(456, 100, 0, 1000);  -- 只显示面积>1000的
+
+
+-- ============================================================================
+-- MVT 矢量瓦片优化（Mapbox Vector Tiles）
+-- ============================================================================
+
+-- 生成 MVT 格式数据，前端使用 GPU 直接渲染，适合超大规模数据
+
+CREATE OR REPLACE FUNCTION get_annotations_as_mvt(
+    p_image_id BIGINT,
+    p_zoom INT,
+    p_x INT,
+    p_y INT,
+    p_extent INT DEFAULT 4096,
+    p_lod_max INT DEFAULT 2
+) RETURNS BYTEA AS $$
+DECLARE
+    v_mvt BYTEA;
+    v_bounds GEOMETRY;
+BEGIN
+    -- 计算瓦片边界（Web Mercator投影）
+    v_bounds := ST_TileEnvelope(p_zoom, p_x, p_y);
+    
+    -- 生成 MVT（需要安装 postgis-vt-util 扩展）
+    SELECT ST_AsMVT(q, 'annotations', p_extent, 'geom')
+    INTO v_mvt
+    FROM (
+        SELECT 
+            annotation_id,
+            tag_id,
+            parent_annotation_id,
+            area_pixels,
+            confidence,
+            ST_AsMVTGeom(
+                COALESCE(simplified_geom, geom),  -- 优先使用简化几何
+                v_bounds,
+                p_extent,
+                0,  -- buffer
+                false  -- 不裁剪
+            ) as geom
+        FROM biz_annotation
+        WHERE image_id = p_image_id
+          AND is_active = true
+          AND lod_level <= p_lod_max
+          AND ST_Intersects(bbox, v_bounds)  -- 使用边界框快速筛选
+    ) q;
+    
+    RETURN v_mvt;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 使用示例：
+-- SELECT get_annotations_as_mvt(456, 10, 512, 256);  -- zoom=10, tile=(512,256)
+-- SELECT get_annotations_as_mvt(456, 12, 2048, 1024, 4096, 1);  -- 更高精度
+
+
+-- MVT 瓦片统计信息
+CREATE OR REPLACE FUNCTION get_mvt_tile_stats(
+    p_image_id BIGINT,
+    p_zoom INT
+) RETURNS TABLE (
+    tile_x INT,
+    tile_y INT,
+    annotation_count BIGINT,
+    avg_area FLOAT,
+    has_simplified BOOLEAN
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        FLOOR(ST_XMin(bbox)::INT / 256) as tile_x,
+        FLOOR(ST_YMin(bbox)::INT / 256) as tile_y,
+        COUNT(*) as annotation_count,
+        AVG(area_pixels) as avg_area,
+        BOOL_OR(simplified_geom IS NOT NULL) as has_simplified
+    FROM biz_annotation
+    WHERE image_id = p_image_id
+      AND is_active = true
+      AND lod_level <= 2
+      AND bbox IS NOT NULL
+    GROUP BY tile_x, tile_y
+    ORDER BY annotation_count DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 使用示例：查看哪些瓦片数据量大
+-- SELECT * FROM get_mvt_tile_stats(456, 10);
+
+-- ============================================================================
+-- 图像生命周期状态说明
+-- ============================================================================
+
+-- 状态定义:
+-- 1. Raw (原始态): 刚上传，仅包含图像文件，未解析元数据
+-- 2. Indexed (索引态): 元数据解析完成，标签已挂载，可检索
+-- 3. Processing (处理中): 正在进行自动预标注、格式转换或LOD生成
+-- 4. Annotated (已标注): 包含人工或AI生成的标注文件，待审核
+-- 5. Verified (已审核): 专家复核通过，进入"金标准库"，具备训练资格
+-- 6. Predicted (已预测): 已被模型推理过，生成了初步诊断建议
+-- 7. Archived (归档态): 项目结束，数据冷存储
+
+-- 状态流转图:
+-- [*] --> Raw: 文件上传
+-- Raw --> Indexed: 元数据解析成功
+-- Indexed --> Processing: 触发预处理/预标注
+-- Processing --> Annotated: AI生成初始标注
+-- Annotated --> Verified: 人工质检通过
+-- Verified --> Training_Queue: 加入训练数据集
+-- Verified --> Predicted: 调用模型推理
+-- Predicted --> Archived: 项目结项
+-- Annotated --> Processing: 质检不通过(返工)
+
+-- 状态查询示例:
+
+-- 1. 统计各状态的切片数量
+SELECT 
+    lifecycle_status,
+    COUNT(*) as count,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) as percentage
+FROM biz_image
+WHERE del_flag = false
+GROUP BY lifecycle_status
+ORDER BY count DESC;
+
+-- 2. 查询某批次下所有待审核的切片
+SELECT image_id, filename, pathology_id, annotation_progress
+FROM biz_image
+WHERE batch_id = 123
+  AND lifecycle_status = 'Annotated'
+  AND del_flag = false
+ORDER BY create_time DESC;
+
+-- 3. 查询可用于训练的已审核切片
+SELECT i.image_id, i.filename, i.pathology_id, b.batch_code
+FROM biz_image i
+JOIN biz_batch b ON i.batch_id = b.batch_id
+WHERE b.project_id = 456
+  AND i.lifecycle_status = 'Verified'
+  AND i.del_flag = false
+ORDER BY i.create_time;
+
+-- 4. 更新切片状态（示例：从Annotated转为Verified）
+UPDATE biz_image
+SET lifecycle_status = 'Verified',
+    update_by = 1001,
+    update_time = NOW()
+WHERE image_id = 789
+  AND lifecycle_status = 'Annotated';
+
+-- 5. 批量更新状态（示例：项目结项，所有切片归档）
+UPDATE biz_image i
+SET lifecycle_status = 'Archived',
+    update_by = 1001,
+    update_time = NOW()
+FROM biz_batch b
+WHERE i.batch_id = b.batch_id
+  AND b.project_id = 456
+  AND i.lifecycle_status != 'Archived'
+  AND i.del_flag = false;

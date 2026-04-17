@@ -11,16 +11,15 @@
   <modules>
     <module>jnet-anno</module>
     <module>jnet-api</module>
-    <module>jnet-datapool</module>
+    <module>jnet-biz</module>
   </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
-    <java.version>21</java.version>
-
+    <maven.compiler.source>22</maven.compiler.source>
+    <maven.compiler.target>22</maven.compiler.target>
+    <java.version>22</java.version>
     <jnet.version>1.0.0</jnet.version>
     <spring-cloud.version>2023.0.3</spring-cloud.version>
     <com-alibaba-cloud.version>2022.0.0.0</com-alibaba-cloud.version>
@@ -29,8 +28,7 @@
     <mybatis-spring-boot-starter.version>3.0.2</mybatis-spring-boot-starter.version>
     <mybatis-plus-spring-boot3-starter.version>3.5.5</mybatis-plus-spring-boot3-starter.version>
     <mysql-connector-java.version>8.0.33</mysql-connector-java.version>
-    <postgresql-connector-java.version>42.7.1</postgresql-connector-java.version>
-    <druid-spring-boot-starter.version>1.2.20</druid-spring-boot-starter.version>
+    <postgresql-connector-java.version>42.7.3</postgresql-connector-java.version>
     <commons-lang3.version>3.13.0</commons-lang3.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <commons-text.version>1.10.0</commons-text.version>
@@ -219,6 +217,12 @@
         <groupId>org.redisson</groupId>
         <artifactId>redisson-spring-boot-starter</artifactId>
         <version>${redisson.version}</version>
+      </dependency>
+      <!-- PostgreSQL 数据库 -->
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql-connector-java.version}</version>
       </dependency>
 
     </dependencies>

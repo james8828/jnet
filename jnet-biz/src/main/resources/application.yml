@@ -1,0 +1,146 @@
+server:
+  port: 9203
+  servlet:
+    context-path: /biz
+
+spring:
+  application:
+    name: jnet-biz-service
+  
+  # 禁用 Nacos Config 导入检查（如果不需要从 Nacos 读取配置）
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+        server-addr: 192.168.52.108:8848
+      discovery:
+        auto-registration: true
+        server-addr: 192.168.52.108:8848
+  
+  # PostgreSQL 数据源配置
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/jnet?useUnicode=true&characterEncoding=utf8&stringtype=unspecified
+    username: postgres
+    password: 123456
+    
+    # HikariCP 连接池配置
+    hikari:
+      maximum-pool-size: 20          # 最大连接数
+      minimum-idle: 5                # 最小空闲连接数
+      idle-timeout: 300000           # 空闲连接超时时间（5分钟）
+      max-lifetime: 1800000          # 连接最大生命周期（30分钟）
+      connection-timeout: 5000       # 连接超时时间（5秒）
+      validation-timeout: 5000       # 验证超时时间（5秒）
+      auto-commit: true              # 自动提交
+      pool-name: "DataPoolHikariCP"  # 连接池名称
+      connection-test-query: "SELECT 1"  # 连接测试查询
+      register-mbeans: true          # 注册 JMX MBeans
+
+  data:
+    redis:
+      # Redis 服务器地址
+      host: 192.168.160.103
+      # Redis 服务器端口
+      port: 6379
+      # Redis 密码
+      password: shengtong
+      # Redis 数据库索引（0~15，默认为0）
+      database: 10
+      # Redis 连接超时时间
+      timeout: 5000ms
+
+      # Lettuce 连接池配置（Spring Boot 2.x+ 默认使用 Lettuce）
+      lettuce:
+        pool:
+          max-active: 20        # 连接池最大连接数（负值表示无限制）
+          max-idle: 10          # 连接池中的最大空闲连接
+          min-idle: 5           # 连接池中的最小空闲连接
+          max-wait: 3000ms      # 连接池最大阻塞等待时间（负值表示无限制）
+        shutdown-timeout: 100ms # 关闭超时时间
+
+  # Jackson 配置
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false
+
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.jnet.biz.entity
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: delFlag
+      logic-delete-value: true
+      logic-not-delete-value: false
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# SpringDoc OpenAPI + Knife4j 配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+  group-configs:
+    - group: '病理AI数据池管理'
+      paths-to-match: '/api/v1/**'
+      packages-to-scan: com.jnet.biz.controller
+
+# Knife4j 增强配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+    swagger-model-name: 实体类列表
+
+# Actuator 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.jnet.biz: DEBUG
+    com.baomidou.mybatisplus: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+  file:
+    name: logs/jnet-datapool-service/debug.log
+    max-size: 100MB
+    max-history: 30
+
+# 自定义配置
+data-pool:
+  # 文件存储路径
+  storage:
+    root-path: /data/pathology/images
+    temp-path: /data/pathology/temp
+    thumbnail-path: /data/pathology/thumbnails
+
+  
+  # 缓存配置
+  cache:
+    tile-ttl: 3600  # Tile 缓存过期时间（秒）
+    metadata-ttl: 1800  # 元数据缓存过期时间（秒）

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jnet.biz.mapper.ModelMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.jnet.biz.entity.Model">
+        <id column="model_id" property="modelId"/>
+        <result column="model_name" property="modelName"/>
+        <result column="version" property="version"/>
+        <result column="base_model" property="baseModel"/>
+        <result column="project_id" property="projectId"/>
+        <result column="training_task_id" property="trainingTaskId"/>
+        <result column="metrics" property="metrics" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="weights_path" property="weightsPath"/>
+        <result column="is_best" property="isBest"/>
+        <result column="dataset_snapshot" property="datasetSnapshot" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="hyperparams" property="hyperparams" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        model_id, model_name, version, base_model, project_id, training_task_id, 
+        metrics, weights_path, is_best, dataset_snapshot, hyperparams, 
+        create_by, create_time, update_by, update_time
+    </sql>
+
+</mapper>

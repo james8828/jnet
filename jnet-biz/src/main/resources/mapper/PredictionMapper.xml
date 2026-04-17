@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jnet.biz.mapper.PredictionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.jnet.biz.entity.Prediction">
+        <id column="prediction_id" property="predictionId"/>
+        <result column="task_id" property="taskId"/>
+        <result column="image_id" property="imageId"/>
+        <result column="detections" property="detections" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="geojson_path" property="geojsonPath"/>
+        <result column="overlay_img_path" property="overlayImgPath"/>
+        <result column="object_count" property="objectCount"/>
+        <result column="positive_rate" property="positiveRate"/>
+        <result column="inference_time_ms" property="inferenceTimeMs"/>
+        <result column="review_status" property="reviewStatus"/>
+        <result column="reviewer_id" property="reviewerId"/>
+        <result column="review_comment" property="reviewComment"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        prediction_id, task_id, image_id, detections, geojson_path, 
+        overlay_img_path, object_count, positive_rate, inference_time_ms, 
+        review_status, reviewer_id, review_comment, create_by, create_time, 
+        update_by, update_time
+    </sql>
+
+</mapper>
