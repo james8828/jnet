@@ -1,6 +1,5 @@
 package com.jnet.biz.dto;
 
-import com.jnet.biz.enums.UploadStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -62,8 +61,8 @@ public class BatchDTO {
     private String storageRootPath;
 
     /**
-     * 上传状态
+     * 上传状态（pending/uploading/completed/failed）
      */
-    @Schema(description = "上传状态", example = "PENDING", allowableValues = {"PENDING", "UPLOADING", "COMPLETED", "FAILED"})
-    private UploadStatus uploadStatus;
+    @Schema(description = "上传状态", example = "pending", allowableValues = {"pending", "uploading", "completed", "failed"})
+    private String uploadStatus;
 }

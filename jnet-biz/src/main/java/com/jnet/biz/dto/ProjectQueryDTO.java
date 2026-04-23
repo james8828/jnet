@@ -1,6 +1,5 @@
 package com.jnet.biz.dto;
 
-import com.jnet.biz.enums.ProjectStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,10 +28,10 @@ public class ProjectQueryDTO extends PageQueryDTO {
     private String code;
 
     /**
-     * 项目状态
+     * 项目状态（active/archived/deleted）
      */
-    @Schema(description = "项目状态", example = "ACTIVE")
-    private ProjectStatus status;
+    @Schema(description = "项目状态", example = "active")
+    private String status;
 
     /**
      * 负责人ID

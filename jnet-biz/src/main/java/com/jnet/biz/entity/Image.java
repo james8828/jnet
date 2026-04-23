@@ -32,9 +32,14 @@ public class Image implements Serializable {
     private Long batchId;
 
     /**
-     * 文件名
+     * 文件名（存储用）
      */
     private String filename;
+
+    /**
+     * 原始文件名（用户上传时的文件名）
+     */
+    private String originalFilename;
 
     /**
      * 文件存储路径
@@ -65,6 +70,11 @@ public class Image implements Serializable {
      * 标注进度 (0-100)
      */
     private Integer annotationProgress;
+
+    /**
+     * 层级
+     */
+    private Integer levels;
 
     /**
      * 图像宽度（像素）
@@ -114,25 +124,21 @@ public class Image implements Serializable {
     /**
      * 创建人ID
      */
-    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建时间
      */
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新人ID
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新时间
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     /**

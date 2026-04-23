@@ -1,6 +1,5 @@
 package com.jnet.biz.dto;
 
-import com.jnet.biz.enums.UploadStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -41,8 +40,8 @@ public class BatchQueryDTO extends PageQueryDTO {
     private String scannerModel;
 
     /**
-     * 上传状态
+     * 上传状态（pending/uploading/completed/failed）
      */
-    @Schema(description = "上传状态", example = "COMPLETED")
-    private UploadStatus uploadStatus;
+    @Schema(description = "上传状态", example = "completed")
+    private String uploadStatus;
 }

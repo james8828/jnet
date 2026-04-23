@@ -53,7 +53,7 @@ public class BatchController {
     @Operation(summary = "获取项目下的批次列表", description = "获取指定项目的所有批次（不分页）")
     @GetMapping("/by-project/{projectId}")
     public Result<List<BatchVO>> listByProject(
-            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable Long projectId) {
+            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable("projectId") Long projectId) {
         List<Batch> batches = batchService.listByProjectId(projectId);
         List<BatchVO> voList = BeanConverter.toVOList(batches, BatchVO.class);
         return Result.success(voList);
@@ -65,7 +65,7 @@ public class BatchController {
     @Operation(summary = "获取批次详情", description = "根据批次ID获取详细信息")
     @GetMapping("/{id}")
     public Result<BatchVO> getBatch(
-            @Parameter(description = "批次ID", required = true, example = "1") @PathVariable Long id) {
+            @Parameter(description = "批次ID", required = true, example = "1") @PathVariable("id") Long id) {
         Batch batch = batchService.getById(id);
         if (batch == null) {
             return Result.error(404, "批次不存在");
@@ -96,7 +96,7 @@ public class BatchController {
     @Operation(summary = "更新批次", description = "更新批次基本信息")
     @PutMapping("/{id}")
     public Result<Void> updateBatch(
-            @Parameter(description = "批次ID", required = true, example = "1") @PathVariable Long id,
+            @Parameter(description = "批次ID", required = true, example = "1") @PathVariable("id") Long id,
             @Parameter(description = "批次信息", required = true) @RequestBody @Validated BatchDTO dto) {
         Batch batch = BeanConverter.toEntity(dto, Batch.class);
         batch.setBatchId(id);

@@ -1,7 +1,6 @@
 package com.jnet.biz.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,15 +26,7 @@ public class ChunkUploadDTO {
     @Schema(description = "当前分片索引（从0开始）", example = "0", required = true)
     private Integer chunkIndex;
 
-    @NotNull(message = "总分片数不能为空")
-    @Min(value = 1, message = "总分片数至少为1")
-    @Schema(description = "总分片数", example = "100", required = true)
-    private Integer totalChunks;
-
-    @NotNull(message = "批次ID不能为空")
-    @Schema(description = "所属批次ID", example = "1", required = true)
-    private Long batchId;
-
-    @Schema(description = "分片文件")
+    @NotNull(message = "分片文件不能为空")
+    @Schema(description = "分片文件", required = true)
     private MultipartFile file;
 }

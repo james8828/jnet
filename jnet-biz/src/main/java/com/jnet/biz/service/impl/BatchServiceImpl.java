@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jnet.biz.dto.BatchQueryDTO;
 import com.jnet.biz.entity.Batch;
+import com.jnet.biz.enums.UploadStatus;
 import com.jnet.biz.mapper.BatchMapper;
 import com.jnet.biz.service.IBatchService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -51,7 +53,7 @@ public class BatchServiceImpl extends ServiceImpl<BatchMapper, Batch> implements
         
         // 上传状态筛选
         if (query.getUploadStatus() != null) {
-            wrapper.eq(Batch::getUploadStatus, query.getUploadStatus().name());
+            wrapper.eq(Batch::getUploadStatus, query.getUploadStatus());
         }
         
         // 排序处理
@@ -82,13 +84,20 @@ public class BatchServiceImpl extends ServiceImpl<BatchMapper, Batch> implements
 
     @Override
     public boolean createBatch(Batch batch) {
-        // 设置默认状态
+        // 设置默认值
         if (batch.getUploadStatus() == null) {
-            batch.setUploadStatus("pending");
+            batch.setUploadStatus(UploadStatus.PENDING.getCode()); // 默认为 PENDING
         }
         if (batch.getTotalImages() == null) {
             batch.setTotalImages(0);
         }
+        
+        // 手动设置审计字段
+        LocalDateTime now = LocalDateTime.now();
+        batch.setCreateTime(now);
+        batch.setUpdateTime(now);
+        batch.setCreateBy(1L); // TODO: 从SecurityContext获取当前用户ID
+        batch.setUpdateBy(1L); // TODO: 从SecurityContext获取当前用户ID
         
         return this.save(batch);
     }

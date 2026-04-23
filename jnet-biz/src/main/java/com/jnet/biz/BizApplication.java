@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -29,7 +30,9 @@ import java.net.UnknownHostException;
  * @version 1.0.0
  */
 @Slf4j
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+    SecurityFilterAutoConfiguration.class  // 排除 Spring Security 自动配置，避免403
+})
 @EnableDiscoveryClient
 @MapperScan("com.jnet.biz.mapper")
 @EnableScheduling // 启用定时任务
@@ -70,4 +73,6 @@ public class BizApplication {
         System.out.println("  Business Service Started Successfully!");
         System.out.println("========================================");
     }
+
+
 }

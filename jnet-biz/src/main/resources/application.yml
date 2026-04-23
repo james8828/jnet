@@ -2,10 +2,21 @@ server:
   port: 9203
   servlet:
     context-path: /biz
+  # Tomcat 配置
+  tomcat:
+    max-swallow-size: -1          # 不限制请求体大小（-1表示无限制）
 
 spring:
   application:
     name: jnet-biz-service
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB        # 单个文件最大大小
+      max-request-size: 500MB     # 整个请求最大大小
+      file-size-threshold: 2KB    # 文件大小阈值，超过则写入磁盘
   
   # 禁用 Nacos Config 导入检查（如果不需要从 Nacos 读取配置）
   cloud:
@@ -114,6 +125,8 @@ management:
   endpoint:
     health:
       show-details: always
+  security:
+    enabled: false
   metrics:
     tags:
       application: ${spring.application.name}
@@ -124,6 +137,10 @@ logging:
     root: INFO
     com.jnet.biz: DEBUG
     com.baomidou.mybatisplus: DEBUG
+    # Security 相关日志（调试403用）
+    org.springframework.security: TRACE
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+    org.springframework.boot.autoconfigure.security: DEBUG
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
   file:
@@ -135,12 +152,17 @@ logging:
 data-pool:
   # 文件存储路径
   storage:
-    root-path: /data/pathology/images
-    temp-path: /data/pathology/temp
-    thumbnail-path: /data/pathology/thumbnails
+    root-path: E:/doc/jnet/imageStore
+    temp-path: E:/doc/jnet/imageStore/temp
+    thumbnail-path: E:/doc/jnet/imageStore/thumbnails
 
   
   # 缓存配置
   cache:
     tile-ttl: 3600  # Tile 缓存过期时间（秒）
     metadata-ttl: 1800  # 元数据缓存过期时间（秒）
+
+# WSI 切片瓦片生成配置
+slide:
+  tile:
+    size: 256  # 瓦片尺寸（像素），支持 256、512 等

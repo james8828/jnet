@@ -38,6 +38,17 @@ public interface IImageTileService {
     Resource getTile(TileQueryDTO query);
 
     /**
+     * 根据OpenLayers zoom级别获取Tile（后端负责zoom到level的转换）
+     *
+     * @param imageId 图像ID
+     * @param zoom OpenLayers zoom级别
+     * @param x 瓦片X坐标
+     * @param y 瓦片Y坐标
+     * @return Tile图像资源
+     */
+    Resource getTileByZoom(Long imageId, Integer zoom, Integer x, Integer y);
+
+    /**
      * 获取金字塔层级信息
      *
      * @param imageId 图像ID

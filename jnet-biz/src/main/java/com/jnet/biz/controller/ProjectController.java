@@ -51,7 +51,7 @@ public class ProjectController {
     @Operation(summary = "获取项目详情", description = "根据项目ID获取详细信息")
     @GetMapping("/{id}")
     public Result<ProjectVO> getProject(
-            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable Long id) {
+            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable("id") Long id) {
         Project project = projectService.getById(id);
         if (project == null) {
             return Result.error(404, "项目不存在");
@@ -83,7 +83,7 @@ public class ProjectController {
     @Operation(summary = "更新项目", description = "更新项目基本信息")
     @PutMapping("/{id}")
     public Result<Void> updateProject(
-            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable Long id,
+            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable("id") Long id,
             @Parameter(description = "项目信息", required = true) @RequestBody @Validated ProjectDTO dto) {
         Project project = BeanConverter.toEntity(dto, Project.class);
         project.setProjectId(id);
@@ -101,7 +101,7 @@ public class ProjectController {
     @Operation(summary = "归档项目", description = "逻辑删除项目（软删除）")
     @DeleteMapping("/{id}")
     public Result<Void> archiveProject(
-            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable Long id) {
+            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable("id") Long id) {
         boolean success = projectService.archiveProject(id);
         if (success) {
             return Result.success("归档成功", null);
@@ -116,7 +116,7 @@ public class ProjectController {
     @Operation(summary = "获取项目统计信息", description = "获取项目下的批次、图像等统计数据")
     @GetMapping("/{id}/stats")
     public Result<String> getProjectStats(
-            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable Long id) {
+            @Parameter(description = "项目ID", required = true, example = "1") @PathVariable("id") Long id) {
         String stats = projectService.getProjectStats(id);
         return Result.success(stats);
     }

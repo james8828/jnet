@@ -92,12 +92,14 @@ CREATE TABLE biz_image (
     image_id BIGSERIAL PRIMARY KEY,
     batch_id BIGINT NOT NULL REFERENCES biz_batch(batch_id) ON DELETE CASCADE,
     filename VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(500) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
     pathology_id VARCHAR(100),
     patient_id VARCHAR(100),
     format VARCHAR(20),
     lifecycle_status VARCHAR(20) DEFAULT 'Raw',
     annotation_progress INT DEFAULT 0,
+    levels INT,
     width INT,
     height INT,
     mpp_x FLOAT,
@@ -118,12 +120,14 @@ COMMENT ON TABLE biz_image IS '图像表';
 COMMENT ON COLUMN biz_image.image_id IS '主键ID（图像ID）';
 COMMENT ON COLUMN biz_image.batch_id IS '所属批次ID';
 COMMENT ON COLUMN biz_image.filename IS '文件名';
+COMMENT ON COLUMN biz_image.original_filename IS '原始文件名（用户上传时的文件名）';
 COMMENT ON COLUMN biz_image.file_path IS '文件存储路径';
 COMMENT ON COLUMN biz_image.pathology_id IS '病理报告号';
 COMMENT ON COLUMN biz_image.patient_id IS '患者ID（脱敏处理）';
 COMMENT ON COLUMN biz_image.format IS '格式 (SVS/NDPI/JPG/PNG)';
 COMMENT ON COLUMN biz_image.lifecycle_status IS '生命周期状态 (Raw/Indexed/Processing/Annotated/Verified/Predicted/Archived)';
 COMMENT ON COLUMN biz_image.annotation_progress IS '标注进度 (0-100)';
+COMMENT ON COLUMN biz_image.levels IS '金字塔层级数（WSI图像的多分辨率层级数量）';
 COMMENT ON COLUMN biz_image.width IS '图像宽度（像素）';
 COMMENT ON COLUMN biz_image.height IS '图像高度（像素）';
 COMMENT ON COLUMN biz_image.mpp_x IS 'X轴物理分辨率 (um/px)';

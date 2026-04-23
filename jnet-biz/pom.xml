@@ -60,6 +60,13 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <exclusions>
+                <!-- 排除 Spring Security Crypto，避免触发403 -->
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-crypto</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <!-- Nacos 配置中心 -->
@@ -72,6 +79,13 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <exclusions>
+                <!-- 排除 Spring Security RSA，避免触发403 -->
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-rsa</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <!-- Spring Cloud LoadBalancer -->
@@ -81,16 +95,16 @@
         </dependency>
         
         <!-- Actuator 监控 -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
+        </dependency>-->
         
         <!-- Prometheus 监控指标 -->
-        <dependency>
+        <!--<dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>
+        </dependency>-->
         
         <!-- Redisson -->
         <dependency>
@@ -154,6 +168,10 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
+                    <!-- 保留方法参数名，Spring MVC需要此配置 -->
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>

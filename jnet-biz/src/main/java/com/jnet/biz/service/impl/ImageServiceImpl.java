@@ -55,7 +55,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         
         // 生命周期状态筛选
         if (query.getLifecycleStatus() != null) {
-            wrapper.eq(Image::getLifecycleStatus, query.getLifecycleStatus().name());
+            wrapper.eq(Image::getLifecycleStatus, query.getLifecycleStatus());
         }
         
         // 病理报告号模糊查询
@@ -121,6 +121,11 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         }
         
         image.setLifecycleStatus(status);
+        
+        // 手动设置更新时间和更新人
+        image.setUpdateTime(java.time.LocalDateTime.now());
+        image.setUpdateBy(1L); // TODO: 从SecurityContext获取当前用户ID
+        
         return this.updateById(image);
     }
 
@@ -261,6 +266,8 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         newImage.setThumbnailUrl(sourceImage.getThumbnailUrl());
         newImage.setCreateTime(java.time.LocalDateTime.now());
         newImage.setUpdateTime(java.time.LocalDateTime.now());
+        newImage.setCreateBy(1L); // TODO: 从SecurityContext获取当前用户ID
+        newImage.setUpdateBy(1L); // TODO: 从SecurityContext获取当前用户ID
         newImage.setDelFlag(false);
 
         this.save(newImage);

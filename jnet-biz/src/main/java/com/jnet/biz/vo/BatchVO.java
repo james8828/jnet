@@ -1,6 +1,5 @@
 package com.jnet.biz.vo;
 
-import com.jnet.biz.enums.UploadStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -65,10 +64,10 @@ public class BatchVO {
     private Integer totalImages;
 
     /**
-     * 上传状态
+     * 上传状态（pending/uploading/completed/failed）
      */
-    @Schema(description = "上传状态", example = "COMPLETED")
-    private UploadStatus uploadStatus;
+    @Schema(description = "上传状态", example = "completed")
+    private String uploadStatus;
 
     /**
      * 创建时间

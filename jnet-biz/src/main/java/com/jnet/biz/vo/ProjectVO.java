@@ -1,6 +1,5 @@
 package com.jnet.biz.vo;
 
-import com.jnet.biz.enums.PrivacyLevel;
 import com.jnet.biz.enums.ProjectStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -48,10 +47,10 @@ public class ProjectVO {
     private String ethicsCode;
 
     /**
-     * 隐私级别
+     * 隐私级别（1:公开, 2:脱敏, 3:绝密）
      */
-    @Schema(description = "隐私级别", example = "PUBLIC")
-    private PrivacyLevel privacyLevel;
+    @Schema(description = "隐私级别", example = "1")
+    private Integer privacyLevel;
 
     /**
      * 项目描述
@@ -66,10 +65,10 @@ public class ProjectVO {
     private String targetClasses;
 
     /**
-     * 状态
+     * 状态（active/archived/deleted）
      */
-    @Schema(description = "项目状态", example = "ACTIVE")
-    private ProjectStatus status;
+    @Schema(description = "项目状态", example = "active")
+    private String status;
 
     /**
      * 创建时间

@@ -70,7 +70,7 @@ public class ImageController {
      */
     @Operation(summary = "获取图像详情", description = "根据ID获取图像完整信息")
     @GetMapping("/{id}")
-    public Result<Image> getImage(@Parameter(description = "图像ID", required = true, example = "1") @PathVariable Long id) {
+    public Result<Image> getImage(@Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id) {
         Image image = imageService.getById(id);
         if (image == null) {
             return Result.error(404, "图像不存在");
@@ -84,9 +84,9 @@ public class ImageController {
     @Operation(summary = "更新图像生命周期状态", description = "更新图像的标注进度状态")
     @PutMapping("/{id}/status")
     public Result<Void> updateStatus(
-            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable Long id,
+            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id,
             @Parameter(description = "状态信息", required = true) @RequestBody @Validated ImageStatusDTO dto) {
-        boolean success = imageService.updateLifecycleStatus(id, dto.getStatus().name());
+        boolean success = imageService.updateLifecycleStatus(id, dto.getStatus());
         if (success) {
             return Result.success("状态更新成功", null);
         } else {
@@ -127,8 +127,9 @@ public class ImageController {
      * 上传分片
      */
     @Operation(summary = "上传分片", description = "上传单个分片文件")
-    @PostMapping("/chunk/upload")
-    public Result<Boolean> uploadChunk(ChunkUploadDTO uploadDTO) {
+    @PostMapping(value = "/chunk/upload", consumes = "multipart/form-data")
+    public Result<Boolean> uploadChunk(
+            @ModelAttribute @Validated ChunkUploadDTO uploadDTO) {
         Boolean success = chunkUploadService.uploadChunk(uploadDTO);
         return Result.success(success);
     }
@@ -140,15 +141,15 @@ public class ImageController {
     @PostMapping("/chunk/merge")
     public Result<Long> mergeChunks(
             @Parameter(description = "文件MD5", required = true, example = "d41d8cd98f00b204e9800998ecf8427e") 
-            @RequestParam String fileMd5,
+            @RequestParam("fileMd5") String fileMd5,
             @Parameter(description = "批次ID", required = true, example = "1") 
-            @RequestParam Long batchId,
+            @RequestParam("batchId") Long batchId,
             @Parameter(description = "原始文件名", required = true, example = "test.svs") 
-            @RequestParam String filename,
+            @RequestParam("filename") String filename,
             @Parameter(description = "病理报告号", example = "P2024-001") 
-            @RequestParam(required = false) String pathologyId,
+            @RequestParam(value = "pathologyId", required = false) String pathologyId,
             @Parameter(description = "患者ID", example = "PATIENT_001") 
-            @RequestParam(required = false) String patientId) {
+            @RequestParam(value = "patientId", required = false) String patientId) {
         Long imageId = chunkUploadService.mergeChunks(fileMd5, batchId, filename, pathologyId, patientId);
         return Result.success("合并成功", imageId);
     }
@@ -160,7 +161,7 @@ public class ImageController {
     @DeleteMapping("/chunk/cancel")
     public Result<Void> cancelUpload(
             @Parameter(description = "文件MD5", required = true, example = "d41d8cd98f00b204e9800998ecf8427e") 
-            @RequestParam String fileMd5) {
+            @RequestParam("fileMd5") String fileMd5) {
         chunkUploadService.cancelUpload(fileMd5);
         return Result.success("已取消", null);
     }
@@ -189,7 +190,7 @@ public class ImageController {
     @Operation(summary = "获取图像元数据", description = "获取WSI图像的金字塔层级、分辨率等元数据信息")
     @GetMapping("/{id}/metadata")
     public Result<ImageMetadataVO> getImageMetadata(
-            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable Long id) {
+            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id) {
         ImageMetadataVO metadata = imageTileService.getImageMetadata(id);
         return Result.success(metadata);
     }
@@ -200,7 +201,7 @@ public class ImageController {
     @Operation(summary = "获取缩略图", description = "获取WSI图像的缩略图，支持自定义尺寸")
     @GetMapping("/{id}/thumbnail")
     public ResponseEntity<Resource> getThumbnail(
-            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable Long id,
+            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id,
             @Parameter(description = "最大尺寸（宽或高）", example = "512") 
             @RequestParam(required = false, defaultValue = "512") Integer maxSize) {
         Resource thumbnail = imageTileService.getThumbnail(id, maxSize);
@@ -213,7 +214,50 @@ public class ImageController {
     }
 
     /**
-     * 获取Tile瓦片
+     * 获取Tile瓦片（RESTful风格，用于OpenLayers）
+     */
+    @Operation(summary = "获取Tile瓦片", description = "根据层级和行列索引获取指定的图像瓦片（RESTful路径）")
+    @GetMapping("/{id}/tiles/{z}/{x}/{y}.jpg")
+    public ResponseEntity<Resource> getTileByPath(
+            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id,
+            @Parameter(description = "OpenLayers zoom级别", required = true, example = "5") @PathVariable("z") Integer zoom,
+            @Parameter(description = "瓦片X坐标", required = true, example = "0") @PathVariable("x") Integer x,
+            @Parameter(description = "瓦片Y坐标", required = true, example = "0") @PathVariable("y") Integer y) {
+        
+        // 后端负责将zoom转换为WSI level
+        Resource tile = imageTileService.getTileByZoom(id, zoom, x, y);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400") // 缓存24小时
+                .body(tile);
+    }
+
+    /**
+     * 获取Tile瓦片（Zoomify格式，用于OpenLayers Zoomify源）
+     * URL格式: /api/v1/images/{id}/tiles/TileGroup{N}/{z}-{x}-{y}.jpg
+     * 注意：TileGroup N 是 Zoomify 的分组机制，后端忽略该参数，直接使用 z-x-y
+     */
+    @Operation(summary = "获取Tile瓦片（Zoomify格式）", description = "根据Zoomify路径格式获取瓦片，支持动态TileGroup分组")
+    @GetMapping("/{id}/tiles/TileGroup{group}/{z}-{x}-{y}.jpg")
+    public ResponseEntity<Resource> getTileByZoomifyPath(
+            @Parameter(description = "图像ID", required = true) @PathVariable("id") Long id,
+            @Parameter(description = "TileGroup编号（忽略）", required = true) @PathVariable("group") String group,
+            @Parameter(description = "Zoom级别", required = true) @PathVariable("z") Integer zoom,
+            @Parameter(description = "瓦片X坐标", required = true) @PathVariable("x") Integer x,
+            @Parameter(description = "瓦片Y坐标", required = true) @PathVariable("y") Integer y) {
+        
+        // 后端负责将zoom转换为WSI level
+        Resource tile = imageTileService.getTileByZoom(id, zoom, x, y);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400") // 缓存24小时
+                .body(tile);
+    }
+
+    /**
+     * 获取Tile瓦片（查询参数风格）
      */
     @Operation(summary = "获取Tile瓦片", description = "根据层级和行列索引获取指定的图像瓦片")
     @GetMapping("/tile")
@@ -232,7 +276,7 @@ public class ImageController {
     @Operation(summary = "获取金字塔层级信息", description = "获取WSI图像的所有缩放层级信息")
     @GetMapping("/{id}/levels")
     public Result<String> getLevelInfo(
-            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable Long id) {
+            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id) {
         String levelInfo = imageTileService.getLevelInfo(id);
         return Result.success(levelInfo);
     }

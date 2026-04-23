@@ -1,6 +1,5 @@
 package com.jnet.biz.dto;
 
-import com.jnet.biz.enums.LifecycleStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,10 +30,10 @@ public class ImageQueryDTO extends PageQueryDTO {
     private Long projectId;
 
     /**
-     * 生命周期状态
+     * 生命周期状态（Raw/Indexed/Processing/Annotated/Verified/Predicted/Archived）
      */
-    @Schema(description = "生命周期状态", example = "ANNOTATED")
-    private LifecycleStatus lifecycleStatus;
+    @Schema(description = "生命周期状态", example = "Annotated")
+    private String lifecycleStatus;
 
     /**
      * 病理报告号（模糊查询）

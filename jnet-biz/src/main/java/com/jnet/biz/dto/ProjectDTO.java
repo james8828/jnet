@@ -1,6 +1,5 @@
 package com.jnet.biz.dto;
 
-import com.jnet.biz.enums.PrivacyLevel;
 import com.jnet.biz.enums.ProjectStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -50,10 +49,10 @@ public class ProjectDTO {
     private String ethicsCode;
 
     /**
-     * 隐私级别
+     * 隐私级别（1:公开, 2:脱敏, 3:绝密）
      */
-    @Schema(description = "隐私级别", example = "PUBLIC", allowableValues = {"PUBLIC", "DESENSITIZED", "TOP_SECRET"})
-    private PrivacyLevel privacyLevel;
+    @Schema(description = "隐私级别", example = "1", allowableValues = {"1", "2", "3"})
+    private Integer privacyLevel;
 
     /**
      * 项目描述
@@ -68,8 +67,8 @@ public class ProjectDTO {
     private String targetClasses;
 
     /**
-     * 状态
+     * 状态（active/archived/deleted）
      */
-    @Schema(description = "项目状态", example = "ACTIVE", allowableValues = {"ACTIVE", "ARCHIVED", "DELETED"})
-    private ProjectStatus status;
+    @Schema(description = "项目状态", example = "active", allowableValues = {"active", "archived", "deleted"})
+    private String status;
 }

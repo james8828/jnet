@@ -59,12 +59,10 @@ public class ImageTagRel implements Serializable {
     /**
      * 创建人ID
      */
-    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建时间
      */
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 }
