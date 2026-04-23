@@ -214,28 +214,8 @@ public class ImageController {
     }
 
     /**
-     * 获取Tile瓦片（RESTful风格，用于OpenLayers）
-     */
-    @Operation(summary = "获取Tile瓦片", description = "根据层级和行列索引获取指定的图像瓦片（RESTful路径）")
-    @GetMapping("/{id}/tiles/{z}/{x}/{y}.jpg")
-    public ResponseEntity<Resource> getTileByPath(
-            @Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id,
-            @Parameter(description = "OpenLayers zoom级别", required = true, example = "5") @PathVariable("z") Integer zoom,
-            @Parameter(description = "瓦片X坐标", required = true, example = "0") @PathVariable("x") Integer x,
-            @Parameter(description = "瓦片Y坐标", required = true, example = "0") @PathVariable("y") Integer y) {
-        
-        // 后端负责将zoom转换为WSI level
-        Resource tile = imageTileService.getTileByZoom(id, zoom, x, y);
-        
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
-                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400") // 缓存24小时
-                .body(tile);
-    }
-
-    /**
      * 获取Tile瓦片（Zoomify格式，用于OpenLayers Zoomify源）
-     * URL格式: /api/v1/images/{id}/tiles/TileGroup{N}/{z}-{x}-{y}.jpg
+     * URL格式: /api/v1/images/{id}/tiles/TileGroup{N}/{z}-{x}-{y}.jpg?tileSize=256
      * 注意：TileGroup N 是 Zoomify 的分组机制，后端忽略该参数，直接使用 z-x-y
      */
     @Operation(summary = "获取Tile瓦片（Zoomify格式）", description = "根据Zoomify路径格式获取瓦片，支持动态TileGroup分组")
@@ -245,25 +225,12 @@ public class ImageController {
             @Parameter(description = "TileGroup编号（忽略）", required = true) @PathVariable("group") String group,
             @Parameter(description = "Zoom级别", required = true) @PathVariable("z") Integer zoom,
             @Parameter(description = "瓦片X坐标", required = true) @PathVariable("x") Integer x,
-            @Parameter(description = "瓦片Y坐标", required = true) @PathVariable("y") Integer y) {
-        
-        // 后端负责将zoom转换为WSI level
-        Resource tile = imageTileService.getTileByZoom(id, zoom, x, y);
-        
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
-                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400") // 缓存24小时
-                .body(tile);
-    }
+            @Parameter(description = "瓦片Y坐标", required = true) @PathVariable("y") Integer y,
+            @Parameter(description = "瓦片尺寸（像素）", example = "256") @RequestParam(value = "tileSize", required = false, defaultValue = "256") Integer tileSize) {
 
-    /**
-     * 获取Tile瓦片（查询参数风格）
-     */
-    @Operation(summary = "获取Tile瓦片", description = "根据层级和行列索引获取指定的图像瓦片")
-    @GetMapping("/tile")
-    public ResponseEntity<Resource> getTile(@Validated TileQueryDTO query) {
-        Resource tile = imageTileService.getTile(query);
-        
+        // 后端负责将zoom转换为WSI level
+        Resource tile = imageTileService.getTileByZoom(id, zoom, x, y, tileSize);
+
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_JPEG)
                 .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400") // 缓存24小时

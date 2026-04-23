@@ -158,6 +158,86 @@ public class WsiTileGenerator {
     }
 
     /**
+     * 计算指定层级的下采样因子
+     * <p>
+     * 下采样因子决定了从 Level 0（原始分辨率）缩放到目标层级时的缩放比例。
+     *
+     * <h3>计算公式</h3>
+     * <pre>
+     * tileCount = 2^level
+     * downSample = maxDimension / (tileCount / 2 * tileSize)
+     * </pre>
+     *
+     * <h3>示例（图像尺寸 31509x37084, tileSize=256）</h3>
+     * <ul>
+     *   <li>Level 0: tileCount=1, downSample = 37084/(1/2*256) = 289.72</li>
+     *   <li>Level 1: tileCount=2, downSample = 37084/(2/2*256) = 144.86</li>
+     *   <li>Level 2: tileCount=4, downSample = 37084/(4/2*256) = 72.43</li>
+     *   <li>Level 3: tileCount=8, downSample = 37084/(8/2*256) = 36.21</li>
+     * </ul>
+     *
+     * @param openSlide OpenSlide 对象
+     * @param level     金字塔层级（0=最高分辨率）
+     * @param tileSize  瓦片尺寸（像素）
+     * @return 下采样因子
+     */
+    private static double calculateDownSample(OpenSlide openSlide, int level, int tileSize) {
+        // 1. 获取 Level 0（原始）图像尺寸
+        long level0Width = openSlide.getLevel0Width();
+        long level0Height = openSlide.getLevel0Height();
+
+        log.debug("Level 0 图像尺寸: {}x{}", level0Width, level0Height);
+
+        // 2. 计算最大维度（用于统一缩放基准）
+        long maxDimension = Math.max(level0Width, level0Height);
+        log.debug("最大维度: {}", maxDimension);
+
+        // 3. 计算当前层级的瓦片数量系数
+        //    公式：tileCount = 2^level
+        //
+        //    层级与瓦片数量的关系：
+        //    - Level 0: tileCount = 1  (整个图像视为 1x1 个瓦片区)
+        //    - Level 1: tileCount = 2  (整个图像分为 2x2 个瓦片区)
+        //    - Level 2: tileCount = 4  (整个图像分为 4x4 个瓦片区)
+        //    - Level 3: tileCount = 8  (整个图像分为 8x8 个瓦片区)
+        //    - ...以此类推
+        double tileCount = Math.pow(2, level);
+        log.debug("瓦片数量系数: tileCount={} (2^{})", tileCount, level);
+
+        // 4. 计算下采样因子
+        //    公式：downSample = maxDimension / (tileCount / 2 * tileSize)
+        //
+        //    说明：
+        //    - tileCount / 2: 调整系数，确保瓦片网格与 OpenLayers Zoomify 匹配
+        //    - tileSize: 每个瓦片的像素尺寸
+        //    - 结果：downSample 表示从 Level 0 缩放到当前层级需要的缩放倍数
+        //
+        //    例如（maxDimension=37084, tileSize=256）：
+        //    - Level 2: downSample = 37084 / (4/2 * 256) = 37084 / 512 = 72.43
+        //      这意味着 Level 2 的图像尺寸是 Level 0 的 1/72.43
+        double downSample = maxDimension / (tileCount / 2 * tileSize);
+
+        log.info("下采样因子计算: level={}, tileCount={}, downSample={:.4f}",
+                level, tileCount, downSample);
+        log.info("瓦片配置: tileSize={} pixels, maxDimension={}", tileSize, maxDimension);
+
+        // 计算当前层级的理论图像尺寸
+        long theoreticalWidth = (long) (level0Width / downSample);
+        long theoreticalHeight = (long) (level0Height / downSample);
+        log.debug("理论层级尺寸: {}x{} (width/height)", theoreticalWidth, theoreticalHeight);
+
+        // 计算理论瓦片数量
+        int theoreticalTilesPerRow = (int) Math.ceil((double) theoreticalWidth / tileSize);
+        int theoreticalTilesPerColumn = (int) Math.ceil((double) theoreticalHeight / tileSize);
+        log.debug("理论瓦片网格: {}x{} (row x col), 总计 {} 个瓦片",
+                theoreticalTilesPerRow, theoreticalTilesPerColumn,
+                theoreticalTilesPerRow * theoreticalTilesPerColumn);
+
+        return downSample;
+    }
+
+
+    /**
      * 生成瓦片（核心方法）
      * <p>
      * 算法流程：
@@ -181,26 +261,10 @@ public class WsiTileGenerator {
         // 1. 获取 Level 0（原始）图像尺寸
         long level0Width = openSlide.getLevel0Width();
         long level0Height = openSlide.getLevel0Height();
-        log.debug("Level 0 图像尺寸: {}x{}", level0Width, level0Height);
-
-        // 2. 计算最大维度
-        long maxDimension = Math.max(level0Width, level0Height);
-
-        // 3. 计算当前层级的瓦片数量系数
-        //    公式：tileCount = 2^level
-        //    Level 0: tileCount = 1 (整个图像分为 1x1 个瓦片区)
-        //    Level 1: tileCount = 2 (整个图像分为 2x2 个瓦片区)
-        //    Level 2: tileCount = 4 (整个图像分为 4x4 个瓦片区)
-        double tileCount = Math.pow(2, coordinate.pyramidLevel);
-
         // 4. 计算下采样因子
         //    公式：downSample = maxDimension / (tileCount * tileSize)
         //    这确保了每个瓦片在下采样后正好是 tileSize x tileSize 像素
-        double downSample = maxDimension / (tileCount * tileSize);
-
-        log.info("瓦片计算: level={}, tileCount={}, downSample={:.4f}",
-                coordinate.pyramidLevel, tileCount, downSample);
-        log.info("瓦片尺寸: tileSize={} pixels", tileSize);
+        double downSample = calculateDownSample(openSlide, coordinate.pyramidLevel, tileSize);
 
         // 5. 计算在 Level 0 坐标系中的读取区域
         //    注意：regionX 和 regionY 是在下采样后的坐标系中
@@ -217,8 +281,6 @@ public class WsiTileGenerator {
         //    确保不会读取超出图像范围的区域
         int maxRegionX = (int) (level0Width / downSample);
         int maxRegionY = (int) (level0Height / downSample);
-
-        log.debug("下采样后可用区域: maxW={}, maxH={}", maxRegionX, maxRegionY);
 
         // 7. 调整右侧边界
         if (regionX + regionWidth > maxRegionX) {
@@ -434,13 +496,9 @@ public class WsiTileGenerator {
     public static int[] calculateTileGrid(OpenSlide openSlide, int level, int tileSize) {
         long level0Width = openSlide.getLevel0Width();
         long level0Height = openSlide.getLevel0Height();
-        long maxDimension = Math.max(level0Width, level0Height);
-
-        // 计算当前层级的瓦片数量系数：tileCount = 2^level
-        double tileCount = Math.pow(2, level);
 
         // 计算下采样因子
-        double downSample = maxDimension / (tileCount * tileSize);
+        double downSample = calculateDownSample(openSlide, level, tileSize);
 
         // 计算下采样后的图像尺寸
         long levelWidth = (long) (level0Width / downSample);

@@ -1,6 +1,5 @@
 package com.jnet.biz.service.impl;
 
-import com.jnet.biz.dto.TileQueryDTO;
 import com.jnet.biz.entity.Image;
 import com.jnet.biz.exception.BizErrorCode;
 import com.jnet.biz.exception.BizException;
@@ -11,8 +10,6 @@ import com.jnet.biz.vo.ImageMetadataVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
-import org.apache.commons.io.FileUtils;
-import org.aspectj.apache.bcel.classfile.Module;
 import org.openslide.OpenSlide;
 import org.openslide.OpenSlideCache;
 import org.springframework.beans.factory.annotation.Value;
@@ -128,92 +125,14 @@ public class ImageTileServiceImpl implements IImageTileService {
     private static final long CACHE_EXPIRE = 3600; // 1小时
 
     public static void main(String[] args) {
-        File image = new File("E:\\R249-224-RD~2424912~2~4M~TN~RC-1_083944.svs");
+        File image = new File("E:\\doc\\jnet\\imageStore\\project_2\\dev-batch\\R25-0818-RD 25081806-18 1F.svs");
         try {
             OpenSlide openSlide = new OpenSlide(image);
-
-            /*long level0Width = openSlide.getLevel0Width();
-            long level0Height = openSlide.getLevel0Height();
-            long maxDimension = Math.max(level0Width, level0Height);
-
-            log.info("========== WSI 图像信息 ==========");
-            log.info("图像尺寸: {}x{}", level0Width, level0Height);
-            log.info("最大维度: {}", maxDimension);
-            log.info("金字塔层级数: {}", openSlide.getLevelCount());
-            log.info("==================================");
-
-            int tileSize = 256;
-            int testLevel = 0; // 测试的层级
-
-            // 计算下采样因子
-            double tileCount = Math.pow(2, testLevel);
-            double downSample = maxDimension / (tileCount * tileSize);
-
-            log.info("\n测试层级: {}", testLevel);
-            log.info("瓦片数量系数: {}", tileCount);
-            log.info("下采样因子: {}", downSample);
-
-            // 计算在 Level 0 坐标系中的读取区域
-            int x = 0, y = 0;
-            long regionX = (long) (x * tileSize * tileCount);
-            long regionY = (long) (y * tileSize * tileCount);
-            long regionWidth = (long) (tileSize * tileCount);
-            long regionHeight = (long) (tileSize * tileCount);
-
-            // 边界检查：使用实际图像尺寸除以下采样因子，确保不超出范围
-            // 这样可以正确处理行或列的最后一个 tile
-            long maxRegionX = (long) (level0Width / downSample);
-            long maxRegionY = (long) (level0Height / downSample);
-
-            if (regionX + regionWidth > maxRegionX) {
-                regionWidth = maxRegionX - regionX;
-            }
-            if (regionY + regionHeight > maxRegionY) {
-                regionHeight = maxRegionY - regionY;
-            }
-
-            log.info("Level 0 读取区域: x={}, y={}, w={}, h={}",
-                    regionX, regionY, regionWidth, regionHeight);
-            log.info("下采样后可用区域: maxW={}, maxH={}", maxRegionX, maxRegionY);
-
-            // 生成瓦片：使用实际读取区域的尺寸（已经过边界检查和下采样调整）
-            int outputWidth = (int) regionWidth;
-            int outputHeight = (int) regionHeight;
-
-            BufferedImage result = new BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB);
-            Graphics2D g = result.createGraphics();
-
-            // 设置白色背景（用于填充空白区域）
-            g.setColor(Color.WHITE);
-            g.fillRect(0, 0, outputWidth, outputHeight);
-
-            // ... existing code ...
-
-            // 使用 paintRegion 绘制
-            // 注意：paintRegion 会自动处理缩放，将 regionWidth x regionHeight 的区域
-            // 缩放到 outputWidth x outputHeight 的目标区域
-            openSlide.paintRegion(g,
-                    0, 0,                                    // 目标位置 (dx, dy)
-                    regionX, regionY,                        // 源位置 (sx, sy)
-                    (int) regionWidth, (int) regionHeight,   // 源尺寸 (w, h)
-                    downSample);                             // 下采样因子
-
-            g.dispose();
-
-            log.info("瓦片生成完成: {}x{}", result.getWidth(), result.getHeight());
-
-
-            // 保存文件
-            String outputPath = String.format("E:\\wsi_tile_level%d_%dx%d.jpg", testLevel, x, y);
-            File outputFile = new File(outputPath);
-            javax.imageio.ImageIO.write(result, "jpg", outputFile);
-            log.info("\n瓦片已保存到: {}", outputFile.getAbsolutePath());*/
-            for (String location : WsiTileGenerator.getTileNamesByLevel(openSlide, 2)){
-                WsiTileGenerator.TileCoordinate  coordinate = WsiTileGenerator.parseAndValidateLocation(location);
+            for (String location : WsiTileGenerator.getTileNamesByLevel(openSlide, 2)) {
+                WsiTileGenerator.TileCoordinate coordinate = WsiTileGenerator.parseAndValidateLocation(location);
                 String outputPath = String.format("E:\\wsi_tile_level\\%d-%d-%d.jpg", 2, coordinate.getRowIndex(), coordinate.getColumnIndex());
                 WsiTileGenerator.generateSingleTileToFile(openSlide, location, 256, outputPath);
             }
-
 
             // 用系统默认查看器打开
             /*
@@ -371,8 +290,8 @@ public class ImageTileServiceImpl implements IImageTileService {
     /**
      * 获取或创建 OpenSlide 实例（带缓存）
      *
-     * @param imageId   图像ID
-     * @param filePath  文件路径
+     * @param imageId  图像ID
+     * @param filePath 文件路径
      * @return OpenSlide 实例
      * @throws IOException 打开失败
      */
@@ -446,15 +365,25 @@ public class ImageTileServiceImpl implements IImageTileService {
     }
 
 
+    /**
+     * 获取图像瓦片
+     *
+     * @param imageId  图像ID
+     * @param zoom     OpenLayers zoom级别
+     * @param x        瓦片X坐标
+     * @param y        瓦片Y坐标
+     * @param tileSize 瓦片尺寸（像素），默认256
+     * @return
+     */
     @Override
-    public Resource getTile(TileQueryDTO query) {
-        Image image = imageMapper.selectById(query.getImageId());
-        if (image == null) {
-            throw new BizException(BizErrorCode.IMAGE_NOT_FOUND,
-                    "图像不存在: " + query.getImageId());
-        }
-
+    public Resource getTileByZoom(Long imageId, Integer zoom, Integer x, Integer y, Integer tileSize) {
         try {
+            Image image = imageMapper.selectById(imageId);
+            if (image == null) {
+                throw new BizException(BizErrorCode.IMAGE_NOT_FOUND,
+                        "图像不存在: " + imageId);
+            }
+
             // 1. 检查Tile缓存
             /*String tileCacheKey = String.format("tile:%d:%d:%d:%d",
                     query.getImageId(), query.getLevel(), query.getCol(), query.getRow());
@@ -463,83 +392,20 @@ public class ImageTileServiceImpl implements IImageTileService {
                 log.debug("从缓存获取Tile: {}", tileCacheKey);
                 return new ByteArrayResource(cachedTile);
             }*/
-
-            int tileSize = query.getTileSize() != null ? query.getTileSize() : 256;
-            long level0Width = image.getWidth();
-            long level0Height = image.getHeight();
-            // 最大维度
-            long maxDim = Math.max(level0Width,level0Height);
-            // 计算最大可用层级
-            int maxLevel = (int) Math.ceil(Math.log((double) maxDim / tileSize) / Math.log(2));
-            
-            // 如果请求的层级超出范围，返回空白瓦片
-            if (query.getLevel() < 0 || query.getLevel() > maxLevel) {
-                log.warn("请求的层级超出范围: level={}, maxLevel={}, 返回空白瓦片", 
-                        query.getLevel(), maxLevel);
-                return null;
-            }else{
-                log.info("开始读取 Tile: imageId={}, level={}, col={}, row={}, tileSize={}",
-                        query.getImageId(), query.getLevel(), query.getCol(), query.getRow(), tileSize);
-
-                OpenSlide openSlide = getOrCreateOpenSlide(image.getImageId(), image.getFilePath());
-
-                // 3. 使用 WsiTileGenerator 工具类读取瓦片
-                BufferedImage tileImage = WsiTileGenerator.generateTile(openSlide, query.getLevel(), query.getCol(), query.getRow(), tileSize);
-
-                // 4. 转换为JPEG
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(tileImage, "jpeg", baos);
-                byte[] tileData = baos.toByteArray();
-
-                log.info("Tile转换完成: JPEG大小={} bytes", tileData.length);
-
-                // 5. 缓存Tile（24小时）
+            OpenSlide openSlide = getOrCreateOpenSlide(image.getImageId(), image.getFilePath());
+            BufferedImage tileImage = WsiTileGenerator.generateTile(openSlide, zoom, x, y, tileSize);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(tileImage, "jpeg", baos);
+            byte[] tileData = baos.toByteArray();
+            // 5. 缓存Tile（24小时）
 //            redisTemplate.opsForValue().set(tileCacheKey, tileData, 24, TimeUnit.HOURS);
-
-                return new ByteArrayResource(tileData);
-            }
-
-        } catch (IOException e) {
-            log.error("获取Tile失败: imageId={}, level={}, col={}, row={}",
-                    query.getImageId(), query.getLevel(), query.getCol(), query.getRow(), e);
-            throw new BizException(BizErrorCode.SYSTEM_ERROR, "获取Tile失败: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public Resource getTileByZoom(Long imageId, Integer zoom, Integer x, Integer y) {
-        try {
-            // 获取图像元数据以确定最大 zoom 层级
-            ImageMetadataVO metadata = getImageMetadata(imageId);
-            int maxZoom = metadata.getLevelCount() - 1;  // Deep Zoom: level 0 是最高分辨率
-
-            // OpenLayers Zoomify zoom 转换：
-            // OpenLayers: zoom=0 (最低分辨率) -> zoom=maxZoom (最高分辨率)
-            // Deep Zoom: level=0 (最高分辨率) -> level=maxLevel (最低分辨率)
-            // 转换公式：deepZoomLevel = maxZoom - openLayersZoom
-            int deepZoomLevel = maxZoom - zoom;
-
-            log.debug("Zoom转换: OpenLayers zoom={} -> Deep Zoom level={} (maxZoom={})",
-                     zoom, deepZoomLevel, maxZoom);
-
-            TileQueryDTO query = new TileQueryDTO();
-            query.setImageId(imageId);
-            query.setLevel(deepZoomLevel);  // 转换为 Deep Zoom level
-            query.setCol(x);
-            query.setRow(y);
-            return getTile(query);
-
+            return new ByteArrayResource(tileData);
         } catch (Exception e) {
             log.error("根据Zoom获取Tile失败: imageId={}, zoom={}, x={}, y={}",
                     imageId, zoom, x, y, e);
             throw new BizException(BizErrorCode.SYSTEM_ERROR, "获取Tile失败: " + e.getMessage());
         }
     }
-
-// ... existing code ...
-
 
     @Override
     public String getLevelInfo(Long imageId) {

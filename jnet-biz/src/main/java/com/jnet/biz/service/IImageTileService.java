@@ -30,23 +30,18 @@ public interface IImageTileService {
     Resource getThumbnail(Long imageId, Integer maxSize);
 
     /**
-     * 获取指定Tile
-     *
-     * @param query Tile查询参数
-     * @return Tile图像资源
-     */
-    Resource getTile(TileQueryDTO query);
-
-    /**
      * 根据OpenLayers zoom级别获取Tile（后端负责zoom到level的转换）
      *
      * @param imageId 图像ID
      * @param zoom OpenLayers zoom级别
      * @param x 瓦片X坐标
      * @param y 瓦片Y坐标
+     * @param tileSize 瓦片尺寸（像素），默认256
      * @return Tile图像资源
      */
-    Resource getTileByZoom(Long imageId, Integer zoom, Integer x, Integer y);
+    Resource getTileByZoom(Long imageId, Integer zoom, Integer x, Integer y, Integer tileSize);
+
+
 
     /**
      * 获取金字塔层级信息
