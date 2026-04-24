@@ -438,7 +438,7 @@ CREATE TABLE biz_annotation (
     batch_id BIGINT REFERENCES biz_batch(batch_id) ON DELETE SET NULL,
     tag_id BIGINT NOT NULL REFERENCES biz_tag(tag_id) ON DELETE CASCADE,
     parent_annotation_id BIGINT REFERENCES biz_annotation(annotation_id) ON DELETE SET NULL,
-    annotation_type VARCHAR(20) NOT NULL,
+    geom_type VARCHAR(20) NOT NULL,
     
     -- 空间数据存储（二选一，推荐 geom）
     geom GEOMETRY(Geometry, 0),  -- PostGIS几何字段（主存储，支持空间索引和查询）
@@ -451,8 +451,8 @@ CREATE TABLE biz_annotation (
     
     -- 标注属性
     confidence FLOAT,
-    area_pixels BIGINT,
-    perimeter FLOAT,
+    area NUMERIC(38,2),
+    perimeter NUMERIC(38,2),
     centroid_x FLOAT,
     centroid_y FLOAT,
     description TEXT,
@@ -478,15 +478,15 @@ COMMENT ON COLUMN biz_annotation.project_id IS '所属项目ID（冗余字段，
 COMMENT ON COLUMN biz_annotation.batch_id IS '所属批次ID（冗余字段，便于按批次统计）';
 COMMENT ON COLUMN biz_annotation.tag_id IS '关联标签ID';
 COMMENT ON COLUMN biz_annotation.parent_annotation_id IS '父标注ID（支持层级标注，如：脏器->组织）';
-COMMENT ON COLUMN biz_annotation.annotation_type IS '标注类型 (POINT/LINESTRING/POLYGON/MULTIPOLYGON)';
+COMMENT ON COLUMN biz_annotation.geom_type IS '标注类型 (POINT/LINESTRING/POLYGON/MULTIPOLYGON)';
 COMMENT ON COLUMN biz_annotation.geom IS 'PostGIS几何字段（主存储，支持空间索引和精确查询）';
 COMMENT ON COLUMN biz_annotation.coordinates_geojson IS 'GeoJSON格式坐标（可选备份，用于前端快速渲染，可为NULL避免冗余）';
 COMMENT ON COLUMN biz_annotation.lod_level IS 'LOD层级 (0=原始精度, 1-5=简化层级，数字越大越简化，用于多分辨率渲染)';
 COMMENT ON COLUMN biz_annotation.simplified_geom IS '简化后的几何（用于低分辨率快速渲染，减少数据传输量）';
 COMMENT ON COLUMN biz_annotation.bbox IS '边界框（用于快速筛选、视口裁剪和碰撞检测）';
 COMMENT ON COLUMN biz_annotation.confidence IS '置信度 (0-1)';
-COMMENT ON COLUMN biz_annotation.area_pixels IS '标注区域面积（像素²）';
-COMMENT ON COLUMN biz_annotation.perimeter IS '周长';
+COMMENT ON COLUMN biz_annotation.area IS '标注区域面积（微米²）';
+COMMENT ON COLUMN biz_annotation.perimeter IS '周长（微米）';
 COMMENT ON COLUMN biz_annotation.centroid_x IS '质心X坐标';
 COMMENT ON COLUMN biz_annotation.centroid_y IS '质心Y坐标';
 COMMENT ON COLUMN biz_annotation.description IS '标注描述信息';
@@ -548,7 +548,7 @@ WITH RECURSIVE annotation_tree AS (
         ann.image_id,
         ann.tag_id,
         ann.parent_annotation_id,
-        ann.annotation_type,
+        ann.geom_type,
         ann.geom,
         t.name as tag_name,
         t.category as tag_category,
@@ -566,7 +566,7 @@ WITH RECURSIVE annotation_tree AS (
         child.image_id,
         child.tag_id,
         child.parent_annotation_id,
-        child.annotation_type,
+        child.geom_type,
         child.geom,
         t.name as tag_name,
         t.category as tag_category,
@@ -585,7 +585,7 @@ SELECT
     ann.tag_id,
     t.name as tag_name,
     t.category,
-    ann.annotation_type,
+    ann.geom_type,
     ST_AsText(ann.geom) as geometry_wkt,
     ann.area_pixels,
     ann.confidence
@@ -621,7 +621,7 @@ SELECT
     ann.parent_annotation_id,
     ann.tag_id,
     t.name as tag_name,
-    ann.annotation_type,
+    ann.geom_type,
     ST_AsText(ann.geom) as geometry_wkt,
     CASE 
         WHEN ann.parent_annotation_id IS NULL THEN '脏器'
@@ -642,12 +642,12 @@ SELECT
     ann.tag_id,
     t.name as tag_name,
     ann.parent_annotation_id,
-    ann.annotation_type,
+    ann.geom_type,
     json_build_object(
         'id', ann.annotation_id,
         'tagId', ann.tag_id,
         'tagName', t.name,
-        'type', ann.annotation_type,
+        'type', ann.geom_type,
         'geometry', ST_AsGeoJSON(ann.geom)::json,
         'children', COALESCE(children.data, '[]'::json)
     ) as annotation_node
@@ -659,7 +659,7 @@ LEFT JOIN LATERAL (
             'id', child.annotation_id,
             'tagId', child.tag_id,
             'tagName', child_tag.name,
-            'type', child.annotation_type,
+            'type', child.geom_type,
             'geometry', ST_AsGeoJSON(child.geom)::json
         )
     ) as data
@@ -698,7 +698,7 @@ CREATE OR REPLACE FUNCTION get_annotations_by_zoom(
     tag_id BIGINT,
     tag_name VARCHAR(100),
     parent_annotation_id BIGINT,
-    annotation_type VARCHAR(20),
+    geom_type VARCHAR(20),
     geom GEOMETRY,
     lod_level INT,
     area_pixels BIGINT,
@@ -723,7 +723,7 @@ BEGIN
         ann.tag_id,
         t.name as tag_name,
         ann.parent_annotation_id,
-        ann.annotation_type,
+        ann.geom_type,
         COALESCE(ann.simplified_geom, ann.geom) as geom,  -- 优先使用简化几何
         ann.lod_level,
         ann.area_pixels,
@@ -785,13 +785,13 @@ BEGIN
             
             -- 插入简化版本
             INSERT INTO biz_annotation (
-                slide_id, image_id, project_id, batch_id, tag_id, parent_annotation_id, annotation_type,
+                slide_id, image_id, project_id, batch_id, tag_id, parent_annotation_id, geom_type,
                 geom, simplified_geom, bbox, lod_level,
                 area_pixels, perimeter, centroid_x, centroid_y,
                 created_by, creation_source, is_active, create_time, update_time
             )
             SELECT 
-                slide_id, image_id, project_id, batch_id, tag_id, parent_annotation_id, annotation_type,
+                slide_id, image_id, project_id, batch_id, tag_id, parent_annotation_id, geom_type,
                 rec.geom, v_simplified, v_bbox, i,
                 ST_Area(rec.geom), ST_Perimeter(rec.geom),
                 ST_X(ST_Centroid(rec.geom)), ST_Y(ST_Centroid(rec.geom)),
