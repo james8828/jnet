@@ -86,7 +86,104 @@ CREATE INDEX idx_batch_project ON biz_batch(project_id);
 CREATE INDEX idx_batch_code ON biz_batch(batch_code);
 
 -- ============================================================================
--- 3. 图像表 (biz_image)
+-- 3. 切片表 (biz_slide) - 新增
+-- ============================================================================
+CREATE TABLE biz_slide (
+    slide_id BIGSERIAL PRIMARY KEY,
+    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
+    project_id BIGINT NOT NULL REFERENCES biz_project(project_id) ON DELETE CASCADE,
+    batch_id BIGINT NOT NULL REFERENCES biz_batch(batch_id) ON DELETE CASCADE,
+    slide_code VARCHAR(100) NOT NULL UNIQUE,
+    slide_name VARCHAR(200),
+    pathology_id VARCHAR(100),
+    patient_id VARCHAR(100),
+    staining_type VARCHAR(50),
+    tissue_type VARCHAR(100),
+    diagnosis VARCHAR(500),
+    clinical_info JSONB,
+    storage_path VARCHAR(500),
+    tile_storage_path VARCHAR(500),
+    thumbnail_url VARCHAR(500),
+    width INT,
+    height INT,
+    levels INT,
+    mpp_x FLOAT,
+    mpp_y FLOAT,
+    magnification INT,
+    file_size BIGINT,
+    format VARCHAR(20),
+    scanner_model VARCHAR(100),
+    scan_date TIMESTAMP,
+    quality_score FLOAT,
+    qc_status VARCHAR(20) DEFAULT 'PENDING',
+    qc_comment TEXT,
+    qc_by BIGINT,
+    qc_time TIMESTAMP,
+    annotation_count INT DEFAULT 0,
+    verified_annotation_count INT DEFAULT 0,
+    lifecycle_status VARCHAR(20) DEFAULT 'Raw',
+    is_public BOOLEAN DEFAULT FALSE,
+    privacy_level SMALLINT DEFAULT 1,
+    tags JSONB,
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    del_flag BOOLEAN DEFAULT FALSE
+);
+
+COMMENT ON TABLE biz_slide IS '切片表（WSI完整切片信息）';
+COMMENT ON COLUMN biz_slide.slide_id IS '主键ID（切片ID）';
+COMMENT ON COLUMN biz_slide.image_id IS '关联图像ID';
+COMMENT ON COLUMN biz_slide.project_id IS '所属项目ID（冗余字段，便于查询）';
+COMMENT ON COLUMN biz_slide.batch_id IS '所属批次ID（冗余字段，便于查询）';
+COMMENT ON COLUMN biz_slide.slide_code IS '切片编码（唯一标识）';
+COMMENT ON COLUMN biz_slide.slide_name IS '切片名称';
+COMMENT ON COLUMN biz_slide.pathology_id IS '病理号';
+COMMENT ON COLUMN biz_slide.patient_id IS '患者ID（脱敏）';
+COMMENT ON COLUMN biz_slide.staining_type IS '染色类型 (HE/IHC/IF等)';
+COMMENT ON COLUMN biz_slide.tissue_type IS '组织类型';
+COMMENT ON COLUMN biz_slide.diagnosis IS '诊断结果';
+COMMENT ON COLUMN biz_slide.clinical_info IS '临床信息 (JSONB)';
+COMMENT ON COLUMN biz_slide.storage_path IS '原始文件存储路径';
+COMMENT ON COLUMN biz_slide.tile_storage_path IS '瓦片存储路径';
+COMMENT ON COLUMN biz_slide.thumbnail_url IS '缩略图URL';
+COMMENT ON COLUMN biz_slide.width IS '图像宽度（像素）';
+COMMENT ON COLUMN biz_slide.height IS '图像高度（像素）';
+COMMENT ON COLUMN biz_slide.levels IS '金字塔层级数';
+COMMENT ON COLUMN biz_slide.mpp_x IS 'X轴物理分辨率 (um/px)';
+COMMENT ON COLUMN biz_slide.mpp_y IS 'Y轴物理分辨率 (um/px)';
+COMMENT ON COLUMN biz_slide.magnification IS '放大倍数';
+COMMENT ON COLUMN biz_slide.file_size IS '文件大小（字节）';
+COMMENT ON COLUMN biz_slide.format IS '格式 (SVS/NDPI/JPG/PNG)';
+COMMENT ON COLUMN biz_slide.scanner_model IS '扫描仪型号';
+COMMENT ON COLUMN biz_slide.scan_date IS '扫描日期';
+COMMENT ON COLUMN biz_slide.quality_score IS '质量评分 (0-100)';
+COMMENT ON COLUMN biz_slide.qc_status IS '质检状态 (PENDING/PASSED/FAILED)';
+COMMENT ON COLUMN biz_slide.qc_comment IS '质检备注';
+COMMENT ON COLUMN biz_slide.qc_by IS '质检人ID';
+COMMENT ON COLUMN biz_slide.qc_time IS '质检时间';
+COMMENT ON COLUMN biz_slide.annotation_count IS '标注总数';
+COMMENT ON COLUMN biz_slide.verified_annotation_count IS '已审核标注数';
+COMMENT ON COLUMN biz_slide.lifecycle_status IS '生命周期状态 (Raw/Processing/Annotated/Verified/Archived)';
+COMMENT ON COLUMN biz_slide.is_public IS '是否公开';
+COMMENT ON COLUMN biz_slide.privacy_level IS '隐私级别 (1:公开, 2:脱敏, 3:绝密)';
+COMMENT ON COLUMN biz_slide.tags IS '标签集合 (JSONB)';
+
+-- 索引优化
+CREATE INDEX idx_slide_image ON biz_slide(image_id);
+CREATE INDEX idx_slide_project ON biz_slide(project_id);
+CREATE INDEX idx_slide_batch ON biz_slide(batch_id);
+CREATE INDEX idx_slide_code ON biz_slide(slide_code);
+CREATE INDEX idx_slide_pathology ON biz_slide(pathology_id);
+CREATE INDEX idx_slide_patient ON biz_slide(patient_id);
+CREATE INDEX idx_slide_lifecycle ON biz_slide(lifecycle_status);
+CREATE INDEX idx_slide_qc_status ON biz_slide(qc_status);
+CREATE INDEX idx_slide_create_time ON biz_slide(create_time DESC);
+CREATE INDEX idx_slide_scan_date ON biz_slide(scan_date);
+
+-- ============================================================================
+-- 4. 图像表 (biz_image)
 -- ============================================================================
 CREATE TABLE biz_image (
     image_id BIGSERIAL PRIMARY KEY,
@@ -146,7 +243,7 @@ CREATE INDEX idx_patient_id ON biz_image(patient_id);
 CREATE INDEX idx_lifecycle_status ON biz_image(lifecycle_status);
 
 -- ============================================================================
--- 4. 标签定义表 (biz_tag)
+-- 5. 标签定义表 (biz_tag)
 -- ============================================================================
 CREATE TABLE biz_tag (
     tag_id BIGSERIAL PRIMARY KEY,
@@ -178,7 +275,7 @@ CREATE INDEX idx_tag_category ON biz_tag(category);
 CREATE INDEX idx_tag_parent ON biz_tag(parent_id);
 
 -- ============================================================================
--- 5. 图像标签关联表 (biz_image_tag_rel)
+-- 6. 图像标签关联表 (biz_image_tag_rel)
 -- ============================================================================
 CREATE TABLE biz_image_tag_rel (
     rel_id BIGSERIAL PRIMARY KEY,
@@ -210,7 +307,7 @@ CREATE INDEX idx_rel_vector ON biz_image_tag_rel(vector_annotation_id)
     WHERE vector_annotation_id IS NOT NULL;
 
 -- ============================================================================
--- 6. 任务执行表 (biz_task)
+-- 7. 任务执行表 (biz_task)
 -- ============================================================================
 CREATE TABLE biz_task (
     task_id BIGSERIAL PRIMARY KEY,
@@ -252,7 +349,7 @@ CREATE INDEX idx_task_project ON biz_task(project_id, type);
 CREATE INDEX idx_task_status ON biz_task(status);
 
 -- ============================================================================
--- 7. 模型注册表 (biz_model)
+-- 8. 模型注册表 (biz_model)
 -- ============================================================================
 CREATE TABLE biz_model (
     model_id BIGSERIAL PRIMARY KEY,
@@ -290,7 +387,7 @@ CREATE INDEX idx_model_project ON biz_model(project_id);
 CREATE UNIQUE INDEX idx_model_version ON biz_model(model_name, version);
 
 -- ============================================================================
--- 8. 预测结果表 (biz_prediction)
+-- 9. 预测结果表 (biz_prediction)
 -- ============================================================================
 CREATE TABLE biz_prediction (
     prediction_id BIGSERIAL PRIMARY KEY,
@@ -331,11 +428,14 @@ CREATE INDEX idx_pred_image ON biz_prediction(image_id);
 CREATE INDEX idx_review_status ON biz_prediction(review_status);
 
 -- ============================================================================
--- 9. 矢量标注表 (biz_annotation)
+-- 10. 矢量标注表 (biz_annotation)
 -- ============================================================================
 CREATE TABLE biz_annotation (
     annotation_id BIGSERIAL PRIMARY KEY,
+    slide_id BIGINT NOT NULL REFERENCES biz_slide(slide_id) ON DELETE CASCADE,
     image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
+    project_id BIGINT REFERENCES biz_project(project_id) ON DELETE SET NULL,
+    batch_id BIGINT REFERENCES biz_batch(batch_id) ON DELETE SET NULL,
     tag_id BIGINT NOT NULL REFERENCES biz_tag(tag_id) ON DELETE CASCADE,
     parent_annotation_id BIGINT REFERENCES biz_annotation(annotation_id) ON DELETE SET NULL,
     annotation_type VARCHAR(20) NOT NULL,
@@ -355,6 +455,7 @@ CREATE TABLE biz_annotation (
     perimeter FLOAT,
     centroid_x FLOAT,
     centroid_y FLOAT,
+    description TEXT,
     created_by BIGINT,
     creation_source VARCHAR(20),
     review_status VARCHAR(20) DEFAULT 'PENDING',
@@ -371,7 +472,10 @@ CREATE TABLE biz_annotation (
 
 COMMENT ON TABLE biz_annotation IS '矢量标注表';
 COMMENT ON COLUMN biz_annotation.annotation_id IS '主键ID（标注对象ID）';
-COMMENT ON COLUMN biz_annotation.image_id IS '关联图像ID';
+COMMENT ON COLUMN biz_annotation.slide_id IS '关联切片ID（主要查询维度）';
+COMMENT ON COLUMN biz_annotation.image_id IS '关联图像ID（冗余字段）';
+COMMENT ON COLUMN biz_annotation.project_id IS '所属项目ID（冗余字段，便于按项目统计）';
+COMMENT ON COLUMN biz_annotation.batch_id IS '所属批次ID（冗余字段，便于按批次统计）';
 COMMENT ON COLUMN biz_annotation.tag_id IS '关联标签ID';
 COMMENT ON COLUMN biz_annotation.parent_annotation_id IS '父标注ID（支持层级标注，如：脏器->组织）';
 COMMENT ON COLUMN biz_annotation.annotation_type IS '标注类型 (POINT/LINESTRING/POLYGON/MULTIPOLYGON)';
@@ -385,6 +489,7 @@ COMMENT ON COLUMN biz_annotation.area_pixels IS '标注区域面积（像素²�
 COMMENT ON COLUMN biz_annotation.perimeter IS '周长';
 COMMENT ON COLUMN biz_annotation.centroid_x IS '质心X坐标';
 COMMENT ON COLUMN biz_annotation.centroid_y IS '质心Y坐标';
+COMMENT ON COLUMN biz_annotation.description IS '标注描述信息';
 COMMENT ON COLUMN biz_annotation.created_by IS '创建人ID';
 COMMENT ON COLUMN biz_annotation.creation_source IS '来源 (AI_PRE_ANNOTATION/MANUAL_DRAWING/AUTO_SEGMENTATION)';
 COMMENT ON COLUMN biz_annotation.review_status IS '审核状态 (PENDING/APPROVED/REJECTED/MODIFIED)';
@@ -396,17 +501,22 @@ COMMENT ON COLUMN biz_annotation.sort_order IS '排序序号（同一层级内�
 
 -- 索引优化
 CREATE INDEX idx_vec_spatial ON biz_annotation USING GIST(geom);
+CREATE INDEX idx_vec_slide ON biz_annotation(slide_id, is_active);
 CREATE INDEX idx_vec_image ON biz_annotation(image_id, is_active);
+CREATE INDEX idx_vec_project ON biz_annotation(project_id, is_active) WHERE project_id IS NOT NULL;
+CREATE INDEX idx_vec_batch ON biz_annotation(batch_id, is_active) WHERE batch_id IS NOT NULL;
 CREATE INDEX idx_vec_tag ON biz_annotation(tag_id, is_active);
 CREATE INDEX idx_vec_parent ON biz_annotation(parent_annotation_id) WHERE parent_annotation_id IS NOT NULL;
-CREATE INDEX idx_vec_review ON biz_annotation(review_status, image_id) 
+CREATE INDEX idx_vec_review ON biz_annotation(review_status, slide_id) 
     WHERE review_status = 'PENDING';
+CREATE INDEX idx_vec_slide_tag ON biz_annotation(slide_id, tag_id, is_active);
 CREATE INDEX idx_vec_image_tag ON biz_annotation(image_id, tag_id, is_active);
 CREATE INDEX idx_vec_create_time ON biz_annotation(create_time DESC);
 CREATE INDEX idx_vec_update_time ON biz_annotation(update_time DESC);
+CREATE INDEX idx_vec_description ON biz_annotation(description);
 
 -- LOD多分辨率索引
-CREATE INDEX idx_vec_lod ON biz_annotation(image_id, lod_level, is_active);
+CREATE INDEX idx_vec_lod ON biz_annotation(slide_id, lod_level, is_active);
 CREATE INDEX idx_vec_bbox ON biz_annotation USING GIST(bbox) WHERE bbox IS NOT NULL;
 
 -- ============================================================================
@@ -577,7 +687,7 @@ ORDER BY ann.sort_order;
 --   zoom >= 17: lod_level = 0 (原始精度)
 
 CREATE OR REPLACE FUNCTION get_annotations_by_zoom(
-    p_image_id BIGINT,
+    p_slide_id BIGINT,
     p_zoom_level INT,
     p_min_x FLOAT DEFAULT NULL,
     p_min_y FLOAT DEFAULT NULL,
@@ -620,7 +730,7 @@ BEGIN
         ann.confidence
     FROM biz_annotation ann
     JOIN biz_tag t ON ann.tag_id = t.tag_id
-    WHERE ann.image_id = p_image_id
+    WHERE ann.slide_id = p_slide_id  -- 使用 slide_id
       AND ann.is_active = true
       AND ann.lod_level <= v_lod_level  -- 返回当前层级及更简化的数据
       AND (
@@ -633,13 +743,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 使用示例：
--- SELECT * FROM get_annotations_by_zoom(456, 10);  -- zoom=10，返回 lod_level <= 3
--- SELECT * FROM get_annotations_by_zoom(456, 18, 100, 100, 500, 500);  -- 带视口裁剪
+-- SELECT * FROM get_annotations_by_zoom(789, 10);  -- slide_id=789, zoom=10
+-- SELECT * FROM get_annotations_by_zoom(789, 18, 100, 100, 500, 500);  -- 带视口裁剪
 
 
 -- 场景2: 自动生成 LOD 简化几何（批量处理）
 CREATE OR REPLACE FUNCTION generate_lod_geometries(
-    p_image_id BIGINT,
+    p_slide_id BIGINT,
     p_max_lod INT DEFAULT 5
 ) RETURNS VOID AS $$
 DECLARE
@@ -651,7 +761,7 @@ BEGIN
     FOR rec IN 
         SELECT annotation_id, geom 
         FROM biz_annotation 
-        WHERE image_id = p_image_id 
+        WHERE slide_id = p_slide_id  -- 使用 slide_id
           AND is_active = true
           AND geom IS NOT NULL
           AND lod_level = 0  -- 只处理原始精度标注
@@ -675,13 +785,13 @@ BEGIN
             
             -- 插入简化版本
             INSERT INTO biz_annotation (
-                image_id, tag_id, parent_annotation_id, annotation_type,
+                slide_id, image_id, project_id, batch_id, tag_id, parent_annotation_id, annotation_type,
                 geom, simplified_geom, bbox, lod_level,
                 area_pixels, perimeter, centroid_x, centroid_y,
                 created_by, creation_source, is_active, create_time, update_time
             )
             SELECT 
-                image_id, tag_id, parent_annotation_id, annotation_type,
+                slide_id, image_id, project_id, batch_id, tag_id, parent_annotation_id, annotation_type,
                 rec.geom, v_simplified, v_bbox, i,
                 ST_Area(rec.geom), ST_Perimeter(rec.geom),
                 ST_X(ST_Centroid(rec.geom)), ST_Y(ST_Centroid(rec.geom)),
@@ -694,7 +804,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 使用示例：
--- SELECT generate_lod_geometries(456, 5);  -- 为图像456生成5个LOD层级
+-- SELECT generate_lod_geometries(789, 5);  -- 为切片789生成5个LOD层级
 
 
 -- ============================================================================
@@ -704,7 +814,7 @@ $$ LANGUAGE plpgsql;
 -- 按优先级分批加载标注，先显示重要/大的标注，再逐步加载细节
 
 CREATE OR REPLACE FUNCTION get_annotations_progressive(
-    p_image_id BIGINT,
+    p_slide_id BIGINT,
     p_batch_size INT DEFAULT 100,
     p_offset INT DEFAULT 0,
     p_min_area FLOAT DEFAULT 0  -- 最小面积过滤（可选）
@@ -739,7 +849,7 @@ BEGIN
             COUNT(*) OVER() as total_count
         FROM biz_annotation ann
         JOIN biz_tag t ON ann.tag_id = t.tag_id
-        WHERE ann.image_id = p_image_id
+        WHERE ann.slide_id = p_slide_id  -- 使用 slide_id
           AND ann.is_active = true
           AND ann.lod_level <= 2  -- 只加载中低精度
           AND (p_min_area = 0 OR ann.area_pixels >= p_min_area)
@@ -762,10 +872,10 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 使用示例：分3批加载
--- 第1批：SELECT * FROM get_annotations_progressive(456, 100, 0);       -- 最重要的100个
--- 第2批：SELECT * FROM get_annotations_progressive(456, 100, 100);     -- 次要的100个
--- 第3批：SELECT * FROM get_annotations_progressive(456, 100, 200);     -- 其余
--- 过滤小目标：SELECT * FROM get_annotations_progressive(456, 100, 0, 1000);  -- 只显示面积>1000的
+-- 第1批：SELECT * FROM get_annotations_progressive(789, 100, 0);       -- 最重要的100个
+-- 第2批：SELECT * FROM get_annotations_progressive(789, 100, 100);     -- 次要的100个
+-- 第3批：SELECT * FROM get_annotations_progressive(789, 100, 200);     -- 其余
+-- 过滤小目标：SELECT * FROM get_annotations_progressive(789, 100, 0, 1000);  -- 只显示面积>1000的
 
 
 -- ============================================================================
@@ -775,7 +885,7 @@ $$ LANGUAGE plpgsql;
 -- 生成 MVT 格式数据，前端使用 GPU 直接渲染，适合超大规模数据
 
 CREATE OR REPLACE FUNCTION get_annotations_as_mvt(
-    p_image_id BIGINT,
+    p_slide_id BIGINT,
     p_zoom INT,
     p_x INT,
     p_y INT,
@@ -807,7 +917,7 @@ BEGIN
                 false  -- 不裁剪
             ) as geom
         FROM biz_annotation
-        WHERE image_id = p_image_id
+        WHERE slide_id = p_slide_id  -- 使用 slide_id
           AND is_active = true
           AND lod_level <= p_lod_max
           AND ST_Intersects(bbox, v_bounds)  -- 使用边界框快速筛选
@@ -818,13 +928,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 使用示例：
--- SELECT get_annotations_as_mvt(456, 10, 512, 256);  -- zoom=10, tile=(512,256)
--- SELECT get_annotations_as_mvt(456, 12, 2048, 1024, 4096, 1);  -- 更高精度
+-- SELECT get_annotations_as_mvt(789, 10, 512, 256);  -- slide_id=789, zoom=10
+-- SELECT get_annotations_as_mvt(789, 12, 2048, 1024, 4096, 1);  -- 更高精度
 
 
 -- MVT 瓦片统计信息
 CREATE OR REPLACE FUNCTION get_mvt_tile_stats(
-    p_image_id BIGINT,
+    p_slide_id BIGINT,
     p_zoom INT
 ) RETURNS TABLE (
     tile_x INT,
@@ -842,7 +952,7 @@ BEGIN
         AVG(area_pixels) as avg_area,
         BOOL_OR(simplified_geom IS NOT NULL) as has_simplified
     FROM biz_annotation
-    WHERE image_id = p_image_id
+    WHERE slide_id = p_slide_id  -- 使用 slide_id
       AND is_active = true
       AND lod_level <= 2
       AND bbox IS NOT NULL
@@ -852,7 +962,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 使用示例：查看哪些瓦片数据量大
--- SELECT * FROM get_mvt_tile_stats(456, 10);
+-- SELECT * FROM get_mvt_tile_stats(789, 10);
 
 -- ============================================================================
 -- 图像生命周期状态说明
