@@ -1,18 +1,17 @@
 package com.jnet.anno.vo.measure;
 
-import com.jnet.api.vo.PageQueryVO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * @author mugw
- * @version 1.0
- * @description
- * @date 2025/5/30 09:25:09
+ * 测量查询请求
+ *
+ * @author JNet Team
+ * @since 2025-05-30
  */
 @Data
-public class MeasureReq extends PageQueryVO {
+public class MeasureReq {
 
     @NotNull(message = "{ARGUMENT_INVALID}")
     @Schema(description = "切片ID")
@@ -20,4 +19,8 @@ public class MeasureReq extends PageQueryVO {
 
     @Schema(description = "标注名称")
     private String measureFullName;
+
+    private Integer current;
+
+    private Integer size;
 }

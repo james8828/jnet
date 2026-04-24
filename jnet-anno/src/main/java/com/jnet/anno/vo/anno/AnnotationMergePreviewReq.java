@@ -5,10 +5,10 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * @author mugw
- * @version 1.0
- * @description
- * @date 2025/6/6 16:36:41
+ * 标注合并预览请求
+ *
+ * @author JNet Team
+ * @since 2025-06-06
  */
 @Data
 public class AnnotationMergePreviewReq {

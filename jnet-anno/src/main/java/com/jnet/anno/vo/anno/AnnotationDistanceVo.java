@@ -6,10 +6,10 @@ import lombok.Data;
 import org.locationtech.jts.geom.Geometry;
 
 /**
- * @author mugw
- * @version 1.0
- * @description 轮廓间距
- * @date 2025/5/28 09:13:09
+ * 标注距离 VO
+ *
+ * @author JNet Team
+ * @since 2025-05-28
  */
 @Data
 public class AnnotationDistanceVo {

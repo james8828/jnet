@@ -4,11 +4,11 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import com.jnet.anno.constant.Constant;
 import com.jnet.anno.domain.Annotation;
+import com.jnet.anno.domain.User;
 import com.jnet.anno.netty.message.AnnotationFeature;
 import com.jnet.anno.netty.message.AnnotationMessage;
 import com.jnet.anno.netty.message.AnnotationProperties;
 import com.jnet.anno.vo.StructureTagPageVo;
-import com.jnet.api.system.domain.User;
 import org.apache.commons.collections4.CollectionUtils;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -37,8 +37,7 @@ public class AnnotationMessageGenerator {
     public static AnnotationFeature generateFeatures(Annotation annotation){
 
         AnnotationFeature feature = new AnnotationFeature();
-        feature.setGeometry(annotation.getGeometry());
-        feature.setId(annotation.getJsonId());
+        feature.setGeometry(annotation.getGeom());
         feature.setProperties(generateProperties(annotation));
         return feature;
     }
@@ -56,8 +55,7 @@ public class AnnotationMessageGenerator {
     public static AnnotationFeature generateFeatures(Annotation annotation, AnnotationProperties properties){
 
         AnnotationFeature feature = new AnnotationFeature();
-        feature.setGeometry(annotation.getGeometry());
-        feature.setId(annotation.getJsonId());
+        feature.setGeometry(annotation.getGeom());
         feature.setProperties(properties);
         return feature;
     }
@@ -89,8 +87,8 @@ public class AnnotationMessageGenerator {
         List<AnnotationProperties> result = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : annotations.stream().map(annotation -> {
             AnnotationProperties properties = new AnnotationProperties();
             properties.setA0(String.valueOf(annotation.getAnnotationId()));
-            properties.setA1(annotation.getLocationType());
-            properties.setA2(annotation.getAnnotationType());
+            properties.setA1(annotation.getCreationSource());
+            properties.setA2(annotation.getGeomType());
             properties.setA3(annotation.getTagId());
             properties.setA6(formatBigDecimal(annotation.getPerimeter()));
             properties.setA7(formatBigDecimal(annotation.getArea()));

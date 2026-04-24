@@ -7,14 +7,17 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * @author .
+ * 标注批量请求
+ *
+ * @author JNet Team
+ * @since 2025-04-16
  */
 @Data
-public class AnnotationBatchReq{
+public class AnnotationBatchDTO {
 
     @NotNull(message = "{NO_SLIDE_DATA}")
     @JsonProperty("slide_id")
     private Long slideId;
 
-    List<AnnotationBatchVo> list;
+    List<AnnotationOperation> list;
 }

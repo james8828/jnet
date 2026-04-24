@@ -440,62 +440,22 @@ public class ImageTileServiceImpl implements IImageTileService {
     /**
      * 使用 OpenSlide 读取元数据
      */
-    private ImageMetadataVO readMetadataWithOpenSlide(Image image) throws IOException {
-        File imageFile = new File(image.getFilePath());
-
-        try (OpenSlide slide = new OpenSlide(imageFile)) {
-            // 设置缓存
-            slide.setCache(slideCache);
-
-            // 获取基本属性
-            long width = slide.getLevel0Width();
-            long height = slide.getLevel0Height();
-            int levelCount = slide.getLevelCount();
-
-            // 获取每层级的尺寸
-            List<int[]> levelDimensions = new ArrayList<>();
-            for (int i = 0; i < levelCount; i++) {
-                long levelWidth = slide.getLevelWidth(i);
-                long levelHeight = slide.getLevelHeight(i);
-                levelDimensions.add(new int[]{(int) levelWidth, (int) levelHeight});
-            }
-
-            // 获取 MPP（如果可用）
-            Double mppX = null;
-            Double mppY = null;
-            try {
-                String mppXStr = slide.getProperties().get("openslide.mpp-x");
-                String mppYStr = slide.getProperties().get("openslide.mpp-y");
-                if (mppXStr != null) mppX = Double.parseDouble(mppXStr);
-                if (mppYStr != null) mppY = Double.parseDouble(mppYStr);
-            } catch (Exception e) {
-                log.warn("无法获取 MPP 信息");
-            }
-
-            // 获取放大倍数
-            Integer magnification = null;
-            try {
-                String magStr = slide.getProperties().get("openslide.objective-power");
-                if (magStr != null) magnification = Integer.parseInt(magStr);
-            } catch (Exception e) {
-                log.warn("无法获取放大倍数");
-            }
+    private ImageMetadataVO readMetadataWithOpenSlide(Image image) {
 
             return ImageMetadataVO.builder()
                     .imageId(image.getImageId())
                     .filename(image.getFilename())
-                    .width((int) width)
-                    .height((int) height)
-                    .levelCount(levelCount)
-                    .levelDimensions(levelDimensions)
-                    .mppX(mppX != null ? mppX : image.getMppX())
-                    .mppY(mppY != null ? mppY : image.getMppY())
-                    .magnification(magnification != null ? magnification : image.getMagnification())
+                    .width(image.getWidth())
+                    .height(image.getHeight())
+                    .levelCount(image.getLevels())
+                    .mppX(image.getMppX())
+                    .mppY(image.getMppY())
+                    .magnification(image.getMagnification())
                     .tileWidth(256)
                     .tileHeight(256)
                     .format(image.getFormat())
                     .build();
-        }
+
     }
 
     /**

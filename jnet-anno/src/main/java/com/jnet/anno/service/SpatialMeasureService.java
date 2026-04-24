@@ -2,7 +2,7 @@ package com.jnet.anno.service;
 
 import com.jnet.anno.domain.Measure;
 import com.jnet.anno.vo.measure.MeasureVo;
-import com.jnet.api.R;
+import com.jnet.common.result.Result;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -39,7 +39,7 @@ public interface SpatialMeasureService {
      * @return 返回添加后的测量标注
      * @throws Exception 异常
      */
-    R<Measure> addMeasure(Measure req) throws Exception;
+    Result<Measure> addMeasure(Measure req) throws Exception;
 
     /**
      * 删除测量标注
@@ -47,7 +47,7 @@ public interface SpatialMeasureService {
      * @return 操作结果
      * @throws Exception 异常
      */
-    R delete(Long measureId) throws Exception;
+    Result delete(Long measureId) throws Exception;
 
     /**
      * 根据 ID 查询测量标注

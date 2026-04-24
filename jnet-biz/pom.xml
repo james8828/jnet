@@ -93,19 +93,7 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
-        
-        <!-- Actuator 监控 -->
-        <!--<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>-->
-        
-        <!-- Prometheus 监控指标 -->
-        <!--<dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>-->
-        
+
         <!-- Redisson -->
         <dependency>
             <groupId>org.redisson</groupId>
@@ -124,13 +112,6 @@
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
             <version>0.4.20</version>
-        </dependency>
-        
-        <!-- Apache Commons Imaging (处理SVS等格式) -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-imaging</artifactId>
-            <version>1.0-alpha3</version>
         </dependency>
         
         <!-- OpenSlide Java (官方绑定) - 使用本地JAR -->

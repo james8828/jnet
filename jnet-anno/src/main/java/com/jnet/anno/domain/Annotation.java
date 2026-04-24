@@ -1,9 +1,6 @@
 package com.jnet.anno.domain;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.locationtech.jts.geom.Geometry;
@@ -13,164 +10,228 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * @author mugw
- * @version 1.0
- * @description 标注表
- * @date 2025/5/21 14:33:43
+ * 矢量标注实体
+ * <p>
+ * 基于 Hibernate Spatial 的标注实体，支持空间查询和空间索引。
+ * 对应数据库表：biz_annotation
+ * </p>
+ *
+ * @author JNet Team
+ * @version 2.0
+ * @since 2026-04-24
  */
-@Schema(description = "标注表")
-@TableName(value ="t_annotation")
 @Data
+@Entity
+@Table(name = "biz_annotation", indexes = {
+        @Index(name = "idx_vec_spatial", columnList = "geom"),
+        @Index(name = "idx_vec_slide", columnList = "slide_id, is_active"),
+        @Index(name = "idx_vec_image", columnList = "image_id, is_active"),
+        @Index(name = "idx_vec_project", columnList = "project_id, is_active"),
+        @Index(name = "idx_vec_batch", columnList = "batch_id, is_active"),
+        @Index(name = "idx_vec_tag", columnList = "tag_id, is_active"),
+        @Index(name = "idx_vec_parent", columnList = "parent_annotation_id"),
+        @Index(name = "idx_vec_review", columnList = "review_status, slide_id"),
+        @Index(name = "idx_vec_slide_tag", columnList = "slide_id, tag_id, is_active"),
+        @Index(name = "idx_vec_image_tag", columnList = "image_id, tag_id, is_active"),
+        @Index(name = "idx_vec_create_time", columnList = "create_time"),
+        @Index(name = "idx_vec_update_time", columnList = "update_time"),
+        @Index(name = "idx_vec_lod", columnList = "slide_id, lod_level, is_active"),
+        @Index(name = "idx_vec_bbox", columnList = "bbox")
+})
 public class Annotation implements Serializable {
+
     /**
-     * 主键id
+     * 主键ID（标注对象ID）
      */
-    @TableId("annotation_id")
+    @Id
+    @Column(name = "annotation_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long annotationId;
 
     /**
-     * 面积
+     * 关联切片ID（主要查询维度）
      */
-    @Schema(description = "面积")
-    private BigDecimal area;
-
-    /**
-     * 周长
-     */
-    private BigDecimal perimeter;
-
-    /**
-     * 轮廓描述
-     */
-    private String description;
-
-    /**
-     * 标签id
-     */
-    private Long tagId;
-
-    /**
-     * 轮廓坐标625
-     */
-    @NotNull(message = "{ARGUMENT_INVALID}")
-    @TableField("contour")
-    private Geometry geometry;
-
-    /**
-     * 轮廓类型
-     */
-    private String locationType;
-
-    /**
-     * 标注类型(AI表示AI算出的标注，Draw表示前端绘制的标注，Measure表示测量数据)
-     */
-    private String annotationType;
-
-    /**
-     * 标注创建者
-     */
-    private Long createBy;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 更新者
-     */
-    private Long updateBy;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
-    /**
-     * 切片id
-     */
-    @NotNull(message = "{MarkingDelIn.slideId.notNull}")
+    @NotNull
+    @Column(name = "slide_id")
     private Long slideId;
 
     /**
-     * geojson中数据id
+     * 关联图像ID（冗余字段）
      */
-    private String jsonId;
+    @NotNull
+    @Column(name = "image_id")
+    private Long imageId;
 
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+    /**
+     * 所属项目ID（冗余字段，便于按项目统计）
+     */
+    @Column(name = "project_id")
+    private Long projectId;
 
-    @Override
-    public boolean equals(Object that) {
-        if (this == that) {
-            return true;
-        }
-        if (that == null) {
-            return false;
-        }
-        if (getClass() != that.getClass()) {
-            return false;
-        }
-        Annotation other = (Annotation) that;
-        return (this.getAnnotationId() == null ? other.getAnnotationId() == null : this.getAnnotationId().equals(other.getAnnotationId()))
-            && (this.getArea() == null ? other.getArea() == null : this.getArea().equals(other.getArea()))
-            && (this.getPerimeter() == null ? other.getPerimeter() == null : this.getPerimeter().equals(other.getPerimeter()))
-            && (this.getDescription() == null ? other.getDescription() == null : this.getDescription().equals(other.getDescription()))
-            && (this.getTagId() == null ? other.getTagId() == null : this.getTagId().equals(other.getTagId()))
-            && (this.getGeometry() == null ? other.getGeometry() == null : this.getGeometry().equals(other.getGeometry()))
-            && (this.getLocationType() == null ? other.getLocationType() == null : this.getLocationType().equals(other.getLocationType()))
-            && (this.getAnnotationType() == null ? other.getAnnotationType() == null : this.getAnnotationType().equals(other.getAnnotationType()))
-            && (this.getCreateBy() == null ? other.getCreateBy() == null : this.getCreateBy().equals(other.getCreateBy()))
-            && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
-            && (this.getUpdateBy() == null ? other.getUpdateBy() == null : this.getUpdateBy().equals(other.getUpdateBy()))
-            && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
-            && (this.getSlideId() == null ? other.getSlideId() == null : this.getSlideId().equals(other.getSlideId()))
-            && (this.getJsonId() == null ? other.getJsonId() == null : this.getJsonId().equals(other.getJsonId()));
-    }
+    /**
+     * 所属批次ID（冗余字段，便于按批次统计）
+     */
+    @Column(name = "batch_id")
+    private Long batchId;
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((getAnnotationId() == null) ? 0 : getAnnotationId().hashCode());
-        result = prime * result + ((getArea() == null) ? 0 : getArea().hashCode());
-        result = prime * result + ((getPerimeter() == null) ? 0 : getPerimeter().hashCode());
-        result = prime * result + ((getDescription() == null) ? 0 : getDescription().hashCode());
-        result = prime * result + ((getTagId() == null) ? 0 : getTagId().hashCode());
-        result = prime * result + ((getGeometry() == null) ? 0 : getGeometry().hashCode());
-        result = prime * result + ((getLocationType() == null) ? 0 : getLocationType().hashCode());
-        result = prime * result + ((getAnnotationType() == null) ? 0 : getAnnotationType().hashCode());
-        result = prime * result + ((getCreateBy() == null) ? 0 : getCreateBy().hashCode());
-        result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
-        result = prime * result + ((getUpdateBy() == null) ? 0 : getUpdateBy().hashCode());
-        result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
-        result = prime * result + ((getSlideId() == null) ? 0 : getSlideId().hashCode());
-        result = prime * result + ((getJsonId() == null) ? 0 : getJsonId().hashCode());
-        return result;
-    }
+    /**
+     * 关联标签ID
+     */
+    @NotNull
+    @Column(name = "tag_id")
+    private Long tagId;
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" [");
-        sb.append("Hash = ").append(hashCode());
-        sb.append(", contourId=").append(annotationId);
-        sb.append(", area=").append(area);
-        sb.append(", perimeter=").append(perimeter);
-        sb.append(", description=").append(description);
-        sb.append(", tagId=").append(tagId);
-        sb.append(", contour=").append(geometry);
-        sb.append(", locationType=").append(locationType);
-        sb.append(", annotationType=").append(annotationType);
-        sb.append(", createBy=").append(createBy);
-        sb.append(", createTime=").append(createTime);
-        sb.append(", updateBy=").append(updateBy);
-        sb.append(", updateTime=").append(updateTime);
-        sb.append(", slideId=").append(slideId);
-        sb.append(", jsonId=").append(jsonId);
-        sb.append(", serialVersionUID=").append(serialVersionUID);
-        sb.append("]");
-        return sb.toString();
-    }
+    /**
+     * 父标注ID（支持层级标注，如：脏器->组织）
+     */
+    @Column(name = "parent_annotation_id")
+    private Long parentAnnotationId;
+
+    /**
+     * 标注类型 (POINT/LINESTRING/POLYGON/MULTIPOLYGON)
+     */
+    @NotNull
+    @Column(name = "geom_type", length = 20)
+    private String geomType;
+
+    /**
+     * PostGIS几何字段（主存储，支持空间索引和精确查询）
+     */
+    @Column(columnDefinition = "geometry")
+    private Geometry geom;
+
+    /**
+     * GeoJSON格式坐标（可选备份，用于前端快速渲染）
+     */
+    @Column(name = "coordinates_geojson", columnDefinition = "jsonb")
+    private String coordinatesGeojson;
+
+    /**
+     * LOD层级 (0=原始精度, 1-5=简化层级，数字越大越简化)
+     */
+    @Column(name = "lod_level")
+    private Integer lodLevel = 0;
+
+    /**
+     * 简化后的几何（用于低分辨率快速渲染）
+     */
+    @Column(name = "simplified_geom", columnDefinition = "geometry")
+    private Geometry simplifiedGeom;
+
+    /**
+     * 边界框（用于快速筛选、视口裁剪和碰撞检测）
+     */
+    @Column(name = "bbox", columnDefinition = "geometry")
+    private Geometry bbox;
+
+    /**
+     * 置信度 (0-1)
+     */
+    @Column(name = "confidence")
+    private Double confidence;
+
+    /**
+     * 标注区域面积（微米²）
+     */
+    @Column(name = "area")
+    private BigDecimal area;
+
+    /**
+     * 周长（微米）
+     */
+    @Column(name = "perimeter")
+    private BigDecimal perimeter;
+
+    /**
+     * 质心X坐标
+     */
+    @Column(name = "centroid_x")
+    private Double centroidX;
+
+    /**
+     * 质心Y坐标
+     */
+    @Column(name = "centroid_y")
+    private Double centroidY;
+
+    /**
+     * 标注描述信息
+     */
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    /**
+     * 创建人ID
+     */
+    @Column(name = "created_by")
+    private Long createdBy;
+
+    /**
+     * 来源 (AI_PRE_ANNOTATION/MANUAL_DRAWING/AUTO_SEGMENTATION)
+     */
+    @Column(name = "creation_source", length = 20)
+    private String creationSource;
+
+    /**
+     * 审核状态 (PENDING/APPROVED/REJECTED/MODIFIED)
+     */
+    @Column(name = "review_status", length = 20)
+    private String reviewStatus = "PENDING";
+
+    /**
+     * 审核人ID
+     */
+    @Column(name = "reviewed_by")
+    private Long reviewedBy;
+
+    /**
+     * 审核时间
+     */
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "review_time")
+    private Date reviewTime;
+
+    /**
+     * 版本号（支持修改历史）
+     */
+    @Column(name = "version")
+    private Integer version = 1;
+
+    /**
+     * 是否有效
+     */
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
+    /**
+     * 排序序号（同一层级内的显示顺序）
+     */
+    @Column(name = "sort_order")
+    private Integer sortOrder = 0;
+
+    /**
+     * 审计字段 - 创建者ID
+     */
+    @Column(name = "create_by")
+    private Long createBy;
+
+    /**
+     * 审计字段 - 创建时间
+     */
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "create_time")
+    private Date createTime;
+
+    /**
+     * 审计字段 - 更新者ID
+     */
+    @Column(name = "update_by")
+    private Long updateBy;
+
+    /**
+     * 审计字段 - 更新时间
+     */
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "update_time")
+    private Date updateTime;
 }

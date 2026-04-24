@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * @author mugw
- * @version 1.0
- * @description 新增标注参数
- * @date 2025/5/22 09:40:28
+ * 标注查询请求
+ *
+ * @author JNet Team
+ * @since 2025-05-22
  */
 @Data
 public class AnnotationReq {

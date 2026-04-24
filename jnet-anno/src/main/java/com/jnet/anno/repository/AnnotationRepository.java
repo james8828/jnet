@@ -1,6 +1,6 @@
 package com.jnet.anno.repository;
 
-import com.jnet.anno.domain.SpatialAnnotation;
+import com.jnet.anno.domain.Annotation;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Pageable;
@@ -23,44 +23,44 @@ import java.util.Optional;
 
 @Repository
 @Transactional
-public interface SpatialAnnotationRepository extends JpaRepository<SpatialAnnotation, Long> {
+public interface AnnotationRepository extends JpaRepository<Annotation, Long> {
 
     /**
      * 根据 ids 查询
      */
-    @Query("SELECT a FROM SpatialAnnotation a WHERE a.annotationId IN :ids")
-    List<SpatialAnnotation> findByIds(@Param("ids") List<Long> ids);
+    @Query("SELECT a FROM Annotation a WHERE a.annotationId IN :ids")
+    List<Annotation> findByIds(@Param("ids") List<Long> ids);
 
     /**
      * 空间查询：查找包含指定点的标注
      * 使用 ST_Contains 函数
      */
     @Transactional(readOnly = true)
-    @Query("SELECT a FROM SpatialAnnotation a WHERE function('ST_Contains', a.contour, :point) = true")
-    List<SpatialAnnotation> findByContainingPoint(@Param("point") Point point);
+    @Query("SELECT a FROM Annotation a WHERE function('ST_Contains', a.geom, :point) = true")
+    List<Annotation> findByContainingPoint(@Param("point") Point point);
 
     /**
      * 空间查询：查找与指定几何相交的标注
      * 使用 ST_Intersects 函数
      */
     @Transactional(readOnly = true)
-    @Query("SELECT a FROM SpatialAnnotation a WHERE function('ST_Intersects', a.contour, :geometry) = true")
-    List<SpatialAnnotation> findByIntersectingGeometry(@Param("geometry") Geometry geometry);
+    @Query("SELECT a FROM Annotation a WHERE function('ST_Intersects', a.geom, :geometry) = true")
+    List<Annotation> findByIntersectingGeometry(@Param("geometry") Geometry geometry);
 
     /**
      * 空间查询：查找指定距离范围内的标注
      * 使用 ST_DWithin 函数（高效，使用空间索引）
      */
     @Transactional(readOnly = true)
-    @Query("SELECT a FROM SpatialAnnotation a WHERE function('ST_DWithin', a.contour, :point, :distance) = true")
-    List<SpatialAnnotation> findByDistanceWithin(@Param("point") Geometry point, @Param("distance") double distance);
+    @Query("SELECT a FROM Annotation a WHERE function('ST_DWithin', a.geom, :point, :distance) = true")
+    List<Annotation> findByDistanceWithin(@Param("point") Geometry point, @Param("distance") double distance);
 
     /**
      * 空间查询：计算与指定点的距离
      * 使用 ST_Distance 函数
      */
     @Transactional(readOnly = true)
-    @Query("SELECT a, function('ST_Distance', a.contour, :point) as distance FROM SpatialAnnotation a WHERE a.slideId = :slideId ORDER BY distance")
+    @Query("SELECT a, function('ST_Distance', a.geom, :point) as distance FROM Annotation a WHERE a.slideId = :slideId ORDER BY distance")
     List<Object[]> findWithDistance(
             @Param("point") Geometry point,
             @Param("slideId") Long slideId,
@@ -71,11 +71,11 @@ public interface SpatialAnnotationRepository extends JpaRepository<SpatialAnnota
      * 使用 ST_MakeEnvelope 和 ST_Intersects
      */
     @Transactional(readOnly = true)
-    @Query("SELECT a FROM SpatialAnnotation a WHERE " +
+    @Query("SELECT a FROM Annotation a WHERE " +
            "a.slideId = :slideId AND " +
-           "function('ST_Intersects', a.contour, " +
+           "function('ST_Intersects', a.geom, " +
            "function('ST_MakeEnvelope', :minX, :minY, :maxX, :maxY)) = true")
-    List<SpatialAnnotation> findByBoundingBox(
+    List<Annotation> findByBoundingBox(
             @Param("minX") Double minX,
             @Param("minY") Double minY,
             @Param("maxX") Double maxX,
@@ -87,7 +87,7 @@ public interface SpatialAnnotationRepository extends JpaRepository<SpatialAnnota
      * 使用 ST_Area 函数
      */
     @Transactional(readOnly = true)
-    @Query("SELECT function('ST_Area', a.contour) FROM SpatialAnnotation a WHERE a.annotationId = :id")
+    @Query("SELECT function('ST_Area', a.geom) FROM Annotation a WHERE a.annotationId = :id")
     Double getArea(@Param("id") Long id);
 
     /**
@@ -95,17 +95,17 @@ public interface SpatialAnnotationRepository extends JpaRepository<SpatialAnnota
      * 使用 ST_Length 函数
      */
     @Transactional(readOnly = true)
-    @Query("SELECT function('ST_Length', a.contour) FROM SpatialAnnotation a WHERE a.annotationId = :id")
+    @Query("SELECT function('ST_Length', a.geom) FROM Annotation a WHERE a.annotationId = :id")
     Double getLength(@Param("id") Long id);
 
     /**
      * 空间查询：查找最近的 N 个标注
      */
     @Transactional(readOnly = true)
-    @Query("SELECT a FROM SpatialAnnotation a WHERE " +
+    @Query("SELECT a FROM Annotation a WHERE " +
            "a.slideId = :slideId " +
-           "ORDER BY function('ST_Distance', a.contour, :point)")
-    List<SpatialAnnotation> findNearest(
+           "ORDER BY function('ST_Distance', a.geom, :point)")
+    List<Annotation> findNearest(
             @Param("point") Geometry point,
             @Param("slideId") Long slideId,
             Pageable pageable);
@@ -114,14 +114,14 @@ public interface SpatialAnnotationRepository extends JpaRepository<SpatialAnnota
      * 批量查询某个切片的所有标注
      */
     @Transactional(readOnly = true)
-    @Query("SELECT a FROM SpatialAnnotation a WHERE a.slideId = :slideId")
-    List<SpatialAnnotation> findBySlideId(@Param("slideId") Long slideId);
+    @Query("SELECT a FROM Annotation a WHERE a.slideId = :slideId")
+    List<Annotation> findBySlideId(@Param("slideId") Long slideId);
 
     /**
      * 根据 annotationId 查询单个标注
      */
     @Transactional(readOnly = true)
-    Optional<SpatialAnnotation> findByAnnotationId(Long annotationId);
+    Optional<Annotation> findByAnnotationId(Long annotationId);
 
     @Transactional(readOnly = true)
     Optional<Long> countBySlideIdAndCreateBy(Long slideId, Long createBy);

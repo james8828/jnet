@@ -4,10 +4,10 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import com.jnet.anno.constant.Constant;
 import com.jnet.anno.domain.Measure;
+import com.jnet.anno.domain.User;
 import com.jnet.anno.netty.message.AnnotationFeature;
 import com.jnet.anno.netty.message.AnnotationMessage;
 import com.jnet.anno.netty.message.AnnotationProperties;
-import com.jnet.api.system.domain.User;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;

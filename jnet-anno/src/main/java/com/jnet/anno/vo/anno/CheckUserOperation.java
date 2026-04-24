@@ -5,10 +5,10 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * @author mugw
- * @version 1.0
- * @description
- * @date 2025/6/10 14:22:29
+ * 检查用户操作
+ *
+ * @author JNet Team
+ * @since 2025-06-10
  */
 @Data
 public class CheckUserOperation {

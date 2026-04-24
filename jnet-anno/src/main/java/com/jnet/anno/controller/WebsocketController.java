@@ -1,7 +1,6 @@
 package com.jnet.anno.controller;
 
-
-import com.jnet.api.R;
+import com.jnet.common.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +17,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  * @date 2025/5/21 14:33:43
  */
 @RestController
-@RequestMapping("/websocket")
+@RequestMapping("/api/v1/websocket")
 public class WebsocketController {
 
     @Value("${netty.port}")
@@ -26,15 +25,14 @@ public class WebsocketController {
 
     @Operation(summary = "websocket接口")
     @GetMapping("/getWebsocketPort")
-    public R<String> getWebsocketPort() {
+    public Result<String> getWebsocketPort() {
         ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (requestAttributes == null) {
-            return R.fail();
+            return Result.error();
         }
         HttpServletRequest request = requestAttributes.getRequest();
         String localAdd = request.getLocalAddr();
-        return R.success("ws://" + localAdd + ":" + port + "/");
+        return Result.success("ws://" + localAdd + ":" + port + "/");
     }
-
 
 }

@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.jnet</groupId>
-        <artifactId>jnet-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <artifactId>jnet-algorithm-parent</artifactId>
+        <version>1.0.0</version>
     </parent>
     <artifactId>jnet-anno</artifactId>
     <packaging>jar</packaging>
@@ -15,23 +15,23 @@
         <postgis-jdbc.version>2.5.0</postgis-jdbc.version>
     </properties>
     <dependencies>
+        <!-- 新的 Common 依赖包 -->
         <dependency>
             <groupId>com.jnet</groupId>
-            <artifactId>jnet-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.jnet</groupId>
-            <artifactId>jnet-common-core</artifactId>
+            <artifactId>common-core</artifactId>
         </dependency>
 
-        <!--<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+        <dependency>
+            <groupId>com.jnet</groupId>
+            <artifactId>common-redis</artifactId>
         </dependency>
+
+        <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>-->
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -74,6 +74,12 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
 
+        <!-- Spring Cloud OpenFeign (TraceAutoConfiguration 需要) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-context</artifactId>
@@ -84,16 +90,30 @@
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
         <!-- swagger -->
-        <dependency>
+        <!--<dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>2.2.15</version>
-        </dependency>
+        </dependency>-->
         <!-- Jakarta Validation API -->
-        <dependency>
+        <!--<dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.0.2</version>
+        </dependency>-->
+
+        <!-- SpringDoc OpenAPI (Swagger UI for Spring Boot 3.x) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
+        <!-- Knife4j OpenAPI 3 增强UI（国内最优选） -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <version>4.4.0</version>
         </dependency>
 
         <!-- Hibernate Validator (实现) -->

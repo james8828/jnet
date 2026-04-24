@@ -1,10 +1,14 @@
 server:
   port: 9005
   servlet:
-    context-path: /
+    context-path: /anno
 
 spring:
   profiles:
     active: dev
   application:
     name: jnet-anno-service
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false

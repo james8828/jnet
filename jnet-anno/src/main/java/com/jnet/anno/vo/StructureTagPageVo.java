@@ -7,6 +7,12 @@ import lombok.Data;
 
 import java.util.Date;
 
+/**
+ * 结构标签分页 VO
+ *
+ * @author JNet Team
+ * @since 2025-04-16
+ */
 @Data
 public class StructureTagPageVo {
 

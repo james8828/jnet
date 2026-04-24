@@ -1,13 +1,10 @@
 package com.jnet.anno.domain;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.locationtech.jts.geom.Geometry;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -18,13 +15,11 @@ import java.util.Date;
  * @description 测量标注表
  * @date 2025/5/21 14:33:43
  */
-@TableName(value ="t_measure")
 @Data
 public class Measure implements Serializable {
     /**
      * 主键id
      */
-    @TableId
     private Long measureId;
 
     /**
@@ -115,7 +110,6 @@ public class Measure implements Serializable {
     /**
      * 标注数据（JSON格式）
      */
-    @TableField("contour")
     private Geometry geometry;
 
     /**
@@ -145,7 +139,7 @@ public class Measure implements Serializable {
      */
     private String measureFullName;
 
-    @TableField(exist = false)
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

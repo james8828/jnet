@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * @author mugw
- * @version 1.0
- * @description 轮廓间距
- * @date 2025/5/28 09:13:09
+ * 标注距离请求
+ *
+ * @author JNet Team
+ * @since 2025-05-28
  */
 @Data
 public class AnnotationDistanceReq {

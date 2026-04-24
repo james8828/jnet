@@ -4,7 +4,6 @@ import com.jnet.anno.domain.Measure;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -20,11 +19,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 /**
- * @author mugw
- * @version 1.0
- * @description
- * @date 2025/5/30 09:22:39
+ * 测量 VO
  *
+ * @author JNet Team
+ * @since 2025-05-30
  */
 @AllArgsConstructor
 @NoArgsConstructor
@@ -159,7 +157,6 @@ public class MeasureVo {
      * 标注数据（JSON格式）
      */
     @ExcelIgnore
-    @TableField("contour")
     private Geometry geometry;
 
     /**

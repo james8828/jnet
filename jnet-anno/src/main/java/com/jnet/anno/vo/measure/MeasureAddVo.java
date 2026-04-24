@@ -1,7 +1,6 @@
 package com.jnet.anno.vo.measure;
 
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -13,10 +12,10 @@ import org.locationtech.jts.geom.Geometry;
 import java.util.Date;
 
 /**
- * @author mugw
- * @version 1.0
- * @description
- * @date 2025/5/30 09:22:39
+ * 测量添加 VO
+ *
+ * @author JNet Team
+ * @since 2025-05-30
  */
 @AllArgsConstructor
 @NoArgsConstructor
@@ -117,7 +116,6 @@ public class MeasureAddVo {
     /**
      * 标注数据（JSON格式）
      */
-    @TableField("contour")
     private Geometry geometry;
 
     /**
