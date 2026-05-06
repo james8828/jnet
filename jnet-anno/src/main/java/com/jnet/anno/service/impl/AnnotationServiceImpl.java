@@ -9,7 +9,7 @@ import com.jnet.anno.netty.websocket.NioWebSocketHandler;
 import com.jnet.anno.repository.AnnotationRepository;
 import com.jnet.anno.repository.SpatialMeasureRepository;
 import com.jnet.anno.service.AnnotationService;
-import com.jnet.anno.utils.MessageSource;
+import com.jnet.anno.utils.MessageSourceUtil;
 import com.jnet.anno.utils.SecurityUtils;
 import com.jnet.anno.utils.annotation.*;
 import com.jnet.anno.vo.anno.*;
@@ -80,7 +80,7 @@ public class AnnotationServiceImpl implements AnnotationService {
 
         if (geometryOne == null || geometryTwo == null) {
             log.warn("标注几何对象为空，annotationIdOne: {}, annotationIdTwo: {}", annotationIdOne, annotationIdTwo);
-            throw new Exception(MessageSource.M("NO_ANNOTATION_DATA"));
+            throw new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA"));
         }
 
         // 使用 DistanceOp 计算最短距离和对应的最近点对
@@ -90,7 +90,7 @@ public class AnnotationServiceImpl implements AnnotationService {
 
         if (nearestPoints == null || nearestPoints.length < 2) {
             log.error("计算最近点失败，geometryOne: {}, geometryTwo: {}", geometryOne, geometryTwo);
-            throw new Exception(MessageSource.M("FAILED_TO_CALCULATE_NEAREST_POINTS"));
+            throw new Exception(MessageSourceUtil.getMessage("FAILED_TO_CALCULATE_NEAREST_POINTS"));
         }
 
         // 计算平均间距（基于采样点）
@@ -128,7 +128,7 @@ public class AnnotationServiceImpl implements AnnotationService {
                 annotationDTO.getSlideId(), annotationDTO.getImageId(),
                 annotationDTO.getTagId(), annotationDTO.getGeomType());
         Annotation annotation = addAnnotation(annotationDTO, Boolean.FALSE);
-        return Result.success(MessageSource.M("ANNOTATION_ADD_SUCCESS"), annotation);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_ADD_SUCCESS"), annotation);
     }
 
     /**
@@ -153,6 +153,8 @@ public class AnnotationServiceImpl implements AnnotationService {
         Long userId = SecurityUtils.getUserId();
         annotationDTO.setCreateBy(userId);
         annotationDTO.setUpdateBy(userId);
+        annotationDTO.setCreateTime(DateUtil.date());
+        annotationDTO.setUpdateTime(DateUtil.date());
 
         // 创建标注实体并复制属性
         Annotation annotation = new Annotation();
@@ -169,7 +171,6 @@ public class AnnotationServiceImpl implements AnnotationService {
             
             log.debug("计算几何属性，area: {} 微米², perimeter: {} 微米", area, perimeter);
         }
-
         // 保存到数据库
         annotation = annotationRepository.save(annotation);
         log.info("标注保存成功，annotationId: {}", annotation.getAnnotationId());
@@ -233,7 +234,7 @@ public class AnnotationServiceImpl implements AnnotationService {
 
         // 查询标注是否存在
         Annotation annotation = annotationRepository.findById(id)
-                .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+                .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
 
         log.info("找到待删除标注，slideId: {}, geomType: {}", annotation.getSlideId(), annotation.getGeomType());
 
@@ -260,7 +261,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         webSocketHandler.sendMessage(AnnotationMessageGenerator.generateAnnotationMessage(annotation, Constant.ANNO_ACTION_DELETE));
         log.debug("WebSocket 消息已发送，action: DELETE");
 
-        return Result.success(MessageSource.M("ANNOTATION_DELETE_SUCCESS"), null);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_DELETE_SUCCESS"), null);
     }
 
 
@@ -303,14 +304,14 @@ public class AnnotationServiceImpl implements AnnotationService {
         // 验证标注 ID
         if (annotationDTO.getAnnotationId() == null) {
             log.warn("标注 ID 为空，无法更新");
-            throw new Exception(MessageSource.M("NO_ANNOTATION_DATA"));
+            throw new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA"));
         }
 
         log.debug("执行更新操作，annotationId: {}, isUndoRedo: {}", annotationDTO.getAnnotationId(), isUndoRedo);
 
         // 查询原始标注并保存历史副本（用于撤销）
         Annotation annotation = annotationRepository.findById(annotationDTO.getAnnotationId())
-                .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+                .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
 
         Annotation history = new Annotation();
         BeanUtils.copyProperties(history, annotation);
@@ -318,9 +319,11 @@ public class AnnotationServiceImpl implements AnnotationService {
 
         // 如果更新了几何对象，重新计算面积和周长（像素单位）
         if (annotationDTO.getGeom() != null) {
+            annotation.setGeom(annotationDTO.getGeom());
+            annotation.setGeomType(annotationDTO.getGeom().getGeometryType());
             double area = calculateArea(annotationDTO.getGeom());
             double perimeter = calculatePerimeter(annotationDTO.getGeom());
-            
+
             // 转换为微米单位（像素 * 分辨率）
             annotation.setArea(BigDecimal.valueOf(area * Constant.IMAGE_RESOLUTION_SQUARE));
             annotation.setPerimeter(BigDecimal.valueOf(perimeter * Constant.IMAGE_RESOLUTION));
@@ -366,7 +369,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         webSocketHandler.sendMessage(AnnotationMessageGenerator.generateAnnotationMessage(annotation, Constant.ANNO_ACTION_UPDATE));
         log.debug("WebSocket 消息已发送，action: UPDATE");
 
-        return Result.success(MessageSource.M("ANNOTATION_UPDATE_SUCCESS"), null);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_UPDATE_SUCCESS"), null);
     }
 
 
@@ -386,11 +389,11 @@ public class AnnotationServiceImpl implements AnnotationService {
 
         // 查询标注并验证几何对象是否存在
         Annotation annotation = annotationRepository.findById(annotationId)
-                .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+                .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
 
         if (annotation.getGeom() == null) {
             log.warn("标注几何对象为空，无法填充，annotationId: {}", annotationId);
-            throw new Exception(MessageSource.M("NO_ANNOTATION_DATA"));
+            throw new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA"));
         }
 
         log.debug("执行填充操作，原始几何类型: {}", annotation.getGeom().getGeometryType());
@@ -442,7 +445,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         webSocketHandler.sendMessage(AnnotationMessageGenerator.generateAnnotationMessage(annotation, Constant.ANNO_ACTION_UPDATE));
         log.debug("WebSocket 消息已发送，action: UPDATE");
 
-        return Result.success(MessageSource.M("ANNOTATION_PADDING_SUCCESS"), null);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_PADDING_SUCCESS"), null);
     }
 
 
@@ -460,18 +463,32 @@ public class AnnotationServiceImpl implements AnnotationService {
     @Transactional(rollbackFor = Exception.class)
     public Result<Void> stickup(AnnotationDTO annotationDTO) throws Exception {
         log.info("开始粘贴标注，sourceAnnotationId: {}", annotationDTO.getAnnotationId());
+        // 1. 查询原始标注
+        Annotation original = annotationRepository.findById(annotationDTO.getAnnotationId())
+                .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
+        log.debug("找到源标注，slideId: {}, geomType: {}", original.getSlideId(), original.getGeomType());
 
-        // 查询源标注
-        Annotation annotation = annotationRepository.findById(annotationDTO.getAnnotationId())
-                .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+        // 2. 创建全新的对象实例（关键！不要直接修改 original）
+        Annotation copy = new Annotation();
 
-        log.debug("找到源标注，slideId: {}, geomType: {}", annotation.getSlideId(), annotation.getGeomType());
-
-        // 清除 ID 以便创建新记录（JPA 会根据 ID 是否为 null 判断是新增还是更新）
-        annotation.setAnnotationId(null);
-        annotation = annotationRepository.save(annotation);
+        // 3. 拷贝属性（除了 ID）
+        copy.setSlideId(original.getSlideId());
+        copy.setImageId(original.getImageId());
+        // 如果传入了新 tagId 则使用新的，否则沿用旧的
+        copy.setTagId(original.getTagId());
+        copy.setGeom(original.getGeom());
+        copy.setGeomType(original.getGeomType());
+        copy.setDescription(original.getDescription());
+        copy.setArea(original.getArea());
+        copy.setPerimeter(original.getPerimeter());
+        copy.setCreationSource("STICKUP"); // 标记来源为复制
+        copy.setCreateBy(SecurityUtils.getUserId());
+        copy.setCreateTime(DateUtil.date());
+        copy.setUpdateBy(SecurityUtils.getUserId());
+        copy.setUpdateTime(DateUtil.date());
+        copy = annotationRepository.save(copy);
         
-        log.info("标注副本创建成功，newAnnotationId: {}", annotation.getAnnotationId());
+        log.info("标注副本创建成功，newAnnotationId: {}", copy.getAnnotationId());
 
         // 记录撤销/重做事件（添加操作）
         UndoRedoEvent event = UndoRedoEvent.builder()
@@ -479,7 +496,7 @@ public class AnnotationServiceImpl implements AnnotationService {
                 .userId(SecurityUtils.getUserId())
                 .undoRedoDetails(Arrays.asList(
                         UndoRedoDetail.builder()
-                                .currentAnnotation(annotation)
+                                .currentAnnotation(copy)
                                 .operation(Constant.ANNO_ACTION_ADD)
                                 .build()))
                 .build();
@@ -487,10 +504,10 @@ public class AnnotationServiceImpl implements AnnotationService {
         log.debug("撤销/重做事件已记录，operation: ADD (STICKUP)");
 
         // 发送 WebSocket 消息通知前端显示新标注
-        webSocketHandler.sendMessage(AnnotationMessageGenerator.generateAnnotationMessage(annotation, Constant.ANNO_ACTION_ADD));
+        webSocketHandler.sendMessage(AnnotationMessageGenerator.generateAnnotationMessage(copy, Constant.ANNO_ACTION_ADD));
         log.debug("WebSocket 消息已发送，action: ADD");
 
-        return Result.success(MessageSource.M("ANNOTATION_STICKUP_SUCCESS"), null);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_STICKUP_SUCCESS"), null);
     }
 
 
@@ -512,7 +529,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         // 验证输入参数
         if (CollectionUtils.isEmpty(annotationIds)) {
             log.warn("标注 ID 列表为空，无法合并");
-            throw new Exception(MessageSource.M("NO_ANNOTATION_DATA"));
+            throw new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA"));
         }
 
         // 查询所有标注
@@ -542,7 +559,7 @@ public class AnnotationServiceImpl implements AnnotationService {
                         log.debug("合并第 {} 个几何对象", i + 1);
                     } else {
                         log.warn("图形不相交，无法合并，index: {}", i);
-                        throw new Exception(MessageSource.M("GRAPHICS_MARK_NOT_RULES"));
+                        throw new Exception(MessageSourceUtil.getMessage("GRAPHICS_MARK_NOT_RULES"));
                     }
                 }
                 resp = mergedGeometry;
@@ -577,11 +594,11 @@ public class AnnotationServiceImpl implements AnnotationService {
         
         // 查询标注并验证几何对象
         Annotation annotation = annotationRepository.findById(req.getAnnotationId())
-                .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+                .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
 
         if (annotation.getGeom() == null) {
             log.warn("标注几何对象为空，annotationId: {}", req.getAnnotationId());
-            throw new Exception(MessageSource.M("NO_ANNOTATION_DATA"));
+            throw new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA"));
         }
 
         log.debug("原始几何类型: {}, 操作几何类型: {}", 
@@ -598,7 +615,7 @@ public class AnnotationServiceImpl implements AnnotationService {
             if (!(operationGeometry instanceof Polygon) || !geometry.intersects(operationGeometry)) {
                 log.warn("几何校验失败，operationGeometry 类型: {}, 是否相交: {}",
                         operationGeometry.getGeometryType(), geometry.intersects(operationGeometry));
-                throw new Exception(MessageSource.M("GRAPHICS_MARK_NOT_RULES"));
+                throw new Exception(MessageSourceUtil.getMessage("GRAPHICS_MARK_NOT_RULES"));
             }
             log.debug("几何校验通过");
         }
@@ -748,7 +765,7 @@ public class AnnotationServiceImpl implements AnnotationService {
                     respList.stream().filter(r -> !r.getStatus()).count());
         } else {
             log.warn("批量操作列表为空");
-            return Result.error(MessageSource.M("ARGUMENT_INVALID"));
+            return Result.error(MessageSourceUtil.getMessage("ARGUMENT_INVALID"));
         }
 
         return Result.success(respList);
@@ -772,14 +789,14 @@ public class AnnotationServiceImpl implements AnnotationService {
         // 检查是否可以撤销
         if (!undoRedoManager.canUndo(req.getUserId(), req.getSlideId())) {
             log.warn("无法撤销，没有可撤销的操作，userId: {}, slideId: {}", req.getUserId(), req.getSlideId());
-            return Result.error(MessageSource.M("ANNOTATION_CANNOT_UNDO"));
+            return Result.error(MessageSourceUtil.getMessage("ANNOTATION_CANNOT_UNDO"));
         }
 
         // 执行撤销并获取事件详情
         UndoRedoEvent event = undoRedoManager.undo(req.getUserId(), req.getSlideId());
         if (event == null) {
             log.warn("撤销事件为空，userId: {}, slideId: {}", req.getUserId(), req.getSlideId());
-            return Result.error(MessageSource.M("ANNOTATION_NO_HISTORY"));
+            return Result.error(MessageSourceUtil.getMessage("ANNOTATION_NO_HISTORY"));
         }
 
         log.debug("获取到撤销事件，操作数量: {}", 
@@ -787,7 +804,7 @@ public class AnnotationServiceImpl implements AnnotationService {
 
         // 处理撤销详情（恢复标注状态）
         undoDetailHandle(event);
-        return Result.success(MessageSource.M("ANNOTATION_UNDO_SUCCESS"), null);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_UNDO_SUCCESS"), null);
     }
 
 
@@ -808,14 +825,14 @@ public class AnnotationServiceImpl implements AnnotationService {
         // 检查是否可以重做
         if (!undoRedoManager.canRedo(req.getUserId(), req.getSlideId())) {
             log.warn("无法重做，没有可重做的操作，userId: {}, slideId: {}", req.getUserId(), req.getSlideId());
-            return Result.error(MessageSource.M("ANNOTATION_CANNOT_REDO"));
+            return Result.error(MessageSourceUtil.getMessage("ANNOTATION_CANNOT_REDO"));
         }
 
         // 执行重做并获取事件详情
         UndoRedoEvent event = undoRedoManager.redo(req.getUserId(), req.getSlideId());
         if (event == null) {
             log.warn("重做事件为空，userId: {}, slideId: {}", req.getUserId(), req.getSlideId());
-            return Result.error(MessageSource.M("ANNOTATION_NO_FUTURE_STATE"));
+            return Result.error(MessageSourceUtil.getMessage("ANNOTATION_NO_FUTURE_STATE"));
         }
 
         log.debug("获取到重做事件，操作数量: {}",
@@ -823,7 +840,7 @@ public class AnnotationServiceImpl implements AnnotationService {
 
         // 处理重做详情（应用标注状态）
         redoDetailHandle(event);
-        return Result.success(MessageSource.M("ANNOTATION_REDO_SUCCESS"), null);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_REDO_SUCCESS"), null);
     }
 
 
@@ -842,7 +859,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         log.info("清除撤销/重做栈，userId: {}, slideId: {}", req.getUserId(), req.getSlideId());
         undoRedoManager.clearForUserAndSlide(req.getUserId(), req.getSlideId());
         log.debug("撤销/重做栈已清除");
-        return Result.success(MessageSource.M("ANNOTATION_CLEAR_STACK_SUCCESS"), null);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_CLEAR_STACK_SUCCESS"), null);
     }
 
 
@@ -971,7 +988,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         if (Constant.ANNO_TYPE_DRAW.equals(annotationType)) {
             // 从标注表查询绘图几何对象
             Annotation annotation = annotationRepository.findByAnnotationId(geometryId)
-                    .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+                    .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
             log.debug("获取绘图标注几何对象，annotationId: {}, geomType: {}",
                     geometryId, annotation.getGeom() != null ? annotation.getGeom().getGeometryType() : "null");
             return annotation.getGeom();
@@ -987,7 +1004,7 @@ public class AnnotationServiceImpl implements AnnotationService {
 
             if (measure == null) {
                 log.warn("测量对象转换为空，measureId: {}", geometryId);
-                throw new Exception(MessageSource.M("NO_ANNOTATION_DATA"));
+                throw new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA"));
             }
             log.debug("获取测量标注几何对象，measureId: {}, geomType: {}",
                     geometryId, measure.getGeometry() != null ? measure.getGeometry().getGeometryType() : "null");
@@ -1095,7 +1112,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         annotation = annotationRepository.save(annotation);
         log.info("标注几何简化完成，annotationId: {}", annotationId);
         
-        return Result.success(MessageSource.M("ANNOTATION_SIMPLIFY_SUCCESS"), annotation);
+        return Result.success(MessageSourceUtil.getMessage("ANNOTATION_SIMPLIFY_SUCCESS"), annotation);
     }
 
     /**

@@ -3,6 +3,13 @@
 -- 数据库: PostgreSQL 14+
 -- 扩展: PostGIS (用于矢量标注空间数据存储)
 -- 创建日期: 2024-04-16
+-- 更新日期: 2026-05-06
+-- 
+-- 重要说明:
+-- 1. 本脚本已移除所有外键约束（REFERENCES），改用应用层维护数据完整性
+-- 2. 保留所有索引以确保查询性能
+-- 3. 删除操作需要在应用层处理级联逻辑
+-- 4. 优势：提高插入/更新性能，避免锁竞争，支持分库分表
 -- ============================================================================
 
 -- 启用 PostGIS 扩展（用于矢量标注的空间数据存储）
@@ -56,7 +63,7 @@ CREATE INDEX idx_project_manager ON biz_project(manager_id);
 -- ============================================================================
 CREATE TABLE biz_batch (
     batch_id BIGSERIAL PRIMARY KEY,
-    project_id BIGINT NOT NULL REFERENCES biz_project(project_id) ON DELETE CASCADE,
+    project_id BIGINT NOT NULL,
     batch_code VARCHAR(100) NOT NULL,
     batch_name VARCHAR(200),
     scanner_model VARCHAR(100),
@@ -90,9 +97,9 @@ CREATE INDEX idx_batch_code ON biz_batch(batch_code);
 -- ============================================================================
 CREATE TABLE biz_slide (
     slide_id BIGSERIAL PRIMARY KEY,
-    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
-    project_id BIGINT NOT NULL REFERENCES biz_project(project_id) ON DELETE CASCADE,
-    batch_id BIGINT NOT NULL REFERENCES biz_batch(batch_id) ON DELETE CASCADE,
+    image_id BIGINT NOT NULL,
+    project_id BIGINT NOT NULL,
+    batch_id BIGINT NOT NULL,
     slide_code VARCHAR(100) NOT NULL UNIQUE,
     slide_name VARCHAR(200),
     pathology_id VARCHAR(100),
@@ -187,7 +194,7 @@ CREATE INDEX idx_slide_scan_date ON biz_slide(scan_date);
 -- ============================================================================
 CREATE TABLE biz_image (
     image_id BIGSERIAL PRIMARY KEY,
-    batch_id BIGINT NOT NULL REFERENCES biz_batch(batch_id) ON DELETE CASCADE,
+    batch_id BIGINT NOT NULL,
     filename VARCHAR(255) NOT NULL,
     original_filename VARCHAR(500) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
@@ -250,7 +257,7 @@ CREATE TABLE biz_tag (
     name VARCHAR(100) NOT NULL,
     code VARCHAR(50) NOT NULL UNIQUE,
     category VARCHAR(50),
-    parent_id BIGINT REFERENCES biz_tag(tag_id) ON DELETE SET NULL,
+    parent_id BIGINT,
     color_code VARCHAR(20),
     sort_order INT DEFAULT 0,
     is_system BOOLEAN DEFAULT FALSE,
@@ -279,8 +286,8 @@ CREATE INDEX idx_tag_parent ON biz_tag(parent_id);
 -- ============================================================================
 CREATE TABLE biz_image_tag_rel (
     rel_id BIGSERIAL PRIMARY KEY,
-    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
-    tag_id BIGINT NOT NULL REFERENCES biz_tag(tag_id) ON DELETE CASCADE,
+    image_id BIGINT NOT NULL,
+    tag_id BIGINT NOT NULL,
     confidence FLOAT,
     tagged_by BIGINT,
     tag_source VARCHAR(20),
@@ -313,7 +320,7 @@ CREATE TABLE biz_task (
     task_id BIGSERIAL PRIMARY KEY,
     task_no VARCHAR(50) NOT NULL UNIQUE,
     type VARCHAR(20) NOT NULL,
-    project_id BIGINT REFERENCES biz_project(project_id) ON DELETE CASCADE,
+    project_id BIGINT,
     model_version VARCHAR(50),
     config_snapshot JSONB,
     progress FLOAT DEFAULT 0,
@@ -356,8 +363,8 @@ CREATE TABLE biz_model (
     model_name VARCHAR(100) NOT NULL,
     version VARCHAR(20) NOT NULL,
     base_model VARCHAR(50),
-    project_id BIGINT REFERENCES biz_project(project_id) ON DELETE CASCADE,
-    training_task_id BIGINT REFERENCES biz_task(task_id) ON DELETE SET NULL,
+    project_id BIGINT,
+    training_task_id BIGINT,
     metrics JSONB,
     weights_path VARCHAR(500),
     is_best BOOLEAN DEFAULT FALSE,
@@ -391,8 +398,8 @@ CREATE UNIQUE INDEX idx_model_version ON biz_model(model_name, version);
 -- ============================================================================
 CREATE TABLE biz_prediction (
     prediction_id BIGSERIAL PRIMARY KEY,
-    task_id BIGINT NOT NULL REFERENCES biz_task(task_id) ON DELETE CASCADE,
-    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
+    task_id BIGINT NOT NULL,
+    image_id BIGINT NOT NULL,
     detections JSONB,
     geojson_path VARCHAR(500),
     overlay_img_path VARCHAR(500),
@@ -432,17 +439,17 @@ CREATE INDEX idx_review_status ON biz_prediction(review_status);
 -- ============================================================================
 CREATE TABLE biz_annotation (
     annotation_id BIGSERIAL PRIMARY KEY,
-    slide_id BIGINT NOT NULL REFERENCES biz_slide(slide_id) ON DELETE CASCADE,
-    image_id BIGINT NOT NULL REFERENCES biz_image(image_id) ON DELETE CASCADE,
-    project_id BIGINT REFERENCES biz_project(project_id) ON DELETE SET NULL,
-    batch_id BIGINT REFERENCES biz_batch(batch_id) ON DELETE SET NULL,
-    tag_id BIGINT NOT NULL REFERENCES biz_tag(tag_id) ON DELETE CASCADE,
-    parent_annotation_id BIGINT REFERENCES biz_annotation(annotation_id) ON DELETE SET NULL,
+    slide_id BIGINT NOT NULL,
+    image_id BIGINT NOT NULL,
+    project_id BIGINT,
+    batch_id BIGINT,
+    tag_id BIGINT NOT NULL,
+    parent_annotation_id BIGINT,
     geom_type VARCHAR(20) NOT NULL,
     
     -- 空间数据存储（二选一，推荐 geom）
     geom GEOMETRY(Geometry, 0),  -- PostGIS几何字段（主存储，支持空间索引和查询）
-    coordinates_geojson JSONB,   -- GeoJSON备份（可选，用于前端快速渲染，可为NULL）
+--     coordinates_geojson JSONB,   -- GeoJSON备份（可选，用于前端快速渲染，可为NULL）
     
     -- LOD多分辨率支持
     lod_level INT DEFAULT 0,     -- LOD层级 (0=原始精度, 1-5=简化层级，数字越大越简化)
@@ -480,7 +487,7 @@ COMMENT ON COLUMN biz_annotation.tag_id IS '关联标签ID';
 COMMENT ON COLUMN biz_annotation.parent_annotation_id IS '父标注ID（支持层级标注，如：脏器->组织）';
 COMMENT ON COLUMN biz_annotation.geom_type IS '标注类型 (POINT/LINESTRING/POLYGON/MULTIPOLYGON)';
 COMMENT ON COLUMN biz_annotation.geom IS 'PostGIS几何字段（主存储，支持空间索引和精确查询）';
-COMMENT ON COLUMN biz_annotation.coordinates_geojson IS 'GeoJSON格式坐标（可选备份，用于前端快速渲染，可为NULL避免冗余）';
+-- COMMENT ON COLUMN biz_annotation.coordinates_geojson IS 'GeoJSON格式坐标（可选备份，用于前端快速渲染，可为NULL避免冗余）';
 COMMENT ON COLUMN biz_annotation.lod_level IS 'LOD层级 (0=原始精度, 1-5=简化层级，数字越大越简化，用于多分辨率渲染)';
 COMMENT ON COLUMN biz_annotation.simplified_geom IS '简化后的几何（用于低分辨率快速渲染，减少数据传输量）';
 COMMENT ON COLUMN biz_annotation.bbox IS '边界框（用于快速筛选、视口裁剪和碰撞检测）';

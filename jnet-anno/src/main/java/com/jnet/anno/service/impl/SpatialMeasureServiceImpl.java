@@ -6,7 +6,7 @@ import com.jnet.anno.domain.SpatialMeasure;
 import com.jnet.anno.netty.websocket.NioWebSocketHandler;
 import com.jnet.anno.repository.SpatialMeasureRepository;
 import com.jnet.anno.service.SpatialMeasureService;
-import com.jnet.anno.utils.MessageSource;
+import com.jnet.anno.utils.MessageSourceUtil;
 import com.jnet.anno.utils.SecurityUtils;
 import com.jnet.anno.utils.measure.MeasureMessageGenerator;
 import com.jnet.anno.vo.measure.MeasureVo;
@@ -19,7 +19,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -80,7 +79,7 @@ public class SpatialMeasureServiceImpl implements SpatialMeasureService {
     @Override
     public Result<Measure> addMeasure(Measure req) throws Exception {
         if (req == null || req.getGeometry() == null || !req.getGeometry().isSimple()) {
-            throw new Exception(MessageSource.M("ARGUMENT_INVALID"));
+            throw new Exception(MessageSourceUtil.getMessage("ARGUMENT_INVALID"));
         }
 
         req.setCreateBy(SecurityUtils.getUserId());
@@ -108,16 +107,16 @@ public class SpatialMeasureServiceImpl implements SpatialMeasureService {
     @Override
     public Result delete(Long measureId) throws Exception {
         if (!Optional.ofNullable(measureId).isPresent()) {
-            throw new Exception(MessageSource.M("ARGUMENT_INVALID"));
+            throw new Exception(MessageSourceUtil.getMessage("ARGUMENT_INVALID"));
         }
 
         SpatialMeasure measure = spatialMeasureRepository.findById(measureId)
-                .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+                .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
 
         spatialMeasureRepository.delete(measure);
 
         webSocketHandler.sendMessage(MeasureMessageGenerator.generateAnnotationMessage(convertToMeasure(measure), Constant.ANNO_ACTION_DELETE));
-        return Result.success(MessageSource.M("OPERATE_SUCCEED"), null);
+        return Result.success(MessageSourceUtil.getMessage("OPERATE_SUCCEED"), null);
     }
 
     @Override
@@ -125,7 +124,7 @@ public class SpatialMeasureServiceImpl implements SpatialMeasureService {
         Measure measure = null;
         try {
             SpatialMeasure spatialMeasure = spatialMeasureRepository.findById(measureId)
-                    .orElseThrow(() -> new Exception(MessageSource.M("NO_ANNOTATION_DATA")));
+                    .orElseThrow(() -> new Exception(MessageSourceUtil.getMessage("NO_ANNOTATION_DATA")));
             measure = convertToMeasure(spatialMeasure);
         } catch (Exception e) {
             log.error("[SpatialMeasureServiceImpl.findById]", e);
@@ -192,7 +191,7 @@ public class SpatialMeasureServiceImpl implements SpatialMeasureService {
 
         response.setContentType("application/vnd.ms-excel");
         response.setCharacterEncoding("utf-8");
-        String exportName = URLEncoder.encode(MessageSource.M("EXCEL_TITLE"), "UTF-8");
+        String exportName = URLEncoder.encode(MessageSourceUtil.getMessage("EXCEL_TITLE"), "UTF-8");
         response.setHeader("Content-disposition", "attachment;filename=" + exportName + ".xlsx");
 
         EasyExcel.write(response.getOutputStream(), MeasureVo.class)

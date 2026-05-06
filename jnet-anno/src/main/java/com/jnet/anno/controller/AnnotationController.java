@@ -1,1 +1,173 @@
-package com.jnet.anno.controller;import com.jnet.anno.domain.Annotation;import com.jnet.anno.netty.message.AnnotationFeature;import com.jnet.anno.repository.AnnotationRepository;import com.jnet.anno.service.AnnotationService;import com.jnet.anno.utils.MessageSource;import com.jnet.anno.utils.SecurityUtils;import com.jnet.anno.utils.annotation.AnnotationMessageGenerator;import com.jnet.anno.utils.annotation.UndoRedoReq;import com.jnet.anno.vo.anno.*;import com.jnet.common.result.Result;import io.swagger.v3.oas.annotations.Operation;import io.swagger.v3.oas.annotations.media.Content;import io.swagger.v3.oas.annotations.media.Schema;import io.swagger.v3.oas.annotations.responses.ApiResponse;import io.swagger.v3.oas.annotations.tags.Tag;import jakarta.annotation.Resource;import org.apache.commons.collections4.CollectionUtils;import org.locationtech.jts.geom.Geometry;import org.springframework.validation.annotation.Validated;import org.springframework.web.bind.annotation.*;import java.util.ArrayList;import java.util.List;import java.util.Map;import java.util.stream.Collectors;/** * 标注管理 * * @author JNet Team * @since 2024-04-16 */@Tag(name = "标注管理")@RestController@RequestMapping("/api/v1/annotation")public class AnnotationController {    @Resource    private AnnotationService annotationService;    @Resource    private AnnotationRepository spatialAnnotationRepository;    @Operation(summary = "添加标注", description = "创建新的标注记录", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = String.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping()    public Result<String> insert(@Validated @RequestBody AnnotationDTO annotationDTO) throws Exception {        Result<Annotation> result = annotationService.addAnnotation(annotationDTO);        return Result.success(String.valueOf(result.getData().getAnnotationId()));    }    @Operation(summary = "删除标注", description = "根据标注ID删除标注", responses = {            @ApiResponse(responseCode = "200", description = "操作成功"),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @DeleteMapping("{id}")    public Result<Void> deleteAnnotation(@PathVariable("id") Long id) throws Exception {        return annotationService.deleteAnnotation(id);    }    @Operation(summary = "更新标注", description = "更新标注的属性和几何信息", responses = {            @ApiResponse(responseCode = "200", description = "操作成功"),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PutMapping()    public Result<Void> updateAnnotation(@Validated @RequestBody AnnotationDTO annotationDTO) throws Exception {        return annotationService.updateAnnotation(annotationDTO);    }    @Operation(summary = "填充轮廓", description = "对标注轮廓进行填充操作", responses = {            @ApiResponse(responseCode = "200", description = "操作成功"),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PutMapping("/padding/{id}")    public Result<Void> padding(@PathVariable("id") Long id) throws Exception {        return annotationService.padding(id);    }    @PostMapping("/getDistance")    @Operation(summary = "获取间距", description = "计算两个标注之间的距离", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationDistanceVo.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    public Result<AnnotationDistanceVo> getDistance(@Validated @RequestBody AnnotationDistanceReq req) throws Exception {        return annotationService.getDistance(req);    }    @Operation(summary = "复制/粘贴轮廓", description = "复制标注并粘贴到新位置", responses = {            @ApiResponse(responseCode = "200", description = "操作成功"),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/stickup")    public Result<Void> stickup(@Validated @RequestBody AnnotationDTO annotationDTO) throws Exception {        return annotationService.stickup(annotationDTO);    }    @Operation(summary = "轮廓合并预览", description = "预览多个标注合并后的几何形状", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Geometry.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/mergePreview")    public Result<Geometry> mergePreview(@RequestBody AnnotationMergePreviewReq req) throws Exception {        List<Long> annotationIds = req.getMarkingIdList();        return annotationService.mergePreview(annotationIds);    }    @Operation(summary = "获取GeoJson数据", description = "查询指定切片的所有标注数据", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationFeature.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/selectLists")    public Result<List<AnnotationFeature>> selectLists(@Validated @RequestBody AnnotationReq req) throws Exception {        Long slideId = req.getSlideId();        if (slideId == null) {            throw new IllegalArgumentException(MessageSource.M("ARGUMENT_INVALID"));        }        List<Annotation> annotations = spatialAnnotationRepository.findBySlideId(slideId);        List<AnnotationFeature> resp = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : AnnotationMessageGenerator.generateFeatures(annotations.stream()                .map(this::convertToFeature)                .collect(Collectors.toList()));        return Result.success(resp);    }    /**     * 将 Annotation 转换为 AnnotationFeature     */    private Annotation convertToFeature(Annotation spatial) {        if (spatial == null) {            return null;        }        Annotation anno = new Annotation();        anno.setAnnotationId(spatial.getAnnotationId());        anno.setSlideId(spatial.getSlideId());        anno.setGeom(spatial.getGeom());        anno.setArea(spatial.getArea());        anno.setPerimeter(spatial.getPerimeter());        anno.setDescription(spatial.getDescription());        anno.setTagId(spatial.getTagId());        anno.setGeomType(spatial.getGeomType());        anno.setCreateBy(spatial.getCreateBy());        anno.setUpdateBy(spatial.getUpdateBy());        anno.setCreateTime(spatial.getCreateTime());        anno.setUpdateTime(spatial.getUpdateTime());        return anno;    }    @Operation(summary = "合并、裁剪轮廓", description = "执行标注的合并或裁剪操作", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Geometry.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/updateOperation")    public Result<Geometry> annotationOperation(@Validated @RequestBody AnnotationOperationReq req) throws Exception {        return annotationService.annotationOperation(req);    }    @Operation(summary = "批量操作", description = "批量处理标注数据", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationBatchVo.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/batch")    public Result<List<AnnotationBatchVo>> batch(@Validated @RequestBody AnnotationBatchDTO req) throws Exception {        return annotationService.batch(req);    }    @Operation(summary = "查询标签是否被使用", description = "检查指定标签是否已被标注使用", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Boolean.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/checkTagUsageStatus")    public Result<Boolean> checkTagUsageStatus(@RequestParam("id") Long id) throws Exception {        long count = spatialAnnotationRepository.countByTagId(id).orElse(0L);        return Result.success(count > 0);    }    @Operation(summary = "检查是否存在用户的标注数据", description = "检查指定用户在指定切片上是否有标注", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Boolean.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/checkUserOperation")    public Result<Boolean> checkUserOperation(@RequestBody CheckUserOperation req) throws Exception {        List<Long> slideIds = req.getSlideId();        Long userId = req.getUserId();        if (CollectionUtils.isEmpty(slideIds) || userId == null) {            throw new IllegalArgumentException(MessageSource.M("ARGUMENT_INVALID"));        }        long count = spatialAnnotationRepository.countBySlideIdInAndCreateBy(slideIds, userId)                .orElse(0L);        return Result.success(count > 0);    }    @Operation(summary = "撤销", description = "撤销最近一次标注操作", responses = {            @ApiResponse(responseCode = "200", description = "操作成功"),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/undoAnnotation/{slideId}")    public Result<Void> undoAnnotation(@PathVariable Long slideId) throws Exception {        return annotationService.undoAnnotation(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());    }    @Operation(summary = "还原", description = "还原已撤销的标注操作", responses = {            @ApiResponse(responseCode = "200", description = "操作成功"),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/redoAnnotation/{slideId}")    public Result<Void> redo(@PathVariable Long slideId) throws Exception {        return annotationService.redoAnnotation(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());    }    @Operation(summary = "清除撤销、还原操作", description = "清空指定切片的撤销/还原栈", responses = {            @ApiResponse(responseCode = "200", description = "操作成功"),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/clear/{slideId}")    public Result<Void> clearUndoAndRedoStack(@PathVariable Long slideId) throws Exception {        return annotationService.clearUndoAndRedoStack(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());    }    @Operation(summary = "检查撤销、还原状态", description = "检查当前是否可以执行撤销或还原操作", responses = {            @ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Map.class))),            @ApiResponse(responseCode = "500", description = "操作失败")    })    @PostMapping("/checkUndoAndRedoStatus/{slideId}")    public Result<Map<String, Boolean>> checkUndoAndRedoStatus(@PathVariable Long slideId) throws Exception {        return annotationService.checkUndoAndRedoStatus(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());    }}
+package com.jnet.anno.controller;
+
+import com.jnet.anno.domain.Annotation;
+import com.jnet.anno.netty.message.AnnotationFeature;
+import com.jnet.anno.repository.AnnotationRepository;
+import com.jnet.anno.service.AnnotationService;
+import com.jnet.anno.utils.MessageSourceUtil;
+import com.jnet.anno.utils.SecurityUtils;
+import com.jnet.anno.utils.annotation.AnnotationMessageGenerator;
+import com.jnet.anno.utils.annotation.UndoRedoReq;
+import com.jnet.anno.vo.anno.*;
+import com.jnet.common.result.Result;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
+import org.apache.commons.collections4.CollectionUtils;
+import org.locationtech.jts.geom.Geometry;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * 标注管理 * * @author JNet Team * @since 2024-04-16
+ */
+@Tag(name = "标注管理")
+@RestController
+@RequestMapping("/api/v1/annotation")
+public class AnnotationController {
+    @Resource
+    private AnnotationService annotationService;
+    @Resource
+    private AnnotationRepository spatialAnnotationRepository;
+
+    @Operation(summary = "添加标注", description = "创建新的标注记录", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = String.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping()
+    public Result<Annotation> insert(@Validated @RequestBody AnnotationDTO annotationDTO) throws Exception {
+        return annotationService.addAnnotation(annotationDTO);
+    }
+
+    @Operation(summary = "删除标注", description = "根据标注ID删除标注", responses = {@ApiResponse(responseCode = "200", description = "操作成功"), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @DeleteMapping("{id}")
+    public Result<Void> deleteAnnotation(@PathVariable("id") Long id) throws Exception {
+        return annotationService.deleteAnnotation(id);
+    }
+
+    @Operation(summary = "更新标注", description = "更新标注的属性和几何信息", responses = {@ApiResponse(responseCode = "200", description = "操作成功"), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PutMapping()
+    public Result<Void> updateAnnotation(@Validated @RequestBody AnnotationDTO annotationDTO) throws Exception {
+        return annotationService.updateAnnotation(annotationDTO);
+    }
+
+    @Operation(summary = "填充轮廓", description = "对标注轮廓进行填充操作", responses = {@ApiResponse(responseCode = "200", description = "操作成功"), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PutMapping("/padding/{id}")
+    public Result<Void> padding(@PathVariable("id") Long id) throws Exception {
+        return annotationService.padding(id);
+    }
+
+    @PostMapping("/getDistance")
+    @Operation(summary = "获取间距", description = "计算两个标注之间的距离", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationDistanceVo.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    public Result<AnnotationDistanceVo> getDistance(@Validated @RequestBody AnnotationDistanceReq req) throws Exception {
+        return annotationService.getDistance(req);
+    }
+
+    @Operation(summary = "复制/粘贴轮廓", description = "复制标注并粘贴到新位置", responses = {@ApiResponse(responseCode = "200", description = "操作成功"), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/stickup")
+    public Result<Void> stickup(@Validated @RequestBody AnnotationDTO annotationDTO) throws Exception {
+        return annotationService.stickup(annotationDTO);
+    }
+
+    @Operation(summary = "轮廓合并预览", description = "预览多个标注合并后的几何形状", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Geometry.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/mergePreview")
+    public Result<Geometry> mergePreview(@RequestBody AnnotationMergePreviewReq req) throws Exception {
+        List<Long> annotationIds = req.getMarkingIdList();
+        return annotationService.mergePreview(annotationIds);
+    }
+
+    @Operation(summary = "获取GeoJson数据", description = "查询指定切片的所有标注数据", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationFeature.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/selectLists")
+    public Result<List<AnnotationFeature>> selectLists(@Validated @RequestBody AnnotationReq req) throws Exception {
+        Long slideId = req.getSlideId();
+        if (slideId == null) {
+            throw new IllegalArgumentException(MessageSourceUtil.getMessage("ARGUMENT_INVALID"));
+        }
+        List<Annotation> annotations = spatialAnnotationRepository.findBySlideId(slideId);
+        List<AnnotationFeature> resp = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : AnnotationMessageGenerator.generateFeatures(annotations);
+        return Result.success(resp);
+    }
+
+    /**
+     * 将 Annotation 转换为 AnnotationFeature
+     */
+    private Annotation convertToFeature(Annotation spatial) {
+        if (spatial == null) {
+            return null;
+        }
+        Annotation anno = new Annotation();
+        anno.setAnnotationId(spatial.getAnnotationId());
+        anno.setSlideId(spatial.getSlideId());
+        anno.setGeom(spatial.getGeom());
+        anno.setArea(spatial.getArea());
+        anno.setPerimeter(spatial.getPerimeter());
+        anno.setDescription(spatial.getDescription());
+        anno.setTagId(spatial.getTagId());
+        anno.setGeomType(spatial.getGeomType());
+        anno.setCreateBy(spatial.getCreateBy());
+        anno.setUpdateBy(spatial.getUpdateBy());
+        anno.setCreateTime(spatial.getCreateTime());
+        anno.setUpdateTime(spatial.getUpdateTime());
+        return anno;
+    }
+
+    @Operation(summary = "合并、裁剪轮廓", description = "执行标注的合并或裁剪操作", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Geometry.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/updateOperation")
+    public Result<Geometry> annotationOperation(@Validated @RequestBody AnnotationOperationReq req) throws Exception {
+        return annotationService.annotationOperation(req);
+    }
+
+    @Operation(summary = "批量操作", description = "批量处理标注数据", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = AnnotationBatchVo.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/batch")
+    public Result<List<AnnotationBatchVo>> batch(@Validated @RequestBody AnnotationBatchDTO req) throws Exception {
+        return annotationService.batch(req);
+    }
+
+    @Operation(summary = "查询标签是否被使用", description = "检查指定标签是否已被标注使用", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Boolean.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/checkTagUsageStatus")
+    public Result<Boolean> checkTagUsageStatus(@RequestParam("id") Long id) throws Exception {
+        long count = spatialAnnotationRepository.countByTagId(id).orElse(0L);
+        return Result.success(count > 0);
+    }
+
+    @Operation(summary = "检查是否存在用户的标注数据", description = "检查指定用户在指定切片上是否有标注", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Boolean.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/checkUserOperation")
+    public Result<Boolean> checkUserOperation(@RequestBody CheckUserOperation req) throws Exception {
+        List<Long> slideIds = req.getSlideId();
+        Long userId = req.getUserId();
+        if (CollectionUtils.isEmpty(slideIds) || userId == null) {
+            throw new IllegalArgumentException(MessageSourceUtil.getMessage("ARGUMENT_INVALID"));
+        }
+        long count = spatialAnnotationRepository.countBySlideIdInAndCreateBy(slideIds, userId).orElse(0L);
+        return Result.success(count > 0);
+    }
+
+    @Operation(summary = "撤销", description = "撤销最近一次标注操作", responses = {@ApiResponse(responseCode = "200", description = "操作成功"), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/undoAnnotation/{slideId}")
+    public Result<Void> undoAnnotation(@PathVariable("slideId") Long slideId) throws Exception {
+        return annotationService.undoAnnotation(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());
+    }
+
+    @Operation(summary = "还原", description = "还原已撤销的标注操作", responses = {@ApiResponse(responseCode = "200", description = "操作成功"), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/redoAnnotation/{slideId}")
+    public Result<Void> redo(@PathVariable("slideId") Long slideId) throws Exception {
+        return annotationService.redoAnnotation(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());
+    }
+
+    @Operation(summary = "清除撤销、还原操作", description = "清空指定切片的撤销/还原栈", responses = {@ApiResponse(responseCode = "200", description = "操作成功"), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/clear/{slideId}")
+    public Result<Void> clearUndoAndRedoStack(@PathVariable("slideId") Long slideId) throws Exception {
+        return annotationService.clearUndoAndRedoStack(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());
+    }
+
+    @Operation(summary = "检查撤销、还原状态", description = "检查当前是否可以执行撤销或还原操作", responses = {@ApiResponse(responseCode = "200", description = "操作成功", content = @Content(schema = @Schema(implementation = Map.class))), @ApiResponse(responseCode = "500", description = "操作失败")})
+    @PostMapping("/checkUndoAndRedoStatus/{slideId}")
+    public Result<Map<String, Boolean>> checkUndoAndRedoStatus(@PathVariable("slideId") Long slideId) throws Exception {
+        return annotationService.checkUndoAndRedoStatus(UndoRedoReq.builder().slideId(slideId).userId(SecurityUtils.getUserId()).build());
+    }
+}

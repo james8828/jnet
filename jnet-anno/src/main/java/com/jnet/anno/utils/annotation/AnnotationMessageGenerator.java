@@ -34,13 +34,15 @@ public class AnnotationMessageGenerator {
         return annotationMessage;
     }
 
-    public static AnnotationFeature generateFeatures(Annotation annotation){
+    public static AnnotationFeature generateFeatures(Annotation annotation, AnnotationProperties properties){
 
         AnnotationFeature feature = new AnnotationFeature();
+        feature.setId(String.valueOf(annotation.getAnnotationId()));
         feature.setGeometry(annotation.getGeom());
-        feature.setProperties(generateProperties(annotation));
+        feature.setProperties(properties);
         return feature;
     }
+
 
     public static List<AnnotationFeature> generateFeatures(List<Annotation> annotations){
         Map<Long, StructureTagPageVo> tagMap = getTagMap(annotations);
@@ -52,13 +54,6 @@ public class AnnotationMessageGenerator {
         return features;
     }
 
-    public static AnnotationFeature generateFeatures(Annotation annotation, AnnotationProperties properties){
-
-        AnnotationFeature feature = new AnnotationFeature();
-        feature.setGeometry(annotation.getGeom());
-        feature.setProperties(properties);
-        return feature;
-    }
 
 
     /**
@@ -68,11 +63,11 @@ public class AnnotationMessageGenerator {
      * @return PropertiesBriefly 属性信息
      */
     public static AnnotationProperties generateProperties(Annotation annotation) {
-        return generateProperties(Arrays.asList(annotation)).get(0);
+        return generateProperties(Collections.singletonList(annotation)).getFirst();
     }
 
     public static AnnotationProperties generateProperties(Annotation annotation,Map<Long,StructureTagPageVo> tagMap,Map<Long, User> userMap) {
-        return generateProperties(Arrays.asList(annotation),tagMap,userMap).get(0);
+        return generateProperties(Collections.singletonList(annotation),tagMap,userMap).getFirst();
     }
 
     public static List<AnnotationProperties> generateProperties(List<Annotation> annotations) {
@@ -96,6 +91,7 @@ public class AnnotationMessageGenerator {
             properties.setA11(annotation.getCreateBy());
             properties.setA12(DateUtil.format(annotation.getCreateTime(), DatePattern.NORM_DATETIME_PATTERN));
             properties.setA13(annotation.getUpdateBy());
+            properties.setTagId(String.valueOf(annotation.getTagId()));
             setTagInfo(properties, tagMap.get(annotation.getTagId()));
             setUserInfo(properties, annotation.getCreateBy(), userMap, true);
             setUserInfo(properties, annotation.getUpdateBy(), userMap, false);

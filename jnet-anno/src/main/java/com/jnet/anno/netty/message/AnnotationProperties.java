@@ -71,4 +71,6 @@ public class AnnotationProperties {
     private String A29;
 
     private Object A30;
+
+    private String tagId;
 }

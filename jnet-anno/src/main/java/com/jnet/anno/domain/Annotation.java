@@ -103,8 +103,8 @@ public class Annotation implements Serializable {
     /**
      * GeoJSON格式坐标（可选备份，用于前端快速渲染）
      */
-    @Column(name = "coordinates_geojson", columnDefinition = "jsonb")
-    private String coordinatesGeojson;
+    /*@Column(name = "coordinates_geojson", columnDefinition = "jsonb")
+    private String coordinatesGeojson;*/
 
     /**
      * LOD层级 (0=原始精度, 1-5=简化层级，数字越大越简化)
