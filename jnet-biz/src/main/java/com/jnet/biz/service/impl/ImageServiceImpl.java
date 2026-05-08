@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jnet.biz.dto.BatchSelectImagesDTO;
 import com.jnet.biz.dto.ImageQueryDTO;
+import com.jnet.biz.dto.ReparseResult;
 import com.jnet.biz.entity.Batch;
 import com.jnet.biz.entity.Image;
 import com.jnet.biz.exception.BizErrorCode;
@@ -13,6 +14,9 @@ import com.jnet.biz.exception.BizException;
 import com.jnet.biz.mapper.ImageMapper;
 import com.jnet.biz.service.IBatchService;
 import com.jnet.biz.service.IImageService;
+import com.jnet.biz.config.StoragePathConfig;
+import com.jnet.biz.util.OpenSlideMetadataParser;
+import com.jnet.biz.util.OpenSlideTiffConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +43,8 @@ import java.util.List;
 public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements IImageService {
 
     private final IBatchService batchService;
+    private final OpenSlideTiffConverter tiffConverter;
+    private final OpenSlideMetadataParser metadataParser;
 
     @Override
     public Page<Image> searchImages(ImageQueryDTO query) {
@@ -51,6 +57,8 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         // 所属批次ID筛选
         if (query.getBatchId() != null) {
             wrapper.eq(Image::getBatchId, query.getBatchId());
+        }else if (query.getProjectId() != null){
+            wrapper.inSql(Image::getBatchId, "select batch_id from biz_batch where project_id = " + query.getProjectId());
         }
         
         // 生命周期状态筛选
@@ -92,7 +100,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
                 wrapper.orderByDesc(getOrderColumn(query.getOrderBy()));
             }
         } else {
-            wrapper.orderByDesc(Image::getCreateTime);
+            wrapper.orderByDesc(Image::getImageId);
         }
         
         return this.page(page, wrapper);
@@ -283,5 +291,113 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         // TODO: 实际应该从数据库查询项目表获取projectCode
         // 这里简化处理，返回默认值
         return "PROJECT_" + projectId;
+    }
+
+    @Override
+//    @Transactional(rollbackFor = Exception.class)
+    public ReparseResult batchReparseMetadata(List<Long> imageIds, Long projectId, boolean forceReparse) {
+        ReparseResult result = new ReparseResult();
+        
+        // 1. 确定要解析的图像列表
+        List<Image> imagesToReparse;
+        if (imageIds != null && !imageIds.isEmpty()) {
+            // 手动选择图像
+            imagesToReparse = this.listByIds(imageIds);
+            log.info("手动选择 {} 个图像进行重新解析", imagesToReparse.size());
+        } else if (projectId != null) {
+            // 按项目解析所有图像
+            LambdaQueryWrapper<Image> wrapper = new LambdaQueryWrapper<>();
+            wrapper.inSql(Image::getBatchId, 
+                "SELECT batch_id FROM biz_batch WHERE project_id = " + projectId);
+            imagesToReparse = this.list(wrapper);
+            log.info("项目 {} 下共找到 {} 个图像", projectId, imagesToReparse.size());
+        } else {
+            throw new BizException(BizErrorCode.PARAM_ERROR, "必须提供图像ID列表或项目ID");
+        }
+        
+        result.setTotalCount(imagesToReparse.size());
+        
+        if (imagesToReparse.isEmpty()) {
+            log.warn("没有找到需要解析的图像");
+            return result;
+        }
+        
+        // 2. 逐个处理图像
+        for (Image image : imagesToReparse) {
+            try {
+                // 检查是否需要跳过
+                if (!forceReparse && hasValidMetadata(image)) {
+                    log.debug("跳过已有元数据的图像: imageId={}, filename={}", 
+                        image.getImageId(), image.getFilename());
+                    result.setSkippedCount(result.getSkippedCount() + 1);
+                    continue;
+                }
+                
+                // 执行重新解析
+                reparseSingleImage(image);
+                result.setSuccessCount(result.getSuccessCount() + 1);
+                log.info("图像解析成功: imageId={}, filename={}", 
+                    image.getImageId(), image.getFilename());
+                
+            } catch (Exception e) {
+                log.error("图像解析失败: imageId={}, filename={}", 
+                    image.getImageId(), image.getFilename(), e);
+                result.setFailedCount(result.getFailedCount() + 1);
+                result.getErrorMessages().add(
+                    String.format("图像 %s 解析失败: %s", image.getFilename(), e.getMessage()));
+            }
+        }
+        
+        log.info("批量重新解析完成: total={}, success={}, failed={}, skipped={}",
+            result.getTotalCount(), result.getSuccessCount(), 
+            result.getFailedCount(), result.getSkippedCount());
+        
+        return result;
+    }
+    
+    /**
+     * 检查图像是否已有有效的元数据
+     */
+    private boolean hasValidMetadata(Image image) {
+        // 如果已有宽度、高度和层级信息，认为已有元数据
+        return image.getWidth() != null && image.getWidth() > 0
+            && image.getHeight() != null && image.getHeight() > 0
+            && image.getLevels() != null && image.getLevels() > 0;
+    }
+    
+    /**
+     * 重新解析单个图像
+     */
+    private void reparseSingleImage(Image image) throws IOException {
+        String filePath = image.getFilePath();
+        if (!StringUtils.hasText(filePath)) {
+            throw new IOException("文件路径为空");
+        }
+        
+        File imageFile = new File(filePath);
+        if (!imageFile.exists()) {
+            throw new IOException("文件不存在: " + filePath);
+        }
+        
+        log.info("开始解析图像: imageId={}, file={}", image.getImageId(), filePath);
+        
+        // 1. 如果是 JPG/PNG，先转换为 OpenSlide 兼容的 TIFF
+        File processedFile = tiffConverter.ensureOpenSlideCompatible(filePath);
+        
+        // 2. 使用 OpenSlide 解析元数据
+        parseAndSetMetadata(image, processedFile.getAbsolutePath());
+        
+        // 3. 更新数据库
+        this.updateById(image);
+        
+        log.info("图像解析完成: imageId={}, width={}, height={}, levels={}",
+            image.getImageId(), image.getWidth(), image.getHeight(), image.getLevels());
+    }
+    
+    /**
+     * 解析并设置图像元数据（使用OpenSlide）
+     */
+    private void parseAndSetMetadata(Image image, String filePath) throws IOException {
+        metadataParser.parseAndSetMetadata(image, filePath);
     }
 }

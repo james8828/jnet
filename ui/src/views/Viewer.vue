@@ -9,6 +9,11 @@
       </div>
 
       <div class="toolbar-right">
+        <!-- 鼠标坐标显示 -->
+        <div class="coordinate-display" v-if="mouseCoordinates">
+          X: {{ mouseCoordinates.x.toFixed(2) }}, Y: {{ mouseCoordinates.y.toFixed(2) }}
+        </div>
+        
         <el-select v-model="selectedMagnification" @change="handleMagnificationChange" size="small" style="width: 100px">
           <el-option
             v-for="mag in availableMagnifications"
@@ -44,6 +49,12 @@ import AnnotationToolbar from '@/components/AnnotationToolbar.vue'
 import { useMapCore } from '@/composables/useMapCore'
 import { useAnnotationInteractions } from '@/composables/useAnnotationInteractions'
 import GeoJSON from 'ol/format/GeoJSON'
+import Style from 'ol/style/Style'
+import Stroke from 'ol/style/Stroke'
+import Fill from 'ol/style/Fill'
+import Polygon from 'ol/geom/Polygon'
+import LineString from 'ol/geom/LineString'
+import Feature from 'ol/Feature'
 import * as tagApi from '@/api/tags'
 import type { Tag } from '@/types/tag'
 import '@/styles/viewer.scss'
@@ -67,6 +78,7 @@ const {
 const slideId = ref<number>()
 const imageId = ref<number>()
 const tags = ref<Tag[]>([])
+const mouseCoordinates = ref<{ x: number; y: number } | null>(null)
 
 // 加载标签列表
 const loadTags = async () => {
@@ -108,8 +120,12 @@ const handleAnnotationSelect = (annotation: any) => {
 const handleAnnotationsLoad = (annotations: any[]) => {
   if (!vectorSource.value || !map.value) return
 
-  console.log('[Viewer] 开始加载标注，数量:', annotations.length)
+  console.log('[Viewer] 开始加载标注,数量:', annotations.length)
   vectorSource.value.clear()
+
+  // ========== 测试：直接渲染写死的 GeoJSON 坐标 ==========
+  // addTestAnnotation()  // 已注释：移除测试标注
+  // ============================================
 
   const geojsonFormat = new GeoJSON()
   const mapProjection = map.value.getView().getProjection()
@@ -159,6 +175,81 @@ const handleAnnotationsLoad = (annotations: any[]) => {
   })
 }
 
+/**
+ * 添加测试标注（Y 坐标已取负）
+ * @deprecated 已移除测试标注功能
+ */
+// const addTestAnnotation = () => {
+//   if (!vectorSource.value || !map.value) return
+//   
+//   console.log('[Viewer] ========== 添加测试标注 ==========')
+//   
+//   // 获取图像实际高度
+//   const view = map.value.getView()
+//   const extent = view.calculateExtent(map.value.getSize())
+//   const imageHeight = Math.abs(extent[3] - extent[1])
+//   
+//   console.log('[Viewer] 图像高度:', imageHeight)
+//   
+//   // ========== 测试: LineString 标注 (从 test.json, Y 已取负) ==========
+//   let offset = 0
+//   const lineCoords: [number, number][] =
+//     [
+//       [
+//         181-offset,
+//         0
+//       ],
+//       [
+//         181-offset,
+//         -128
+//       ],
+//       [
+//         304-offset,
+//         -128
+//       ],
+//       [
+//         304-offset,
+//         0
+//       ],
+//       [
+//         181-offset,
+//         0
+//       ]
+//     ]
+
+//   
+//   // 翻转 Y 坐标
+
+//   const lineString = new LineString(lineCoords)
+//   const lineFeature = new Feature({
+//     geometry: lineString,
+//     annotationId: 999999,
+//     categoryName: 'test-line'
+//   })
+//   
+//   lineFeature.setStyle(new Style({
+//     stroke: new Stroke({ color: '#FF0000', width: 2 })
+//   }))
+//   
+//   vectorSource.value.addFeature(lineFeature)
+//   console.log('[Viewer] ✅ LineString 标注已添加 (红色)')
+//   
+//   console.log('[Viewer] ====================================')
+//   
+//   // 注释掉自动缩放，保持图像以原始尺寸显示
+//   // setTimeout(() => {
+//   //   if (map.value && lineFeature.getGeometry()) {
+//   //     const extent = lineFeature.getGeometry()!.getExtent()
+//   //     console.log('[Viewer] 缩放到范围:', extent)
+//   //     map.value.getView().fit(extent, {
+//   //       padding: [100, 100, 100, 100],
+//   //       duration: 1000
+//   //     })
+//   //     console.log('[Viewer] 🎯 已缩放到标注范围')
+//   //   }
+//   // }, 500)
+// }
+
 // 生命周期
 onMounted(async () => {
   if (!mapContainer.value) return
@@ -175,6 +266,9 @@ onMounted(async () => {
         
         // 初始化键盘和右键监听
         setupEditListeners()
+        
+        // 初始化鼠标坐标监听
+        setupMouseCoordinateTracking()
       } catch (error) {
         console.error('Map init error:', error)
       }
@@ -224,6 +318,34 @@ const setupEditListeners = () => {
   })
 }
 
+// 设置鼠标坐标跟踪
+const setupMouseCoordinateTracking = () => {
+  if (!map.value || !mapContainer.value) return
+  
+  const handleMouseMove = (event: MouseEvent) => {
+    const pixel = map.value!.getEventPixel(event)
+    const coordinate = map.value!.getCoordinateFromPixel(pixel)
+    
+    if (coordinate) {
+      // OpenLayers Zoomify 使用像素坐标系，原点在左上角
+      // coordinate[0] = x, coordinate[1] = y
+      mouseCoordinates.value = {
+        x: coordinate[0],
+        y: coordinate[1]
+      }
+    }
+  }
+  
+  mapContainer.value.addEventListener('mousemove', handleMouseMove)
+  
+  // 清理监听器
+  onBeforeUnmount(() => {
+    if (mapContainer.value) {
+      mapContainer.value.removeEventListener('mousemove', handleMouseMove)
+    }
+  })
+}
+
 onBeforeUnmount(() => {
   ;(window as any).__viewerInstance = null
   if (map.value) {
@@ -257,6 +379,22 @@ defineExpose({
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+}
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coordinate-display {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #606266;
+  background: #f5f7fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #dcdfe6;
+  white-space: nowrap;
 }
 .map-container {
   flex: 1;

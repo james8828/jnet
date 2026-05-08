@@ -100,6 +100,13 @@
                 <el-button type="primary" @click="showImportDialog">
                   <el-icon><Upload /></el-icon> 导入
                 </el-button>
+                <el-button 
+                  type="warning" 
+                  @click="showReparseDialog"
+                  :disabled="!currentProject"
+                >
+                  <el-icon><Refresh /></el-icon> 重新解析
+                </el-button>
                 <el-dropdown split-button type="success" @command="handleBatchCommand">
                   批量操作
                   <template #dropdown>
@@ -127,8 +134,8 @@
               <el-option label="已完成" value="completed" />
             </el-select>
             <el-select v-model="filterFormat" placeholder="文件格式" clearable style="width: 120px">
-              <el-option label="SVS" value="svs" />
-              <el-option label="JPG" value="jpg" />
+              <el-option label="SVS" value="SVS" />
+              <el-option label="JPG" value="JPG" />
             </el-select>
           </div>
 
@@ -328,17 +335,118 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 重新解析对话框 -->
+    <el-dialog v-model="reparseDialogVisible" title="批量重新解析元数据" width="600px">
+      <el-alert
+        title="重新解析说明"
+        type="info"
+        :closable="false"
+        style="margin-bottom: 20px"
+      >
+        <p>此功能将重新解析图像的元数据，包括：</p>
+        <ul style="margin: 8px 0; padding-left: 20px">
+          <li>图像尺寸（宽度、高度）</li>
+          <li>金字塔层级信息</li>
+          <li>MPP（每像素微米数）</li>
+          <li>放大倍数</li>
+          <li>生成缩略图</li>
+        </ul>
+        <p style="margin: 8px 0 0 0">适用于已入库但未执行元数据解析的图像。</p>
+      </el-alert>
+
+      <el-form label-width="120px">
+        <el-form-item label="解析范围">
+          <el-radio-group v-model="reparseScope">
+            <el-radio value="selected">选中图像 ({{ selectedRows.length }} 个)</el-radio>
+            <el-radio value="project">当前项目所有图像</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        
+        <el-form-item label="强制重新解析">
+          <el-switch v-model="forceReparse" />
+          <div style="color: #909399; font-size: 12px; margin-top: 4px">
+            开启后将跳过已有元数据的检查，强制重新解析所有图像
+          </div>
+        </el-form-item>
+      </el-form>
+
+      <!-- 解析进度 -->
+      <div v-if="isReparsing" class="reparse-progress">
+        <el-progress 
+          :percentage="reparseProgress" 
+          :status="reparseStatus"
+          :stroke-width="20"
+        />
+        <div class="reparse-stats">
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <div class="stat-item">
+                <div class="stat-label">总数</div>
+                <div class="stat-value">{{ reparseResult.totalCount }}</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-item success">
+                <div class="stat-label">成功</div>
+                <div class="stat-value">{{ reparseResult.successCount }}</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-item warning">
+                <div class="stat-label">跳过</div>
+                <div class="stat-value">{{ reparseResult.skippedCount }}</div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-item error">
+                <div class="stat-label">失败</div>
+                <div class="stat-value">{{ reparseResult.failedCount }}</div>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+        
+        <!-- 错误信息 -->
+        <div v-if="reparseResult.errorMessages.length > 0" class="error-messages">
+          <div class="error-title">错误详情：</div>
+          <el-scrollbar max-height="200px">
+            <div v-for="(msg, index) in reparseResult.errorMessages" :key="index" class="error-item">
+              {{ msg }}
+            </div>
+          </el-scrollbar>
+        </div>
+      </div>
+      
+      <template #footer>
+        <el-button @click="reparseDialogVisible = false" :disabled="isReparsing">关闭</el-button>
+        <el-button 
+          type="primary" 
+          @click="startReparse" 
+          :loading="isReparsing"
+          :disabled="(reparseScope === 'selected' && selectedRows.length === 0) || isReparsing"
+        >
+          {{ isReparsing ? '解析中...' : '开始解析' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'Dataset'
+}
+</script>
+
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onActivated, onDeactivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
+import { UploadFilled, Refresh } from '@element-plus/icons-vue'
 import { getProjectPage } from '@/api/projects'
 import { getBatchesByProject, createBatch } from '@/api/batches'
-import { searchImages, getThumbnailUrl } from '@/api/images'
+import { searchImages, getThumbnailUrl, batchReparseMetadata } from '@/api/images'
 import { getAllTags } from '@/api/tags'
 import type { ProjectVO } from '@/types/project'
 import type { BatchVO, BatchDTO } from '@/types/batch'
@@ -348,7 +456,9 @@ import { PageData } from '@/utils/request'
 import ChunkUploader from '@/utils/chunk-uploader'
 import type { UploadUserFile } from 'element-plus'
 
-const currentView = ref('grid')  // 默认使用网格视图（显示缩略图）
+console.log('[Dataset] 组件脚本加载')
+
+const currentView = ref('table')  // 默认使用表格视图
 const searchText = ref('')
 const filterCategory = ref('')
 const filterStatus = ref<string | ''>('')
@@ -391,6 +501,21 @@ const uploadForm = ref({
 // 是否可以上传
 const canUpload = computed(() => {
   return uploadForm.value.batchId && fileList.value.length > 0 && !isUploading.value
+})
+
+// 重新解析相关状态
+const reparseDialogVisible = ref(false)
+const reparseScope = ref<'selected' | 'project'>('selected')
+const forceReparse = ref(false)
+const isReparsing = ref(false)
+const reparseProgress = ref(0)
+const reparseStatus = ref<'success' | 'exception' | undefined>(undefined)
+const reparseResult = ref({
+  totalCount: 0,
+  successCount: 0,
+  failedCount: 0,
+  skippedCount: 0,
+  errorMessages: [] as string[]
 })
 
 // 项目列表
@@ -813,6 +938,100 @@ const handleImageError = (e: Event) => {
   target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmN2ZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzkwOTM5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuaXoOazleWKoOi9veWbvueJhzwvdGV4dD48L3N2Zz4='
 }
 
+// 显示重新解析对话框
+const showReparseDialog = () => {
+  if (!currentProject.value) {
+    ElMessage.warning('请先选择一个项目')
+    return
+  }
+  
+  // 重置状态
+  reparseScope.value = selectedRows.value.length > 0 ? 'selected' : 'project'
+  forceReparse.value = false
+  isReparsing.value = false
+  reparseProgress.value = 0
+  reparseStatus.value = undefined
+  reparseResult.value = {
+    totalCount: 0,
+    successCount: 0,
+    failedCount: 0,
+    skippedCount: 0,
+    errorMessages: []
+  }
+  
+  reparseDialogVisible.value = true
+}
+
+// 开始重新解析
+const startReparse = async () => {
+  if (reparseScope.value === 'selected' && selectedRows.value.length === 0) {
+    ElMessage.warning('请至少选择一个图像')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要${forceReparse.value ? '强制' : ''}重新解析 ${
+        reparseScope.value === 'selected' ? `${selectedRows.value.length} 个选中` : '当前项目所有'
+      } 图像的元数据吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    return // 用户取消
+  }
+  
+  isReparsing.value = true
+  reparseProgress.value = 0
+  reparseStatus.value = undefined
+  
+  try {
+    // 准备参数
+    const imageIds = reparseScope.value === 'selected' 
+      ? selectedRows.value.map(img => img.imageId)
+      : undefined
+    const projectId = reparseScope.value === 'project' 
+      ? currentProject.value!.projectId 
+      : undefined
+    
+    console.log('[startReparse] 调用API，参数:', { imageIds, projectId, forceReparse: forceReparse.value })
+    
+    // 调用后端 API
+    const result = await batchReparseMetadata(imageIds, projectId, forceReparse.value)
+    
+    console.log('[startReparse] 解析结果:', result)
+    
+    // 更新结果
+    reparseResult.value = result
+    
+    // 计算进度（模拟）
+    reparseProgress.value = 100
+    
+    // 根据结果设置状态
+    if (result.failedCount === 0) {
+      reparseStatus.value = 'success'
+      ElMessage.success(`解析完成！成功: ${result.successCount}, 跳过: ${result.skippedCount}`)
+    } else {
+      reparseStatus.value = 'exception'
+      ElMessage.warning(`解析完成，但有 ${result.failedCount} 个失败`)
+    }
+    
+    // 刷新图像列表
+    await loadImages()
+    
+  } catch (error) {
+    console.error('[startReparse] 解析失败:', error)
+    reparseStatus.value = 'exception'
+    ElMessage.error('解析失败，请查看错误详情')
+  } finally {
+    isReparsing.value = false
+  }
+}
+
 // 分页变化
 const handlePageChange = () => {
   loadImages()
@@ -831,8 +1050,25 @@ watch([searchText, filterStatus, filterFormat], () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
+  console.log('[Dataset] onMounted - 组件首次挂载')
   loadProjects()
   loadTags()
+})
+
+// 组件激活时（从缓存中恢复）
+onActivated(() => {
+  console.log('[Dataset] onActivated - 页面从缓存中激活，当前项目:', currentProject.value?.name)
+  console.log('[Dataset] 当前页码:', currentPage.value, '每页数量:', pageSize.value, '总数:', total.value)
+  console.log('[Dataset] 当前批次:', currentBatch.value?.batchCode)
+  // 如果需要每次返回都刷新数据，可以取消下面的注释
+  // if (currentProject.value) {
+  //   loadImages()
+  // }
+})
+
+// 组件停用时（进入缓存）
+onDeactivated(() => {
+  console.log('[Dataset] onDeactivated - 页面进入缓存')
 })
 </script>
 
@@ -1064,6 +1300,78 @@ onMounted(() => {
           font-size: 14px;
           color: #409EFF;
           font-weight: 600;
+        }
+      }
+    }
+  }
+  
+  // 重新解析进度样式
+  .reparse-progress {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f5f7fa;
+    border-radius: 8px;
+    
+    .reparse-stats {
+      margin-top: 20px;
+      
+      .stat-item {
+        text-align: center;
+        padding: 12px;
+        background: white;
+        border-radius: 6px;
+        
+        &.success {
+          background: #f0f9ff;
+          border: 1px solid #67c23a;
+        }
+        
+        &.warning {
+          background: #fdf6ec;
+          border: 1px solid #e6a23c;
+        }
+        
+        &.error {
+          background: #fef0f0;
+          border: 1px solid #f56c6c;
+        }
+        
+        .stat-label {
+          font-size: 12px;
+          color: #909399;
+          margin-bottom: 8px;
+        }
+        
+        .stat-value {
+          font-size: 24px;
+          font-weight: 600;
+          color: #303133;
+        }
+      }
+    }
+    
+    .error-messages {
+      margin-top: 20px;
+      padding: 12px;
+      background: #fef0f0;
+      border-radius: 6px;
+      border: 1px solid #fde2e2;
+      
+      .error-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #f56c6c;
+        margin-bottom: 8px;
+      }
+      
+      .error-item {
+        font-size: 13px;
+        color: #606266;
+        padding: 6px 0;
+        border-bottom: 1px solid #fde2e2;
+        
+        &:last-child {
+          border-bottom: none;
         }
       }
     }

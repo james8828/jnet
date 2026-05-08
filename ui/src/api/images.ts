@@ -120,6 +120,28 @@ export function batchSelectImages(data: BatchSelectImagesDTO) {
   return request.post(`${BASE_URL}/batch-select`, data)
 }
 
+/**
+ * 批量重新解析图像元数据
+ */
+export function batchReparseMetadata(
+  imageIds?: number[],
+  projectId?: number,
+  forceReparse: boolean = false
+) {
+  return request.post<{ 
+    totalCount: number
+    successCount: number
+    failedCount: number
+    skippedCount: number
+    errorMessages: string[]
+  }>(`${BASE_URL}/batch-reparse`, imageIds || null, {
+    params: {
+      projectId,
+      forceReparse
+    }
+  })
+}
+
 // ==================== 缩略图和瓦片相关接口 ====================
 
 /**

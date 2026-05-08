@@ -1,6 +1,5 @@
 package com.jnet.biz.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jnet.biz.dto.ChunkUploadDTO;
 import com.jnet.biz.dto.ChunkUploadInitDTO;
@@ -13,31 +12,24 @@ import com.jnet.biz.exception.BizException;
 import com.jnet.biz.mapper.ImageMapper;
 import com.jnet.biz.service.IBatchService;
 import com.jnet.biz.service.IChunkUploadService;
+import com.jnet.biz.config.StoragePathConfig;
+import com.jnet.biz.util.OpenSlideMetadataParser;
+import com.jnet.biz.util.OpenSlideTiffConverter;
 import com.jnet.biz.vo.ChunkUploadVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openslide.OpenSlide;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
 
 /**
  * 图像分片上传 Service 实现类
@@ -53,13 +45,11 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
     private final ImageMapper imageMapper;
     private final IBatchService batchService;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final OpenSlideTiffConverter openSlideTiffConverter;
+    private final StoragePathConfig storageConfig;
+    private final OpenSlideMetadataParser metadataParser;
 
-    @Value("${data-pool.storage.temp-path:E:/doc/jnet/imageStore/temp}")
-    private String tempPath;
 
-    @Value("${data-pool.storage.root-path:E:/doc/jnet/imageStore}")
-    private String rootPath;
 
     /**
      * Redis Key前缀
@@ -213,7 +203,6 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
         String redisKey = UPLOAD_PREFIX + uploadId;
 
         // 2. 获取已上传的分片列表
-        @SuppressWarnings("unchecked")
         List<Integer> uploadedChunks = (List<Integer>) redisTemplate.opsForValue().get(redisKey);
         
         // 3. 获取元数据
@@ -275,7 +264,7 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
         }
 
         String projectCode = getProjectCodeByBatchId(batchId);
-        String targetDir = String.format("%s/%s/%s", rootPath, projectCode, batch.getBatchCode());
+        String targetDir = storageConfig.getBatchDir(projectCode, batch.getBatchCode());
         File dir = new File(targetDir);
         if (!dir.exists()) {
             dir.mkdirs();
@@ -323,7 +312,9 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
         
         // 7. 异步解析WSI元数据（不阻塞上传流程）
         try {
-            parseAndSetMetadata(image, targetPath, filename);
+            // 添加转换方法
+            File convertedFile = openSlideTiffConverter.ensureOpenSlideCompatible(targetPath);
+            metadataParser.parseAndSetMetadata(image, convertedFile.getPath());
         } catch (Exception e) {
             log.warn("解析图像元数据失败: {}, 将稍后异步处理", filename, e);
             // 元数据解析失败不影响上传，可以后续异步处理
@@ -385,7 +376,7 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
      * 获取分片目录
      */
     private String getChunkDir(String uploadId) {
-        return tempPath + "/" + uploadId;
+        return storageConfig.getTempPath() + "/" + uploadId;
     }
 
     /**
@@ -473,107 +464,6 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
         return imageMapper.selectOne(wrapper);
     }
 
-    /**
-     * 解析并设置图像元数据（使用OpenSlide）
-     */
-    private void parseAndSetMetadata(Image image, String filePath, String filename) {
-        try {
-            // 只对WSI格式进行元数据解析
-            String format = image.getFormat();
-            if (!"SVS".equals(format) && !"NDPI".equals(format) && !"TIFF".equals(format)) {
-                log.debug("非WSI格式，跳过元数据解析: {}", format);
-                return;
-            }
-    
-            log.info("开始解析WSI元数据: {}", filePath);
-                
-            try (OpenSlide slide = new OpenSlide(new File(filePath))) {
-                // 获取基本属性
-                long width = slide.getLevel0Width();
-                long height = slide.getLevel0Height();
-                int levelCount = slide.getLevelCount();
-                    
-                image.setWidth((int) width);
-                image.setHeight((int) height);
-                image.setLevels(levelCount);
-                    
-                // 获取所有属性
-                Map<String, String> properties = slide.getProperties();
-                    
-                // 调试：输出所有属性
-                log.debug("=== OpenSlide 属性列表 ===");
-                properties.forEach((key, value) -> {
-                    log.debug("{}: {}", key, value);
-                });
-                    
-                // 获取分辨率 (mpp = microns per pixel)
-                String mppXStr = properties.get(OpenSlide.PROPERTY_NAME_MPP_X);
-                String mppYStr = properties.get(OpenSlide.PROPERTY_NAME_MPP_Y);
-                    
-                if (mppXStr != null) {
-                    try {
-                        image.setMppX(Double.parseDouble(mppXStr));
-                        log.debug("MPP X: {}", mppXStr);
-                    } catch (NumberFormatException e) {
-                        log.warn("无法解析MPP X: {}", mppXStr);
-                    }
-                }
-                if (mppYStr != null) {
-                    try {
-                        image.setMppY(Double.parseDouble(mppYStr));
-                        log.debug("MPP Y: {}", mppYStr);
-                    } catch (NumberFormatException e) {
-                        log.warn("无法解析MPP Y: {}", mppYStr);
-                    }
-                }
-                    
-                // 获取放大倍数
-                String magStr = properties.get(OpenSlide.PROPERTY_NAME_OBJECTIVE_POWER);
-                if (magStr != null) {
-                    try {
-                        image.setMagnification(Integer.parseInt(magStr));
-                        log.debug("放大倍数: {}", magStr);
-                    } catch (NumberFormatException e) {
-                        log.warn("无法解析放大倍数: {}", magStr);
-                    }
-                }
-                    
-                // 构建元数据JSON
-                Map<String, Object> metadata = new HashMap<>();
-                metadata.put("vendor", properties.get(OpenSlide.PROPERTY_NAME_VENDOR));
-                metadata.put("quickhash1", properties.get(OpenSlide.PROPERTY_NAME_QUICKHASH1));
-                metadata.put("levelCount", levelCount);
-                metadata.put("properties", properties); // 保存所有属性
-                    
-                // 添加各层级信息
-                List<Map<String, Object>> levels = new ArrayList<>();
-                for (int i = 0; i < levelCount; i++) {
-                    Map<String, Object> levelInfo = new HashMap<>();
-                    long levelWidth = slide.getLevelWidth(i);
-                    long levelHeight = slide.getLevelHeight(i);
-                    levelInfo.put("level", i);
-                    levelInfo.put("width", levelWidth);
-                    levelInfo.put("height", levelHeight);
-                    levelInfo.put("downsample", slide.getLevelDownsample(i));
-                    levels.add(levelInfo);
-                }
-                metadata.put("levels", levels);
-                    
-                image.setMetadata(objectMapper.writeValueAsString(metadata));
-                    
-                log.info("WSI元数据解析成功: {}x{}, {} levels, MPP: {}x{}, 放大倍数: {}",
-                        width, height, levelCount, 
-                        image.getMppX(), image.getMppY(), 
-                        image.getMagnification());
-            }
-                
-        } catch (Exception e) {
-            log.error("解析WSI元数据失败: {}", filePath, e);
-            // 不抛出异常，允许上传继续
-            log.warn("元数据解析失败，将使用默认值");
-        }
-    }
-    
     /**
      * 扫描磁盘上的分片文件，重建分片列表
      * @param uploadId 上传ID

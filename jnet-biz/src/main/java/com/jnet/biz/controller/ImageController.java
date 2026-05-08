@@ -7,6 +7,7 @@ import com.jnet.biz.dto.ChunkUploadDTO;
 import com.jnet.biz.dto.ChunkUploadInitDTO;
 import com.jnet.biz.dto.ImageQueryDTO;
 import com.jnet.biz.dto.ImageStatusDTO;
+import com.jnet.biz.dto.ReparseResult;
 import com.jnet.biz.entity.Image;
 import com.jnet.biz.service.IChunkUploadService;
 import com.jnet.biz.service.IImageService;
@@ -24,6 +25,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 图像资产管理 Controller
@@ -244,5 +247,25 @@ public class ImageController {
             @Parameter(description = "图像ID", required = true, example = "1") @PathVariable("id") Long id) {
         String levelInfo = imageTileService.getLevelInfo(id);
         return Result.success(levelInfo);
+    }
+
+    // ==================== 批量重新解析相关接口 ====================
+
+    /**
+     * 批量重新解析图像元数据
+     */
+    @Operation(summary = "批量重新解析图像元数据", 
+               description = "对已入库但未执行元数据解析的图像，重新执行 TIFF 转换和 OpenSlide 元数据提取。支持按项目或手动选择图像")
+    @PostMapping("/batch-reparse")
+    public Result<ReparseResult> batchReparseMetadata(
+            @Parameter(description = "图像ID列表（为空时按项目解析）", example = "[1,2,3]") 
+            @RequestBody(required = false) List<Long> imageIds,
+            @Parameter(description = "项目ID（当imageIds为空时使用）", example = "1") 
+            @RequestParam(required = false) Long projectId,
+            @Parameter(description = "是否强制重新解析（即使已有元数据）", example = "false") 
+            @RequestParam(required = false, defaultValue = "false") boolean forceReparse) {
+        
+        ReparseResult result = imageService.batchReparseMetadata(imageIds, projectId, forceReparse);
+        return Result.success(result);
     }
 }

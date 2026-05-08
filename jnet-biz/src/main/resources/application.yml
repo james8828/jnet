@@ -166,3 +166,15 @@ data-pool:
 slide:
   tile:
     size: 256  # 瓦片尺寸（像素），支持 256、512 等
+
+# OpenSlide TIFF 转换配置
+jnet:
+  openslide:
+    converter:
+      python-path: E:\\conda\\envs\\wt_env\\python.exe
+      script-path: /python/tools/convert_to_openslide_tiff.py
+      default-quality: 0.9
+      supported-formats:
+        - jpg
+        - jpeg
+        - png

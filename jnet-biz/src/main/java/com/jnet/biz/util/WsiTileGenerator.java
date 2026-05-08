@@ -162,22 +162,20 @@ public class WsiTileGenerator {
      * <p>
      * 下采样因子决定了从 Level 0（原始分辨率）缩放到目标层级时的缩放比例。
      *
-     * <h3>计算公式</h3>
+     * <h3>计算公式（与 OpenLayers Zoomify 兼容）</h3>
      * <pre>
-     * tileCount = 2^level
-     * downSample = maxDimension / (tileCount / 2 * tileSize)
+     * downSample = 2^(maxLevel - level)
      * </pre>
      *
-     * <h3>示例（图像尺寸 31509x37084, tileSize=256）</h3>
+     * <h3>示例（maxLevel=2）</h3>
      * <ul>
-     *   <li>Level 0: tileCount=1, downSample = 37084/(1/2*256) = 289.72</li>
-     *   <li>Level 1: tileCount=2, downSample = 37084/(2/2*256) = 144.86</li>
-     *   <li>Level 2: tileCount=4, downSample = 37084/(4/2*256) = 72.43</li>
-     *   <li>Level 3: tileCount=8, downSample = 37084/(8/2*256) = 36.21</li>
+     *   <li>Level 0: downSample = 2^(2-0) = 4 （最低分辨率）</li>
+     *   <li>Level 1: downSample = 2^(2-1) = 2</li>
+     *   <li>Level 2: downSample = 2^(2-2) = 1 （最高分辨率，原始尺寸）</li>
      * </ul>
      *
      * @param openSlide OpenSlide 对象
-     * @param level     金字塔层级（0=最高分辨率）
+     * @param level     金字塔层级（0=最低分辨率，maxLevel=最高分辨率）
      * @param tileSize  瓦片尺寸（像素）
      * @return 下采样因子
      */
@@ -192,33 +190,20 @@ public class WsiTileGenerator {
         long maxDimension = Math.max(level0Width, level0Height);
         log.debug("最大维度: {}", maxDimension);
 
-        // 3. 计算当前层级的瓦片数量系数
-        //    公式：tileCount = 2^level
-        //
-        //    层级与瓦片数量的关系：
-        //    - Level 0: tileCount = 1  (整个图像视为 1x1 个瓦片区)
-        //    - Level 1: tileCount = 2  (整个图像分为 2x2 个瓦片区)
-        //    - Level 2: tileCount = 4  (整个图像分为 4x4 个瓦片区)
-        //    - Level 3: tileCount = 8  (整个图像分为 8x8 个瓦片区)
-        //    - ...以此类推
-        double tileCount = Math.pow(2, level);
-        log.debug("瓦片数量系数: tileCount={} (2^{})", tileCount, level);
+        // 3. 计算总层级数
+        int maxLevel = (int) Math.ceil(Math.log((double) maxDimension / tileSize) / Math.log(2));
+        log.debug("总层级数 (maxLevel): {}", maxLevel);
 
-        // 4. 计算下采样因子
-        //    公式：downSample = maxDimension / (tileCount / 2 * tileSize)
-        //
+        // 4. 计算下采样因子（与 OpenLayers Zoomify 兼容）
+        //    公式：downSample = 2^(maxLevel - level)
+        //    
         //    说明：
-        //    - tileCount / 2: 调整系数，确保瓦片网格与 OpenLayers Zoomify 匹配
-        //    - tileSize: 每个瓦片的像素尺寸
-        //    - 结果：downSample 表示从 Level 0 缩放到当前层级需要的缩放倍数
-        //
-        //    例如（maxDimension=37084, tileSize=256）：
-        //    - Level 2: downSample = 37084 / (4/2 * 256) = 37084 / 512 = 72.43
-        //      这意味着 Level 2 的图像尺寸是 Level 0 的 1/72.43
-        double downSample = maxDimension / (tileCount / 2 * tileSize);
+        //    - level=0: 最低分辨率，downSample 最大
+        //    - level=maxLevel: 最高分辨率，downSample=1（原始尺寸）
+        double downSample = Math.pow(2, maxLevel - level);
 
-        log.info("下采样因子计算: level={}, tileCount={}, downSample={:.4f}",
-                level, tileCount, downSample);
+        log.info("下采样因子计算: level={}, maxLevel={}, downSample={:.4f}",
+                level, maxLevel, downSample);
         log.info("瓦片配置: tileSize={} pixels, maxDimension={}", tileSize, maxDimension);
 
         // 计算当前层级的理论图像尺寸

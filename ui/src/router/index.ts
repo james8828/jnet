@@ -41,7 +41,7 @@ const routes: RouteRecordRaw[] = [
         path: 'dataset',
         name: 'Dataset',
         component: () => import('@/views/Dataset.vue'),
-        meta: { title: '数据管理', icon: 'Folder' }
+        meta: { title: '数据管理', icon: 'Folder', keepAlive: true }
       }
     ]
   },

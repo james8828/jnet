@@ -392,7 +392,13 @@ public class ImageTileServiceImpl implements IImageTileService {
                 log.debug("从缓存获取Tile: {}", tileCacheKey);
                 return new ByteArrayResource(cachedTile);
             }*/
-            OpenSlide openSlide = getOrCreateOpenSlide(image.getImageId(), image.getFilePath());
+            //添加FilePath处理逻辑，判断格式非svs npdi tiff,则文件后缀改为tif
+            String filePath = image.getFilePath();
+            String format = image.getFormat();
+            if (!"SVS".equals(format) && !"NDPI".equals(format) && !"TIFF".equals(format)) {
+                filePath = filePath.substring(0, filePath.lastIndexOf(".")) + ".tif";
+            }
+            OpenSlide openSlide = getOrCreateOpenSlide(image.getImageId(), filePath);
             BufferedImage tileImage = WsiTileGenerator.generateTile(openSlide, zoom, x, y, tileSize);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(tileImage, "jpeg", baos);
@@ -553,6 +559,10 @@ public class ImageTileServiceImpl implements IImageTileService {
 
     /**
      * 保存缩略图到磁盘
+     *
+     * @param imageId 图像ID
+     * @param data 缩略图数据
+     * @return 缩略图文件路径
      */
     private String saveThumbnail(Long imageId, byte[] data) throws IOException {
         String thumbnailDir = String.format("%s/thumbnails", rootPath);
