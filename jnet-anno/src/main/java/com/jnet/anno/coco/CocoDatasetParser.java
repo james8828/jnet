@@ -25,7 +25,7 @@ public class CocoDatasetParser {
      * 主方法
      */
     public static void main(String[] args) {
-        String jsonFilePath = "E:\\doc\\jnet\\data-set\\coco\\annotations_trainval2017\\annotations\\instances_val2017.json";
+        String jsonFilePath = "E:\\doc\\jnet\\data-set\\coco\\annotations_trainval2017\\annotations\\instances_train2017.json";
 
         if (args != null && args.length > 0) {
             jsonFilePath = args[0];
@@ -90,8 +90,8 @@ public class CocoDatasetParser {
 //            String exportSql = System.getenv("EXPORT_COCO_SQL");
             String exportSql = "true";
             if ("true".equalsIgnoreCase(exportSql)) {
-                String sqlFilePath = "E:\\doc\\jnet\\data-set\\coco\\sql\\coco_images_import.sql";
-                Long batchId = 3L; // 需要根据实际情况设置批次ID
+                String sqlFilePath = "E:\\doc\\jnet\\data-set\\coco\\sql\\coco_train_images_import.sql";
+                Long batchId = 4L; // 需要根据实际情况设置批次ID
                 
                 System.out.println("正在导出图片数据到 SQL 文件...");
                 System.out.println("  批次ID: " + batchId);
@@ -106,7 +106,7 @@ public class CocoDatasetParser {
 
             // 【可选步骤8】导出类别数据为 SQL INSERT 语句
             System.out.println("【步骤8】导出类别数据为 SQL");
-            String categoriesSqlFilePath = "E:\\doc\\jnet\\data-set\\coco\\sql\\coco_categories_import.sql";
+            String categoriesSqlFilePath = "E:\\doc\\jnet\\data-set\\coco\\sql\\coco_train_categories_import.sql";
             
             System.out.println("正在导出类别数据到 SQL 文件...");
             System.out.println("  输出文件: " + categoriesSqlFilePath);
@@ -116,7 +116,7 @@ public class CocoDatasetParser {
 
             // 【可选步骤9】导出标注数据为 SQL INSERT 语句
             System.out.println("【步骤9】导出标注数据为 SQL");
-            String annotationsSqlFilePath = "E:\\doc\\jnet\\data-set\\coco\\sql\\coco_annotations_import.sql";
+            String annotationsSqlFilePath = "E:\\doc\\jnet\\data-set\\coco\\sql\\coco_train_annotations_import.sql";
             Long slideId = 1L; // 需要根据实际情况设置切片ID
             Long projectId = 3L; // 可选
             Long batchIdForAnnotations = 3L; // 需要与图片导入时使用的批次ID一致

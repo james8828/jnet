@@ -295,7 +295,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
 
     @Override
 //    @Transactional(rollbackFor = Exception.class)
-    public ReparseResult batchReparseMetadata(List<Long> imageIds, Long projectId, boolean forceReparse) {
+    public ReparseResult batchReparseMetadata(List<Long> imageIds, Long projectId, Long batchId, boolean forceReparse) {
         ReparseResult result = new ReparseResult();
         
         // 1. 确定要解析的图像列表
@@ -304,6 +304,12 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
             // 手动选择图像
             imagesToReparse = this.listByIds(imageIds);
             log.info("手动选择 {} 个图像进行重新解析", imagesToReparse.size());
+        } else if (batchId != null) {
+            // 按批次解析所有图像
+            LambdaQueryWrapper<Image> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Image::getBatchId, batchId);
+            imagesToReparse = this.list(wrapper);
+            log.info("批次 {} 下共找到 {} 个图像", batchId, imagesToReparse.size());
         } else if (projectId != null) {
             // 按项目解析所有图像
             LambdaQueryWrapper<Image> wrapper = new LambdaQueryWrapper<>();
@@ -312,7 +318,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
             imagesToReparse = this.list(wrapper);
             log.info("项目 {} 下共找到 {} 个图像", projectId, imagesToReparse.size());
         } else {
-            throw new BizException(BizErrorCode.PARAM_ERROR, "必须提供图像ID列表或项目ID");
+            throw new BizException(BizErrorCode.PARAM_ERROR, "必须提供图像ID列表、项目ID或批次ID");
         }
         
         result.setTotalCount(imagesToReparse.size());

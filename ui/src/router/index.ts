@@ -38,6 +38,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '项目管理', icon: 'Briefcase' }
       },
       {
+        path: 'batches',
+        name: 'Batches',
+        component: () => import('@/views/Batches.vue'),
+        meta: { title: '批次管理', icon: 'Collection' }
+      },
+      {
         path: 'dataset',
         name: 'Dataset',
         component: () => import('@/views/Dataset.vue'),

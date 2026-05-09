@@ -117,7 +117,7 @@ public class CocoImageSqlExporter {
         sql.append(escapeString(image.getFileName())).append(", ");
 
         // file_path - 文件路径
-        String filePath = "E:\\doc\\jnet\\imageStore\\coco-instance\\instances_val2017\\"+image.getFileName();
+        String filePath = "E:\\doc\\jnet\\imageStore\\coco-instance\\instances_train2017\\"+image.getFileName();
         sql.append(escapeString(filePath)).append(", ");
 
         /*// width

@@ -28,6 +28,12 @@ public class BatchVO {
     private Long projectId;
 
     /**
+     * 所属项目名称（关联查询）
+     */
+    @Schema(description = "所属项目名称", example = "肺癌筛查项目")
+    private String projectName;
+
+    /**
      * 批次编号
      */
     @Schema(description = "批次编号", example = "BATCH-2024-001")

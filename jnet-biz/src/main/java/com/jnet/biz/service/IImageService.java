@@ -56,10 +56,11 @@ public interface IImageService extends IService<Image> {
      * <p>
      * 对已入库但未执行元数据解析的图像，重新执行 TIFF 转换和 OpenSlide 元数据提取
      *
-     * @param imageIds 图像ID列表，为空则解析指定项目下所有图像
+     * @param imageIds 图像ID列表，为空则解析指定项目或批次下所有图像
      * @param projectId 项目ID（当imageIds为空时使用）
+     * @param batchId 批次ID（当imageIds和projectId都为空时使用）
      * @param forceReparse 是否强制重新解析（即使已有元数据）
      * @return 解析结果统计
      */
-    ReparseResult batchReparseMetadata(List<Long> imageIds, Long projectId, boolean forceReparse);
+    ReparseResult batchReparseMetadata(List<Long> imageIds, Long projectId, Long batchId, boolean forceReparse);
 }

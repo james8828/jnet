@@ -46,3 +46,22 @@ export function createBatch(data: BatchDTO) {
 export function updateBatch(id: number, data: BatchDTO) {
   return request.put(`${BASE_URL}/${id}`, data)
 }
+
+/**
+ * 重新解析批次（调用图像批量重新解析API）
+ */
+export function reparseBatch(batchId: number, forceReparse: boolean = false) {
+  const imagesUrl = createApiPath(SERVICES.BIZ, '/api/v1/images')
+  return request.post<{ 
+    totalCount: number
+    successCount: number
+    failedCount: number
+    skippedCount: number
+    errorMessages: string[]
+  }>(`${imagesUrl}/batch-reparse`, null, {
+    params: {
+      batchId,
+      forceReparse
+    }
+  })
+}

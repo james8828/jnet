@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jnet.biz.dto.BatchDTO;
 import com.jnet.biz.dto.BatchQueryDTO;
 import com.jnet.biz.entity.Batch;
+import com.jnet.biz.entity.Project;
 import com.jnet.biz.service.IBatchService;
+import com.jnet.biz.service.IProjectService;
 import com.jnet.biz.util.BeanConverter;
 import com.jnet.biz.vo.BatchVO;
 import com.jnet.common.result.Result;
@@ -16,6 +18,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 批次管理 Controller
@@ -30,6 +34,7 @@ import java.util.List;
 public class BatchController {
 
     private final IBatchService batchService;
+    private final IProjectService projectService;
 
     /**
      * 分页查询批次列表
@@ -42,8 +47,32 @@ public class BatchController {
         
         // 转换为VO
         Page<BatchVO> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        voPage.setRecords(BeanConverter.toVOList(page.getRecords(), BatchVO.class));
+        List<BatchVO> voList = BeanConverter.toVOList(page.getRecords(), BatchVO.class);
         
+        // 填充项目名称
+        if (!voList.isEmpty()) {
+            // 收集所有需要查询的项目ID
+            List<Long> projectIds = voList.stream()
+                .map(BatchVO::getProjectId)
+                .distinct()
+                .collect(Collectors.toList());
+            
+            // 批量查询项目信息
+            if (!projectIds.isEmpty()) {
+                List<Project> projects = projectService.listByIds(projectIds);
+                Map<Long, String> projectNameMap = projects.stream()
+                    .collect(Collectors.toMap(Project::getProjectId, Project::getName));
+                
+                // 设置项目名称
+                voList.forEach(vo -> {
+                    if (vo.getProjectId() != null) {
+                        vo.setProjectName(projectNameMap.get(vo.getProjectId()));
+                    }
+                });
+            }
+        }
+        
+        voPage.setRecords(voList);
         return Result.success(voPage);
     }
 
@@ -56,6 +85,15 @@ public class BatchController {
             @Parameter(description = "项目ID", required = true, example = "1") @PathVariable("projectId") Long projectId) {
         List<Batch> batches = batchService.listByProjectId(projectId);
         List<BatchVO> voList = BeanConverter.toVOList(batches, BatchVO.class);
+        
+        // 填充项目名称
+        if (!voList.isEmpty()) {
+            Project project = projectService.getById(projectId);
+            if (project != null) {
+                voList.forEach(vo -> vo.setProjectName(project.getName()));
+            }
+        }
+        
         return Result.success(voList);
     }
 
@@ -71,6 +109,15 @@ public class BatchController {
             return Result.error(404, "批次不存在");
         }
         BatchVO vo = BeanConverter.toVO(batch, BatchVO.class);
+        
+        // 填充项目名称
+        if (batch.getProjectId() != null) {
+            Project project = projectService.getById(batch.getProjectId());
+            if (project != null) {
+                vo.setProjectName(project.getName());
+            }
+        }
+        
         return Result.success(vo);
     }
 

@@ -255,17 +255,19 @@ public class ImageController {
      * 批量重新解析图像元数据
      */
     @Operation(summary = "批量重新解析图像元数据", 
-               description = "对已入库但未执行元数据解析的图像，重新执行 TIFF 转换和 OpenSlide 元数据提取。支持按项目或手动选择图像")
+               description = "对已入库但未执行元数据解析的图像，重新执行 TIFF 转换和 OpenSlide 元数据提取。支持按项目、批次或手动选择图像")
     @PostMapping("/batch-reparse")
     public Result<ReparseResult> batchReparseMetadata(
-            @Parameter(description = "图像ID列表（为空时按项目解析）", example = "[1,2,3]") 
+            @Parameter(description = "图像ID列表（为空时按项目或批次解析）", example = "[1,2,3]") 
             @RequestBody(required = false) List<Long> imageIds,
             @Parameter(description = "项目ID（当imageIds为空时使用）", example = "1") 
             @RequestParam(required = false) Long projectId,
+            @Parameter(description = "批次ID（当imageIds和projectId都为空时使用）", example = "1") 
+            @RequestParam(required = false) Long batchId,
             @Parameter(description = "是否强制重新解析（即使已有元数据）", example = "false") 
             @RequestParam(required = false, defaultValue = "false") boolean forceReparse) {
         
-        ReparseResult result = imageService.batchReparseMetadata(imageIds, projectId, forceReparse);
+        ReparseResult result = imageService.batchReparseMetadata(imageIds, projectId, batchId, forceReparse);
         return Result.success(result);
     }
 }

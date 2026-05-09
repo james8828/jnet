@@ -32,7 +32,52 @@
       </el-row>
 
       <!-- 项目表格 -->
-      <el-table :data="projects" stripe style="width: 100%" v-loading="loading">
+      <el-table 
+        :data="projects" 
+        stripe 
+        style="width: 100%" 
+        v-loading="loading" 
+        row-key="projectId"
+        @expand-change="handleExpandChange"
+      >
+        <!-- 展开行：显示批次列表 -->
+        <el-table-column type="expand">
+          <template #default="{ row }">
+            <div class="batch-expand-container">
+              <div class="expand-header">
+                <h4>批次列表</h4>
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click="viewAllBatches(row.projectId)"
+                >
+                  查看全部批次
+                </el-button>
+              </div>
+              <el-table 
+                :data="row.batches || []" 
+                size="small"
+                v-loading="row.batchesLoading"
+                empty-text="暂无批次数据"
+              >
+                <el-table-column prop="batchCode" label="批次编码" width="150" />
+                <el-table-column prop="batchName" label="批次名称" min-width="180" show-overflow-tooltip />
+                <el-table-column prop="scannerModel" label="扫描仪型号" width="120" />
+                <el-table-column prop="stainingProtocol" label="染色方案" width="100" />
+                <el-table-column prop="totalImages" label="图像数量" width="100" align="center" />
+                <el-table-column prop="uploadStatus" label="上传状态" width="100" align="center">
+                  <template #default="{ row: batchRow }">
+                    <el-tag :type="getBatchStatusType(batchRow.uploadStatus)" size="small">
+                      {{ getBatchStatusText(batchRow.uploadStatus) }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="createTime" label="创建时间" width="180" />
+              </el-table>
+            </div>
+          </template>
+        </el-table-column>
+        
         <el-table-column prop="name" label="项目名称" min-width="200">
           <template #default="{ row }">
             <div class="project-name-cell">
@@ -69,7 +114,6 @@
         </el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="viewProject(row)">查看数据</el-button>
             <el-button link type="primary" size="small" @click="editProject(row)">编辑</el-button>
             <el-button link type="danger" size="small" @click="deleteProject(row)">删除</el-button>
           </template>
@@ -121,10 +165,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getProjectPage, createProject, updateProject, archiveProject, getProjectStats } from '@/api/projects'
+import { getBatchesByProject } from '@/api/batches'
 import type { ProjectVO, ProjectDTO, ProjectQueryDTO } from '@/types/project'
+import type { BatchVO } from '@/types/batch'
 import { PageData } from '@/utils/request'
 
 const loading = ref(false)
@@ -136,6 +183,7 @@ const total = ref(0)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const currentProjectId = ref<number | null>(null)
+const router = useRouter()
 
 const form = ref<ProjectDTO>({
   name: '',
@@ -191,6 +239,28 @@ const getPrivacyLevelType = (level?: number) => {
   return level ? map[level] || 'info' : 'info'
 }
 
+// 获取批次状态文本
+const getBatchStatusText = (status?: string) => {
+  const map: Record<string, string> = { 
+    pending: '待上传', 
+    uploading: '上传中', 
+    completed: '已完成', 
+    failed: '失败' 
+  }
+  return status ? map[status] || status : '-'
+}
+
+// 获取批次状态类型
+const getBatchStatusType = (status?: string) => {
+  const map: Record<string, any> = { 
+    pending: 'info', 
+    uploading: 'warning', 
+    completed: 'success', 
+    failed: 'danger' 
+  }
+  return status ? map[status] || 'info' : 'info'
+}
+
 // 加载项目列表
 const loadProjects = async () => {
   loading.value = true
@@ -203,13 +273,36 @@ const loadProjects = async () => {
     }
     
     const result: PageData<ProjectVO> = await getProjectPage(query)
-    projects.value = result.records
+    // 为每个项目添加批次数据占位符
+    projects.value = result.records.map(project => ({
+      ...project,
+      batches: undefined,  // 未加载
+      batchesLoading: false
+    }))
     total.value = result.total
   } catch (error) {
     console.error('加载项目列表失败:', error)
     ElMessage.error('加载项目列表失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 加载项目的批次列表（懒加载）
+const loadProjectBatches = async (projectId: number) => {
+  const project = projects.value.find(p => p.projectId === projectId)
+  if (!project || project.batches !== undefined) return  // 已加载或正在加载
+  
+  project.batchesLoading = true
+  try {
+    const batches = await getBatchesByProject(projectId)
+    project.batches = batches || []
+  } catch (error) {
+    console.error('加载批次列表失败:', error)
+    ElMessage.error('加载批次列表失败')
+    project.batches = []
+  } finally {
+    project.batchesLoading = false
   }
 }
 
@@ -271,13 +364,6 @@ const confirmSave = async () => {
   }
 }
 
-// 查看项目
-const viewProject = (row: ProjectVO) => {
-  ElMessage.info(`正在进入项目: ${row.name}`)
-  // 实际业务中这里应跳转到 Dataset 页面并携带 projectId 参数
-  // router.push({ path: '/dataset', query: { projectId: row.projectId } })
-}
-
 // 删除项目（归档）
 const deleteProject = (row: ProjectVO) => {
   ElMessageBox.confirm(
@@ -305,6 +391,23 @@ const refreshData = () => {
   loadProjects()
 }
 
+// 查看全部批次（跳转到批次管理页面并筛选该项目）
+const viewAllBatches = (projectId: number) => {
+  router.push({
+    path: '/batches',
+    query: { projectId }
+  })
+}
+
+// 监听表格展开行事件
+const handleExpandChange = (row: any, expandedRows: any[]) => {
+  // 如果该行被展开，则加载批次数据
+  const isExpanded = expandedRows.some((r: any) => r.projectId === row.projectId)
+  if (isExpanded) {
+    loadProjectBatches(row.projectId)
+  }
+}
+
 // 监听分页变化
 const handlePageChange = () => {
   loadProjects()
@@ -314,6 +417,17 @@ const handleSizeChange = () => {
   currentPage.value = 1
   loadProjects()
 }
+
+// 监听筛选条件变化，自动触发查询
+watch(
+  [searchText, filterStatus],
+  () => {
+    // 重置到第一页
+    currentPage.value = 1
+    loadProjects()
+  },
+  { deep: false }
+)
 
 // 组件挂载时加载数据
 onMounted(() => {
@@ -371,6 +485,42 @@ onMounted(() => {
     margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+  }
+  
+  // 展开行样式
+  .batch-expand-container {
+    padding: 20px 40px;
+    background-color: #f5f7fa;
+    
+    .expand-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      
+      h4 {
+        margin: 0;
+        font-size: 14px;
+        color: #303133;
+        font-weight: 600;
+      }
+    }
+    
+    :deep(.el-table) {
+      background-color: transparent;
+      
+      &::before {
+        display: none;
+      }
+      
+      .el-table__row {
+        background-color: #fff;
+        
+        &:hover > td {
+          background-color: #f5f7fa !important;
+        }
+      }
+    }
   }
 }
 </style>
