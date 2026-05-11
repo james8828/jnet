@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jnet.biz.dto.BatchSelectImagesDTO;
+import com.jnet.biz.dto.CopyImageDTO;
 import com.jnet.biz.dto.ImageQueryDTO;
 import com.jnet.biz.dto.ReparseResult;
 import com.jnet.biz.entity.Batch;
 import com.jnet.biz.entity.Image;
+import com.jnet.biz.entity.Project;
 import com.jnet.biz.exception.BizErrorCode;
 import com.jnet.biz.exception.BizException;
 import com.jnet.biz.mapper.ImageMapper;
@@ -26,7 +28,6 @@ import org.springframework.util.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
@@ -45,6 +46,8 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
     private final IBatchService batchService;
     private final OpenSlideTiffConverter tiffConverter;
     private final OpenSlideMetadataParser metadataParser;
+    private final StoragePathConfig storagePathConfig;
+    private final com.jnet.biz.service.IProjectService projectService;
 
     @Override
     public Page<Image> searchImages(ImageQueryDTO query) {
@@ -198,35 +201,86 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         return successCount > 0;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean copyImages(CopyImageDTO dto) {
+        if (dto.getImageIds() == null || dto.getImageIds().isEmpty()) {
+            throw new BizException(BizErrorCode.PARAM_ERROR, "图像ID列表不能为空");
+        }
+
+        if (dto.getTargetBatchId() == null) {
+            throw new BizException(BizErrorCode.PARAM_ERROR, "目标文件夹ID不能为空");
+        }
+
+        // 1. 验证目标批次（文件夹）
+        Batch targetBatch = batchService.getById(dto.getTargetBatchId());
+        if (targetBatch == null) {
+            throw new BizException(BizErrorCode.BATCH_NOT_FOUND, 
+                    "目标文件夹不存在: " + dto.getTargetBatchId());
+        }
+
+        // 2. 查询所有要复制的图像
+        List<Image> sourceImages = this.listByIds(dto.getImageIds());
+        if (sourceImages.size() != dto.getImageIds().size()) {
+            throw new BizException(BizErrorCode.IMAGE_NOT_FOUND, "部分源图像不存在");
+        }
+
+        // 3. 逐个复制图像
+        int successCount = 0;
+        for (Image sourceImage : sourceImages) {
+            try {
+                copyImageToBatch(sourceImage, targetBatch);
+                successCount++;
+                log.info("图像复制成功: sourceImageId={}, targetBatchId={}", 
+                        sourceImage.getImageId(), dto.getTargetBatchId());
+            } catch (Exception e) {
+                log.error("图像复制失败: sourceImageId={}, filename={}", 
+                        sourceImage.getImageId(), sourceImage.getFilename(), e);
+                // 继续处理下一个，不中断整个流程
+            }
+        }
+
+        log.info("批量复制完成: total={}, success={}", 
+                dto.getImageIds().size(), successCount);
+
+        return successCount > 0;
+    }
+
     /**
      * 移动图像到目标批次
      */
     private void moveImageToBatch(Image image, Batch targetBatch) throws IOException {
-        // 1. 构建新的文件路径：E:\doc\jnet\imageStore\{projectCode}\{batchCode}\{filename}
-        String projectCode = getProjectCodeByBatchId(targetBatch.getProjectId());
-        String newDir = String.format("E:/doc/jnet/imageStore/%s/%s", 
-                projectCode, targetBatch.getBatchCode());
+        // 1. 构建新的文件路径：{rootPath}/{projectCode}/{batchCode}/{filename}
+        String projectCode = getProjectCodeById(targetBatch.getProjectId());
+        String newDir = storagePathConfig.getBatchDir(projectCode, targetBatch.getBatchCode());
         File dir = new File(newDir);
         if (!dir.exists()) {
             dir.mkdirs();
         }
-
-        String newFilePath = newDir + "/" + image.getFilename();
-        File oldFile = new File(image.getFilePath());
+    
+        String newFilePath = storagePathConfig.getImageFilePath(projectCode, targetBatch.getBatchCode(), image.getFilename());
+            
+        // 使用 originalFilePath 或 filePath
+        String oldFilePath = image.getOriginalFilePath() != null 
+                ? image.getOriginalFilePath() 
+                : image.getFilePath();
+            
+        File oldFile = new File(oldFilePath);
         File newFile = new File(newFilePath);
-
+    
         // 2. 移动文件
         if (oldFile.exists()) {
-            Files.move(Paths.get(image.getFilePath()), Paths.get(newFilePath), 
+            Files.move(Paths.get(oldFilePath), Paths.get(newFilePath), 
                     StandardCopyOption.REPLACE_EXISTING);
         }
-
+    
         // 3. 更新数据库记录
         image.setBatchId(targetBatch.getBatchId());
-        image.setFilePath(newFilePath);
+        image.setFilePath(newFilePath);  // 兼容旧字段
+        image.setOriginalFilePath(newFilePath);  // 【新增】
         this.updateById(image);
-
-        // 4. 更新批次统计（TODO: 需要在IBatchService中添加此方法）
+    
+        // 4. 更新批次统计（TODO: 需要在 IBatchService 中添加此方法）
         // batchService.updateBatchImageCount(targetBatch.getBatchId());
     }
 
@@ -235,29 +289,53 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
      */
     private void copyImageToBatch(Image sourceImage, Batch targetBatch) throws IOException {
         // 1. 构建新的文件路径
-        String projectCode = getProjectCodeByBatchId(targetBatch.getProjectId());
-        String newDir = String.format("E:/doc/jnet/imageStore/%s/%s", 
-                projectCode, targetBatch.getBatchCode());
+        String projectCode = getProjectCodeById(targetBatch.getProjectId());
+        String newDir = storagePathConfig.getBatchDir(projectCode, targetBatch.getBatchCode());
         File dir = new File(newDir);
         if (!dir.exists()) {
             dir.mkdirs();
         }
 
-        String newFilePath = newDir + "/" + sourceImage.getFilename();
-        File sourceFile = new File(sourceImage.getFilePath());
-        File targetFile = new File(newFilePath);
-
-        // 2. 复制文件
+        // 2. 复制原始文件
+        String originalSourcePath = sourceImage.getOriginalFilePath() != null 
+                ? sourceImage.getOriginalFilePath() 
+                : sourceImage.getFilePath();  // 兼容旧数据
+        String newOriginalPath = storagePathConfig.getImageFilePath(
+                projectCode, targetBatch.getBatchCode(), sourceImage.getFilename());
+        
+        File sourceFile = new File(originalSourcePath);
         if (sourceFile.exists()) {
-            Files.copy(Paths.get(sourceImage.getFilePath()), Paths.get(newFilePath), 
+            Files.copy(Paths.get(originalSourcePath), Paths.get(newOriginalPath), 
                     StandardCopyOption.REPLACE_EXISTING);
+            log.info("复制原始文件: {} -> {}", originalSourcePath, newOriginalPath);
         }
 
-        // 3. 创建新的图像记录
+        // 3. 【关键改造】如果有转换文件，也复制转换文件
+        String newConvertedPath = null;
+        if (sourceImage.getConvertedTiffPath() != null && !sourceImage.getConvertedTiffPath().isEmpty()) {
+            File convertedSourceFile = new File(sourceImage.getConvertedTiffPath());
+            if (convertedSourceFile.exists()) {
+                // 方案A：共享转换文件（节省空间）
+                newConvertedPath = sourceImage.getConvertedTiffPath();
+                log.info("共享转换文件（不复制）: {}", newConvertedPath);
+                
+                // 方案B：复制转换文件（独立，更安全）- 需要新 imageId
+                // String newConvertedPath = storagePathConfig.getConvertedTiffPath(
+                //         newImageId, sourceImage.getFilename());
+                // Files.copy(Paths.get(sourceImage.getConvertedTiffPath()), 
+                //           Paths.get(newConvertedPath), 
+                //           StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+
+        // 4. 创建新的图像记录
         Image newImage = new Image();
         newImage.setBatchId(targetBatch.getBatchId());
         newImage.setFilename(sourceImage.getFilename());
-        newImage.setFilePath(newFilePath);
+        newImage.setOriginalFilename(sourceImage.getOriginalFilename());
+        newImage.setFilePath(newOriginalPath);  // 兼容旧字段
+        newImage.setOriginalFilePath(newOriginalPath);  // 【新增】
+        newImage.setConvertedTiffPath(newConvertedPath);  // 【新增】
         newImage.setPathologyId(sourceImage.getPathologyId());
         newImage.setPatientId(sourceImage.getPatientId());
         newImage.setFormat(sourceImage.getFormat());
@@ -272,25 +350,32 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         newImage.setScannerInfo(sourceImage.getScannerInfo());
         newImage.setMetadata(sourceImage.getMetadata());
         newImage.setThumbnailUrl(sourceImage.getThumbnailUrl());
+        newImage.setRequiresConversion(sourceImage.getRequiresConversion());  // 【新增】
+        newImage.setConversionStatus(sourceImage.getConversionStatus());  // 【新增】
         newImage.setCreateTime(java.time.LocalDateTime.now());
         newImage.setUpdateTime(java.time.LocalDateTime.now());
-        newImage.setCreateBy(1L); // TODO: 从SecurityContext获取当前用户ID
-        newImage.setUpdateBy(1L); // TODO: 从SecurityContext获取当前用户ID
+        newImage.setCreateBy(1L); // TODO: 从 SecurityContext 获取当前用户 ID
+        newImage.setUpdateBy(1L); // TODO: 从 SecurityContext 获取当前用户 ID
         newImage.setDelFlag(false);
 
         this.save(newImage);
 
-        // 4. 更新批次统计（TODO: 需要在IBatchService中添加此方法）
-        // batchService.updateBatchImageCount(targetBatch.getBatchId());
+        // 5. 更新批次统计（TODO: 需要在 IBatchService 中添加此方法）
+//         batchService.updateBatchImageCount(targetBatch.getBatchId());
     }
 
     /**
-     * 根据批次ID获取项目编码
+     * 根据项目ID获取项目编码
      */
-    private String getProjectCodeByBatchId(Long projectId) {
-        // TODO: 实际应该从数据库查询项目表获取projectCode
-        // 这里简化处理，返回默认值
-        return "PROJECT_" + projectId;
+    private String getProjectCodeById(Long projectId) {
+        // 从数据库查询项目表获取真实的 projectCode
+        Project project = projectService.getById(projectId);
+        if (project != null && project.getCode() != null) {
+            return project.getCode();
+        }
+        // 降级处理：如果查询失败，使用默认格式
+        log.warn("无法获取项目编码，使用默认格式: projectId={}", projectId);
+        return "project_" + projectId;
     }
 
     @Override
@@ -387,8 +472,17 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         
         log.info("开始解析图像: imageId={}, file={}", image.getImageId(), filePath);
         
+        // 获取批次和项目信息
+        Batch batch = batchService.getById(image.getBatchId());
+        if (batch == null) {
+            throw new IOException("批次不存在: batchId=" + image.getBatchId());
+        }
+        String projectCode = getProjectCodeById(batch.getProjectId());
+        String batchCode = batch.getBatchCode();
+        
         // 1. 如果是 JPG/PNG，先转换为 OpenSlide 兼容的 TIFF
-        File processedFile = tiffConverter.ensureOpenSlideCompatible(filePath);
+        File processedFile = tiffConverter.ensureOpenSlideCompatible(
+                image.getImageId(), filePath, projectCode, batchCode);
         
         // 2. 使用 OpenSlide 解析元数据
         parseAndSetMetadata(image, processedFile.getAbsolutePath());

@@ -5,6 +5,7 @@ import com.jnet.biz.dto.ChunkUploadDTO;
 import com.jnet.biz.dto.ChunkUploadInitDTO;
 import com.jnet.biz.entity.Batch;
 import com.jnet.biz.entity.Image;
+import com.jnet.biz.enums.ConversionStatus;
 import com.jnet.biz.enums.ImageFormat;
 import com.jnet.biz.enums.LifecycleStatus;
 import com.jnet.biz.exception.BizErrorCode;
@@ -48,6 +49,7 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
     private final OpenSlideTiffConverter openSlideTiffConverter;
     private final StoragePathConfig storageConfig;
     private final OpenSlideMetadataParser metadataParser;
+    private final com.jnet.biz.service.IProjectService projectService;
 
 
 
@@ -302,30 +304,75 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
         image.setBatchId(batchId);
         image.setFilename(filename);  // 存储用文件名
         image.setOriginalFilename(filename);  // 原始文件名（用户上传时的名称）
-        image.setFilePath(targetPath);
+        image.setFilePath(targetPath);  // 兼容旧字段
+        image.setOriginalFilePath(targetPath);  // 【新增】保存原始文件路径
         image.setPathologyId(pathologyId);
         image.setPatientId(patientId);
         image.setFormat(detectImageFormat(filename));
         image.setLifecycleStatus(LifecycleStatus.RAW.getCode()); // 使用枚举的code
         image.setAnnotationProgress(0);
         image.setFileSize(targetFile.length());
-        
-        // 7. 异步解析WSI元数据（不阻塞上传流程）
-        try {
-            // 添加转换方法
-            File convertedFile = openSlideTiffConverter.ensureOpenSlideCompatible(targetPath);
-            metadataParser.parseAndSetMetadata(image, convertedFile.getPath());
-        } catch (Exception e) {
-            log.warn("解析图像元数据失败: {}, 将稍后异步处理", filename, e);
-            // 元数据解析失败不影响上传，可以后续异步处理
+                
+        // 7. 【关键改造】根据文件类型差异化处理
+        boolean isWsi = StoragePathConfig.isWsiFormat(filename);
+        boolean needsConv = StoragePathConfig.needsConversion(filename);
+                
+        if (isWsi) {
+            // 【分支1】WSI 格式：直接使用，无需转换
+            log.info("WSI 格式文件，直接解析元数据: {}", filename);
+            image.setRequiresConversion(false);
+            image.setConversionStatus(ConversionStatus.NONE.getCode());
+            image.setConvertedTiffPath(null);
+                    
+            try {
+                // 直接解析 WSI 元数据
+                metadataParser.parseAndSetMetadata(image, targetPath);
+            } catch (Exception e) {
+                log.warn("WSI 元数据解析失败: {}", filename, e);
+            }
+                    
+        } else if (needsConv) {
+            // 【分支2】普通图片：需要转换
+            log.info("普通图片格式，执行 TIFF 转换: {}", filename);
+            image.setRequiresConversion(true);
+            image.setConversionStatus(ConversionStatus.PENDING.getCode());
+            image.setConvertedTiffPath(null);  // 初始为空，转换完成后更新
+                    
+            try {
+                // 获取批次编码（projectCode和batch已在前面定义）
+                String batchCode = batch.getBatchCode();
+                
+                // 调用转换器（会自动保存到批次目录下的tiff子目录）
+                File convertedFile = openSlideTiffConverter.ensureOpenSlideCompatible(
+                        image.getImageId(), targetPath, projectCode, batchCode);
+                        
+                // 更新转换后路径和状态
+                image.setConvertedTiffPath(convertedFile.getAbsolutePath());
+                image.setConversionStatus(ConversionStatus.COMPLETED.getCode());
+                        
+                // 解析转换后文件的元数据
+                metadataParser.parseAndSetMetadata(image, convertedFile.getAbsolutePath());
+                        
+                log.info("转换完成: {} -> {}", targetPath, convertedFile.getAbsolutePath());
+                        
+            } catch (Exception e) {
+                log.error("TIFF 转换失败: {}", filename, e);
+                image.setConversionStatus(ConversionStatus.FAILED.getCode());
+                // 转换失败不影响入库，可后续异步重试
+            }
+        } else {
+            // 【分支3】未知格式
+            log.warn("未知文件格式，跳过元数据解析: {}", filename);
+            image.setRequiresConversion(false);
+            image.setConversionStatus(ConversionStatus.NONE.getCode());
         }
-        
+                
         image.setCreateTime(LocalDateTime.now());
         image.setUpdateTime(LocalDateTime.now());
-        image.setCreateBy(1L); // TODO: 从SecurityContext获取当前用户ID
-        image.setUpdateBy(1L); // TODO: 从SecurityContext获取当前用户ID
+        image.setCreateBy(1L); // TODO: 从 SecurityContext 获取当前用户 ID
+        image.setUpdateBy(1L); // TODO: 从 SecurityContext 获取当前用户 ID
         image.setDelFlag(false);
-
+        
         imageMapper.insert(image);
 
         // 8. 清理临时文件和Redis
@@ -443,8 +490,13 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
         // 通过batchService查询batch，再关联project
         Batch batch = batchService.getById(batchId);
         if (batch != null && batch.getProjectId() != null) {
-            // TODO: 这里需要关联查询项目表获取projectCode
-            // 简化处理：使用projectId作为projectCode
+            // 从数据库查询项目表获取真实的 projectCode
+            com.jnet.biz.entity.Project project = projectService.getById(batch.getProjectId());
+            if (project != null && project.getCode() != null) {
+                return project.getCode();
+            }
+            // 降级处理：如果查询失败，使用默认格式
+            log.warn("无法获取项目编码，使用默认格式: projectId={}", batch.getProjectId());
             return "project_" + batch.getProjectId();
         }
         return "default_project";

@@ -5,6 +5,7 @@ import com.jnet.biz.exception.BizErrorCode;
 import com.jnet.biz.exception.BizException;
 import com.jnet.biz.mapper.ImageMapper;
 import com.jnet.biz.service.IImageTileService;
+import com.jnet.biz.config.StoragePathConfig;
 import com.jnet.biz.util.WsiTileGenerator;
 import com.jnet.biz.vo.ImageMetadataVO;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.openslide.OpenSlide;
 import org.openslide.OpenSlideCache;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -117,40 +117,11 @@ public class ImageTileServiceImpl implements IImageTileService {
 
     private final ImageMapper imageMapper;
     private final RedisTemplate<String, Object> redisTemplate;
-
-    @Value("${data-pool.storage.root-path:E:/doc/jnet/imageStore}")
-    private String rootPath;
+    private final StoragePathConfig storagePathConfig;
 
     private static final String METADATA_CACHE_KEY = "image:metadata:";
     private static final long CACHE_EXPIRE = 3600; // 1小时
 
-    public static void main(String[] args) {
-        File image = new File("E:\\doc\\jnet\\imageStore\\project_2\\dev-batch\\R25-0818-RD 25081806-18 1F.svs");
-        try {
-            OpenSlide openSlide = new OpenSlide(image);
-            for (String location : WsiTileGenerator.getTileNamesByLevel(openSlide, 2)) {
-                WsiTileGenerator.TileCoordinate coordinate = WsiTileGenerator.parseAndValidateLocation(location);
-                String outputPath = String.format("E:\\wsi_tile_level\\%d-%d-%d.jpg", 2, coordinate.getRowIndex(), coordinate.getColumnIndex());
-                WsiTileGenerator.generateSingleTileToFile(openSlide, location, 256, outputPath);
-            }
-
-            // 用系统默认查看器打开
-            /*
-            File outputFile = new File(outputPath);
-            if (Desktop.isDesktopSupported() && outputFile.exists()) {
-                Desktop.getDesktop().open(outputFile);
-                log.info("已打开图片查看器");
-            }*/
-
-            openSlide.close();
-
-        } catch (IOException e) {
-            log.error("处理失败", e);
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
     public ImageMetadataVO getImageMetadata(Long imageId) {
@@ -204,10 +175,12 @@ public class ImageTileServiceImpl implements IImageTileService {
                 }
             }
 
-            // 2. 检查图像文件是否存在
-            File imageFile = new File(image.getFilePath());
+            // 2. 【关键改造】根据文件类型选择正确的文件路径
+            String effectiveFilePath = getEffectiveFilePath(image);
+            File imageFile = new File(effectiveFilePath);
+            
             if (!imageFile.exists()) {
-                log.warn("图像文件不存在，返回占位图: {}", image.getFilePath());
+                log.warn("图像文件不存在: {}, 返回占位图", effectiveFilePath);
                 return generatePlaceholderThumbnail(maxSize);
             }
 
@@ -392,13 +365,11 @@ public class ImageTileServiceImpl implements IImageTileService {
                 log.debug("从缓存获取Tile: {}", tileCacheKey);
                 return new ByteArrayResource(cachedTile);
             }*/
-            //添加FilePath处理逻辑，判断格式非svs npdi tiff,则文件后缀改为tif
-            String filePath = image.getFilePath();
-            String format = image.getFormat();
-            if (!"SVS".equals(format) && !"NDPI".equals(format) && !"TIFF".equals(format)) {
-                filePath = filePath.substring(0, filePath.lastIndexOf(".")) + ".tif";
-            }
-            OpenSlide openSlide = getOrCreateOpenSlide(image.getImageId(), filePath);
+            
+            // 【关键改造】根据文件类型选择正确的文件路径
+            String effectiveFilePath = getEffectiveFilePath(image);
+            
+            OpenSlide openSlide = getOrCreateOpenSlide(image.getImageId(), effectiveFilePath);
             BufferedImage tileImage = WsiTileGenerator.generateTile(openSlide, zoom, x, y, tileSize);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(tileImage, "jpeg", baos);
@@ -471,8 +442,8 @@ public class ImageTileServiceImpl implements IImageTileService {
         // 实际应该解析SVS文件头获取真实元数据
         // 这里使用数据库中的信息进行估算
 
-        int width = image.getWidth() != null ? image.getWidth() : 100000;
-        int height = image.getHeight() != null ? image.getHeight() : 80000;
+        int width = image.getWidth();
+        int height = image.getHeight();
         int tileSize = 256;
 
         // 计算金字塔层级数
@@ -559,19 +530,25 @@ public class ImageTileServiceImpl implements IImageTileService {
 
     /**
      * 保存缩略图到磁盘
+     * <p>
+     * 路径结构: {thumbnailPath}/{imageId}/thumbnail.jpg
      *
      * @param imageId 图像ID
-     * @param data 缩略图数据
+     * @param data    缩略图数据
      * @return 缩略图文件路径
      */
     private String saveThumbnail(Long imageId, byte[] data) throws IOException {
-        String thumbnailDir = String.format("%s/thumbnails", rootPath);
+        // 使用配置类获取缩略图目录（按 imageId 分目录）
+        String thumbnailDir = storagePathConfig.getThumbnailDirByImageId(imageId);
         File dir = new File(thumbnailDir);
         if (!dir.exists()) {
-            dir.mkdirs();
+            boolean created = dir.mkdirs();
+            if (created) {
+                log.debug("创建缩略图目录: {}", thumbnailDir);
+            }
         }
 
-        String thumbnailPath = String.format("%s/%d.jpg", thumbnailDir, imageId);
+        String thumbnailPath = storagePathConfig.getThumbnailFilePath(imageId);
         File thumbnailFile = new File(thumbnailPath);
 
         try (FileOutputStream fos = new FileOutputStream(thumbnailFile)) {
@@ -596,5 +573,36 @@ public class ImageTileServiceImpl implements IImageTileService {
 
             return baos.toByteArray();
         }
+    }
+
+    /**
+     * 【核心方法】根据图像类型获取有效的文件路径
+     *
+     * @param image 图像实体
+     * @return 可用于 OpenSlide 读取的文件路径
+     */
+    private String getEffectiveFilePath(Image image) {
+        // 优先级1: 如果有转换后的 TIFF，优先使用
+        if (image.getConvertedTiffPath() != null && !image.getConvertedTiffPath().isEmpty()) {
+            File convertedFile = new File(image.getConvertedTiffPath());
+            if (convertedFile.exists()) {
+                log.debug("使用转换后的 TIFF 文件: {}", image.getConvertedTiffPath());
+                return image.getConvertedTiffPath();
+            }
+        }
+
+        // 优先级2: 使用原始文件路径
+        if (image.getOriginalFilePath() != null && !image.getOriginalFilePath().isEmpty()) {
+            log.debug("使用原始文件: {}", image.getOriginalFilePath());
+            return image.getOriginalFilePath();
+        }
+
+        // 兼容性：回退到旧的 filePath 字段
+        if (image.getFilePath() != null && !image.getFilePath().isEmpty()) {
+            log.warn("回退到旧字段 filePath: {}", image.getFilePath());
+            return image.getFilePath();
+        }
+
+        throw new BizException(BizErrorCode.SYSTEM_ERROR, "图像文件路径无效");
     }
 }

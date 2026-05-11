@@ -155,6 +155,8 @@ data-pool:
     root-path: E:/doc/jnet/imageStore
     temp-path: E:/doc/jnet/imageStore/temp
     thumbnail-path: E:/doc/jnet/imageStore/thumbnails
+    converted-tiff-path: E:/doc/jnet/imageStore/converted-tiff
+    tile-cache-path: E:/doc/jnet/imageStore/tile-cache
 
   
   # 缓存配置

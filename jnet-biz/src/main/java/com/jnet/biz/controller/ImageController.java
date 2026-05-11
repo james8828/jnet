@@ -5,6 +5,7 @@ import com.jnet.biz.dto.AnnotationProgressDTO;
 import com.jnet.biz.dto.BatchSelectImagesDTO;
 import com.jnet.biz.dto.ChunkUploadDTO;
 import com.jnet.biz.dto.ChunkUploadInitDTO;
+import com.jnet.biz.dto.CopyImageDTO;
 import com.jnet.biz.dto.ImageQueryDTO;
 import com.jnet.biz.dto.ImageStatusDTO;
 import com.jnet.biz.dto.ReparseResult;
@@ -180,6 +181,22 @@ public class ImageController {
             return Result.success("操作成功", null);
         } else {
             return Result.error("操作失败");
+        }
+    }
+
+    /**
+     * 复制图像到目标文件夹
+     */
+    @Operation(summary = "复制图像", description = "将选中的图像复制到目标文件夹（批次），保留原图像不变")
+    @PostMapping("/copy")
+    public Result<Void> copyImages(
+            @Parameter(description = "复制参数", required = true) 
+            @RequestBody @Validated CopyImageDTO dto) {
+        boolean success = imageService.copyImages(dto);
+        if (success) {
+            return Result.success("复制成功", null);
+        } else {
+            return Result.error("复制失败");
         }
     }
 

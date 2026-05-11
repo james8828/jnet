@@ -1,5 +1,6 @@
 package com.jnet.biz.task;
 
+import com.jnet.biz.config.StoragePathConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,9 +22,9 @@ import java.util.Set;
 public class UploadCleanupTask {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final StoragePathConfig storagePathConfig;
     
     private static final String UPLOAD_PREFIX = "upload:chunk:";
-    private static final String TEMP_PATH = "E:/doc/jnet/imageStore/temp";
 
     /**
      * 每天凌晨3点执行清理过期临时文件
@@ -34,10 +35,11 @@ public class UploadCleanupTask {
         
         int cleanedCount = 0;
         long totalSizeCleaned = 0;
-        File tempDir = new File(TEMP_PATH);
+        String tempPath = storagePathConfig.getTempPath();
+        File tempDir = new File(tempPath);
         
         if (!tempDir.exists()) {
-            log.warn("临时目录不存在: {}", TEMP_PATH);
+            log.warn("临时目录不存在: {}", tempPath);
             return;
         }
         
@@ -86,7 +88,8 @@ public class UploadCleanupTask {
         int orphanCount = 0;
         for (String key : keys) {
             String uploadId = key.replace(UPLOAD_PREFIX, "");
-            File uploadDir = new File(TEMP_PATH + "/" + uploadId);
+            String tempPath = storagePathConfig.getTempPath();
+            File uploadDir = new File(tempPath + "/" + uploadId);
             
             if (!uploadDir.exists()) {
                 // 文件目录不存在，但Redis中存在，删除Redis记录

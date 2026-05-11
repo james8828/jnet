@@ -3,6 +3,7 @@ package com.jnet.biz.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jnet.biz.dto.BatchSelectImagesDTO;
+import com.jnet.biz.dto.CopyImageDTO;
 import com.jnet.biz.dto.ImageQueryDTO;
 import com.jnet.biz.dto.ReparseResult;
 import com.jnet.biz.entity.Image;
@@ -50,6 +51,14 @@ public interface IImageService extends IService<Image> {
      * @return 是否成功
      */
     boolean batchSelectImages(BatchSelectImagesDTO dto);
+
+    /**
+     * 复制图像到目标文件夹
+     *
+     * @param dto 复制参数
+     * @return 是否成功
+     */
+    boolean copyImages(CopyImageDTO dto);
 
     /**
      * 批量重新解析图像元数据

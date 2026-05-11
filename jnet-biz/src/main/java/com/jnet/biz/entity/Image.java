@@ -42,9 +42,20 @@ public class Image implements Serializable {
     private String originalFilename;
 
     /**
-     * 文件存储路径
+     * 文件存储路径（兼容旧字段，逐步废弃）
      */
     private String filePath;
+
+    /**
+     * 原始文件路径（用户上传的原始文件）
+     */
+    private String originalFilePath;
+
+    /**
+     * 转换后 TIFF 文件路径（仅 JPG/PNG 需要）
+     * 如果为空，表示原始文件本身就是 WSI 格式
+     */
+    private String convertedTiffPath;
 
     /**
      * 病理报告号
@@ -117,9 +128,19 @@ public class Image implements Serializable {
     private String metadata;
 
     /**
-     * 缩略图URL
+     * 缩略图 URL
      */
     private String thumbnailUrl;
+    
+    /**
+     * 是否需要转换（JPG/PNG 为 true，WSI 为 false）
+     */
+    private Boolean requiresConversion;
+    
+    /**
+     * 转换状态: NONE/PENDING/COMPLETED/FAILED
+     */
+    private String conversionStatus;
 
     /**
      * 创建人ID

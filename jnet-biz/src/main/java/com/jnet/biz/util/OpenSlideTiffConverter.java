@@ -1,6 +1,7 @@
 package com.jnet.biz.util;
 
 import com.jnet.biz.config.OpenSlideConverterProperties;
+import com.jnet.biz.config.StoragePathConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,34 +26,51 @@ import java.nio.file.Paths;
 public class OpenSlideTiffConverter {
 
     private final OpenSlideConverterProperties converterProperties;
+    private final StoragePathConfig storagePathConfig;
 
     /**
-     * 智能转换：如果是 PNG/JPG 则转换为 OpenSlide 兼容的 TIFF，否则直接返回
+     * 智能处理：根据文件类型决定是否需要转换
      *
-     * @param inputPath 输入文件路径
-     * @return 转换后的 TIFF 文件路径或原始文件路径
-     * @throws IOException 转换失败时抛出异常
+     * @param imageId     图像 ID
+     * @param inputPath   输入文件路径
+     * @param projectCode 项目编码
+     * @param batchCode   批次编码
+     * @return 可用于 OpenSlide 读取的文件路径
+     * @throws IOException 处理失败时抛出异常
      */
-    public File ensureOpenSlideCompatible(String inputPath) throws IOException {
+    public File ensureOpenSlideCompatible(Long imageId, String inputPath, String projectCode, String batchCode) throws IOException {
         File inputFile = new File(inputPath);
         if (!inputFile.exists()) {
             throw new FileNotFoundException("文件不存在: " + inputPath);
         }
 
-        String lowerName = inputFile.getName().toLowerCase();
-        // 如果已经是 TIFF 格式，直接返回
-        if (lowerName.endsWith(".tif") || lowerName.endsWith(".tiff") || lowerName.endsWith(".ndpi") || lowerName.endsWith(".svs")) {
-            log.debug("文件已是 TIFF 格式，无需转换: {}", inputPath);
+        String filename = inputFile.getName();
+
+        // 【关键分支1】WSI 格式：直接返回，无需转换
+        if (StoragePathConfig.isWsiFormat(filename)) {
+            log.debug("WSI 格式文件，无需转换: {}", inputPath);
             return inputFile;
         }
 
-        // 如果是支持的图片格式，执行转换
-        if (isSupportedFormat(inputFile.getName())) {
-            log.info("检测到 {} 格式，开始转换为 OpenSlide 兼容 TIFF...", lowerName.substring(lowerName.lastIndexOf('.') + 1));
-            return convertToOpenSlideTiff(inputPath);
+        // 【关键分支2】普通图片：需要转换
+        if (StoragePathConfig.needsConversion(filename)) {
+            log.info("检测到普通图片格式 [{}]，开始转换为 OpenSlide 兼容 TIFF...", filename);
+
+            // 生成转换文件路径（批次目录下的tiff子目录）
+            String convertedPath = storagePathConfig.getConvertedTiffPath(filename, projectCode, batchCode);
+            File convertedFile = new File(convertedPath);
+
+            // 幂等性检查：如果已存在转换文件，直接返回
+            if (convertedFile.exists() && convertedFile.length() > 0) {
+                log.info("转换文件已存在，跳过转换: {}", convertedPath);
+                return convertedFile;
+            }
+
+            // 执行转换
+            return convertToOpenSlideTiff(inputPath, convertedPath);
         }
 
-        throw new IllegalArgumentException("不支持的文件格式: " + inputPath);
+        throw new IllegalArgumentException("不支持的文件格式: " + filename);
     }
 
     /**

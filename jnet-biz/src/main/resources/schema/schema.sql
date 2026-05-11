@@ -198,6 +198,8 @@ CREATE TABLE biz_image (
     filename VARCHAR(255) NOT NULL,
     original_filename VARCHAR(500) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
+    original_file_path VARCHAR(500),
+    converted_tiff_path VARCHAR(500),
     pathology_id VARCHAR(100),
     patient_id VARCHAR(100),
     format VARCHAR(20),
@@ -213,6 +215,8 @@ CREATE TABLE biz_image (
     scanner_info JSONB,
     metadata JSONB,
     thumbnail_url VARCHAR(500),
+    requires_conversion BOOLEAN DEFAULT FALSE,
+    conversion_status VARCHAR(20) DEFAULT 'NONE',
     create_by BIGINT,
     create_time TIMESTAMP NOT NULL DEFAULT NOW(),
     update_by BIGINT,
@@ -225,7 +229,9 @@ COMMENT ON COLUMN biz_image.image_id IS '主键ID（图像ID）';
 COMMENT ON COLUMN biz_image.batch_id IS '所属批次ID';
 COMMENT ON COLUMN biz_image.filename IS '文件名';
 COMMENT ON COLUMN biz_image.original_filename IS '原始文件名（用户上传时的文件名）';
-COMMENT ON COLUMN biz_image.file_path IS '文件存储路径';
+COMMENT ON COLUMN biz_image.file_path IS '文件存储路径（兼容旧字段，逐步废弃）';
+COMMENT ON COLUMN biz_image.original_file_path IS '原始文件路径（用户上传的原始文件）';
+COMMENT ON COLUMN biz_image.converted_tiff_path IS '转换后 TIFF 文件路径（仅 JPG/PNG 需要，WSI 格式为空）';
 COMMENT ON COLUMN biz_image.pathology_id IS '病理报告号';
 COMMENT ON COLUMN biz_image.patient_id IS '患者ID（脱敏处理）';
 COMMENT ON COLUMN biz_image.format IS '格式 (SVS/NDPI/JPG/PNG)';
@@ -241,6 +247,8 @@ COMMENT ON COLUMN biz_image.file_size IS '文件大小（字节）';
 COMMENT ON COLUMN biz_image.scanner_info IS '扫描仪详细信息 (JSONB)';
 COMMENT ON COLUMN biz_image.metadata IS '扩展元数据 (JSONB)';
 COMMENT ON COLUMN biz_image.thumbnail_url IS '缩略图URL';
+COMMENT ON COLUMN biz_image.requires_conversion IS '是否需要转换（JPG/PNG 为 true，WSI 为 false）';
+COMMENT ON COLUMN biz_image.conversion_status IS '转换状态 (NONE/PENDING/COMPLETED/FAILED)';
 
 -- 索引优化
 CREATE INDEX idx_image_batch ON biz_image(batch_id);

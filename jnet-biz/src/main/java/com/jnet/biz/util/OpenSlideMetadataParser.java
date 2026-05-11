@@ -148,11 +148,14 @@ public class OpenSlideMetadataParser {
             // 生成缩略图（最大边长 512px）
             BufferedImage thumbnail = slide.createThumbnailImage(512);
 
-            // 获取缩略图目录和文件路径
-            String thumbnailDir = storageConfig.getThumbnailDir();
+            // 获取缩略图目录（按 imageId 分目录）
+            String thumbnailDir = storageConfig.getThumbnailDirByImageId(image.getImageId());
             File dir = new File(thumbnailDir);
             if (!dir.exists()) {
-                dir.mkdirs();
+                boolean created = dir.mkdirs();
+                if (created) {
+                    log.debug("创建缩略图目录: {}", thumbnailDir);
+                }
             }
 
             String thumbnailFilePath = storageConfig.getThumbnailFilePath(image.getImageId());
