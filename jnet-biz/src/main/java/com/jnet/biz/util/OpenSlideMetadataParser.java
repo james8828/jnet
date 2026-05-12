@@ -163,8 +163,8 @@ public class OpenSlideMetadataParser {
 
             javax.imageio.ImageIO.write(thumbnail, "JPEG", thumbnailFile);
 
-            // 设置缩略图 URL（存储完整文件路径）
-            image.setThumbnailUrl(thumbnailFilePath);
+            // 【改造】设置缩略图 URL（存储相对URL而不是绝对路径）
+            image.setThumbnailUrl(storageConfig.getThumbnailUrl(image.getImageId()));
 
             log.debug("缩略图生成成功: imageId={}, path={}", image.getImageId(), thumbnailFile.getAbsolutePath());
 

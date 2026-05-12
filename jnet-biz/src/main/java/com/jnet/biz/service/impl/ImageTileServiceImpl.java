@@ -1,11 +1,14 @@
 package com.jnet.biz.service.impl;
 
+import com.jnet.biz.entity.Batch;
 import com.jnet.biz.entity.Image;
 import com.jnet.biz.exception.BizErrorCode;
 import com.jnet.biz.exception.BizException;
 import com.jnet.biz.mapper.ImageMapper;
+import com.jnet.biz.service.IBatchService;
 import com.jnet.biz.service.IImageTileService;
 import com.jnet.biz.config.StoragePathConfig;
+import com.jnet.biz.util.OpenSlideTiffConverter;
 import com.jnet.biz.util.WsiTileGenerator;
 import com.jnet.biz.vo.ImageMetadataVO;
 import lombok.RequiredArgsConstructor;
@@ -118,6 +121,9 @@ public class ImageTileServiceImpl implements IImageTileService {
     private final ImageMapper imageMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final StoragePathConfig storagePathConfig;
+    private final IBatchService batchService;
+    private final OpenSlideTiffConverter tiffConverter;
+    private final com.jnet.biz.service.IProjectService projectService;
 
     private static final String METADATA_CACHE_KEY = "image:metadata:";
     private static final long CACHE_EXPIRE = 3600; // 1小时
@@ -168,7 +174,9 @@ public class ImageTileServiceImpl implements IImageTileService {
         try {
             // 1. 检查是否已有缩略图
             if (image.getThumbnailUrl() != null && !image.getThumbnailUrl().isEmpty()) {
-                File thumbnailFile = new File(image.getThumbnailUrl());
+                // 【改造】thumbnail_url现在是相对URL，需要转换为绝对路径
+                String thumbnailAbsolutePath = storagePathConfig.toAbsolutePath(image.getThumbnailUrl());
+                File thumbnailFile = new File(thumbnailAbsolutePath);
                 if (thumbnailFile.exists()) {
                     byte[] data = readFile(thumbnailFile);
                     return new ByteArrayResource(data);
@@ -548,14 +556,15 @@ public class ImageTileServiceImpl implements IImageTileService {
             }
         }
 
-        String thumbnailPath = storagePathConfig.getThumbnailFilePath(imageId);
-        File thumbnailFile = new File(thumbnailPath);
+        String thumbnailAbsolutePath = storagePathConfig.getThumbnailFilePath(imageId);
+        File thumbnailFile = new File(thumbnailAbsolutePath);
 
         try (FileOutputStream fos = new FileOutputStream(thumbnailFile)) {
             fos.write(data);
         }
 
-        return thumbnailPath;
+        // 【改造】返回相对URL而不是绝对路径
+        return storagePathConfig.getThumbnailUrl(imageId);
     }
 
     /**
@@ -577,32 +586,108 @@ public class ImageTileServiceImpl implements IImageTileService {
 
     /**
      * 【核心方法】根据图像类型获取有效的文件路径
+     * <p>
+     * 如果图像需要转换但尚未转换，会先触发转换，然后返回转换后的TIFF路径
+     * 注意：数据库中存储的是相对路径，这里需要转换为绝对路径
      *
      * @param image 图像实体
-     * @return 可用于 OpenSlide 读取的文件路径
+     * @return 可用于 OpenSlide 读取的绝对路径
      */
     private String getEffectiveFilePath(Image image) {
         // 优先级1: 如果有转换后的 TIFF，优先使用
         if (image.getConvertedTiffPath() != null && !image.getConvertedTiffPath().isEmpty()) {
-            File convertedFile = new File(image.getConvertedTiffPath());
+            // 【改造】将相对路径转换为绝对路径
+            String convertedAbsolutePath = storagePathConfig.toAbsolutePath(image.getConvertedTiffPath());
+            File convertedFile = new File(convertedAbsolutePath);
             if (convertedFile.exists()) {
-                log.debug("使用转换后的 TIFF 文件: {}", image.getConvertedTiffPath());
-                return image.getConvertedTiffPath();
+                log.debug("使用转换后的 TIFF 文件: {}", convertedAbsolutePath);
+                return convertedAbsolutePath;
             }
         }
 
-        // 优先级2: 使用原始文件路径
+        // 优先级2: 如果需要转换但尚未转换，先执行转换
+        if (Boolean.TRUE.equals(image.getRequiresConversion()) 
+                && !"COMPLETED".equals(image.getConversionStatus())) {
+            log.info("检测到未转换的图像，开始转换: imageId={}, filename={}", 
+                    image.getImageId(), image.getFilename());
+            
+            try {
+                // 获取批次和项目信息
+                Batch batch = batchService.getById(image.getBatchId());
+                if (batch == null) {
+                    throw new BizException(BizErrorCode.BATCH_NOT_FOUND, 
+                            "批次不存在: batchId=" + image.getBatchId());
+                }
+                
+                String projectCode = getProjectCodeById(batch.getProjectId());
+                String batchCode = batch.getBatchCode();
+                
+                // 【改造】获取原始文件绝对路径
+                String originalRelativePath = image.getOriginalFilePath() != null 
+                        ? image.getOriginalFilePath() 
+                        : image.getFilePath();
+                String originalAbsolutePath = storagePathConfig.toAbsolutePath(originalRelativePath);
+                
+                if (originalAbsolutePath == null || originalAbsolutePath.isEmpty()) {
+                    throw new BizException(BizErrorCode.SYSTEM_ERROR, "原始文件路径为空");
+                }
+                
+                // 执行转换（会自动保存到批次目录下的tiff子目录）
+                File convertedFile = tiffConverter.ensureOpenSlideCompatible(
+                        image.getImageId(), originalAbsolutePath, projectCode, batchCode);
+                
+                // 【改造】更新数据库记录（存储相对路径）
+                String relativeTiffPath = storagePathConfig.toRelativePath(convertedFile.getAbsolutePath());
+                image.setConvertedTiffPath(relativeTiffPath);
+                image.setConversionStatus("COMPLETED");
+                imageMapper.updateById(image);
+                
+                log.info("转换完成并更新数据库: imageId={}, tiffPath={}", 
+                        image.getImageId(), convertedFile.getAbsolutePath());
+                
+                return convertedFile.getAbsolutePath();
+                
+            } catch (Exception e) {
+                log.error("懒加载转换失败: imageId={}, filename={}", 
+                        image.getImageId(), image.getFilename(), e);
+                
+                // 更新转换状态为失败
+                image.setConversionStatus("FAILED");
+                imageMapper.updateById(image);
+                
+                // 降级：使用原始文件（可能无法被OpenSlide识别）
+                log.warn("转换失败，尝试使用原始文件");
+            }
+        }
+
+        // 优先级3: 使用原始文件路径
         if (image.getOriginalFilePath() != null && !image.getOriginalFilePath().isEmpty()) {
-            log.debug("使用原始文件: {}", image.getOriginalFilePath());
-            return image.getOriginalFilePath();
+            // 【改造】将相对路径转换为绝对路径
+            String absolutePath = storagePathConfig.toAbsolutePath(image.getOriginalFilePath());
+            log.debug("使用原始文件: {}", absolutePath);
+            return absolutePath;
         }
 
         // 兼容性：回退到旧的 filePath 字段
         if (image.getFilePath() != null && !image.getFilePath().isEmpty()) {
-            log.warn("回退到旧字段 filePath: {}", image.getFilePath());
-            return image.getFilePath();
+            // 【改造】将相对路径转换为绝对路径
+            String absolutePath = storagePathConfig.toAbsolutePath(image.getFilePath());
+            log.warn("回退到旧字段 filePath: {}", absolutePath);
+            return absolutePath;
         }
 
         throw new BizException(BizErrorCode.SYSTEM_ERROR, "图像文件路径无效");
+    }
+    
+    /**
+     * 根据项目ID获取项目编码
+     */
+    private String getProjectCodeById(Long projectId) {
+        com.jnet.biz.entity.Project project = projectService.getById(projectId);
+        if (project != null && project.getCode() != null) {
+            return project.getCode();
+        }
+        log.warn("无法获取项目编码，使用默认格式: projectId={}", projectId);
+        return "project_" + projectId;
     }
 }

@@ -1005,48 +1005,210 @@ $$ LANGUAGE plpgsql;
 
 -- 状态查询示例:
 
--- 1. 统计各状态的切片数量
-SELECT 
-    lifecycle_status,
-    COUNT(*) as count,
-    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) as percentage
-FROM biz_image
-WHERE del_flag = false
-GROUP BY lifecycle_status
-ORDER BY count DESC;
 
--- 2. 查询某批次下所有待审核的切片
-SELECT image_id, filename, pathology_id, annotation_progress
-FROM biz_image
-WHERE batch_id = 123
-  AND lifecycle_status = 'Annotated'
-  AND del_flag = false
-ORDER BY create_time DESC;
+-- ============================================================================
+-- YOLO训练数据集构建任务表 (biz_yolo_dataset_task)
+-- ============================================================================
+CREATE TABLE biz_yolo_dataset_task (
+    task_id BIGSERIAL PRIMARY KEY,
+    task_no VARCHAR(50) NOT NULL UNIQUE,
+    project_id BIGINT NOT NULL,
+    batch_id BIGINT,
+    task_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    
+    -- ========== 数据筛选条件 ==========
+    image_ids JSONB,                    -- 指定图像ID列表（为空则使用筛选条件）
+    lifecycle_status_filter VARCHAR(50), -- 生命周期状态筛选
+    annotation_types JSONB,             -- 标注类型筛选 (polygon/rectangle/point)
+    min_annotation_count INT DEFAULT 0, -- 最小标注数量
+    max_annotation_count INT,           -- 最大标注数量
+    tags_filter JSONB,                  -- 标签筛选
+    
+    -- ========== 数据集配置 ==========
+    train_ratio FLOAT DEFAULT 0.8,      -- 训练集比例
+    val_ratio FLOAT DEFAULT 0.1,        -- 验证集比例
+    test_ratio FLOAT DEFAULT 0.1,       -- 测试集比例
+    class_mapping JSONB,                -- 类别映射配置 {old_name: new_name}
+    shuffle BOOLEAN DEFAULT TRUE,       -- 是否打乱数据
+    
+    -- ========== 输出配置 ==========
+    output_format VARCHAR(20) DEFAULT 'yolov8', -- YOLO版本格式 (yolov5/yolov8)
+    include_images BOOLEAN DEFAULT TRUE,         -- 是否包含图像文件
+    compress_format VARCHAR(10) DEFAULT 'zip',   -- 压缩格式 (zip/tar.gz)
+    image_resize_width INT,                      -- 图像缩放宽度（可选）
+    image_resize_height INT,                     -- 图像缩放高度（可选）
+    
+    -- ========== 任务状态 ==========
+    status VARCHAR(20) DEFAULT 'PENDING',        -- PENDING/RUNNING/SUCCESS/FAILED/CANCELLED
+    progress FLOAT DEFAULT 0,                    -- 进度 0-100
+    current_step VARCHAR(100),                   -- 当前执行步骤描述
+    step_detail JSONB,                           -- 步骤详细信息
+    
+    -- ========== 结果信息 ==========
+    total_images INT DEFAULT 0,                  -- 总图像数
+    total_annotations INT DEFAULT 0,             -- 总标注数
+    train_count INT DEFAULT 0,                   -- 训练集数量
+    val_count INT DEFAULT 0,                     -- 验证集数量
+    test_count INT DEFAULT 0,                    -- 测试集数量
+    class_distribution JSONB,                    -- 类别分布统计 {class_name: count}
+    dataset_path VARCHAR(500),                   -- 数据集文件路径
+    dataset_size BIGINT,                         -- 数据集文件大小（字节）
+    data_yaml_path VARCHAR(500),                 -- data.yaml配置文件路径
+    
+    -- ========== 训练关联 ==========
+    auto_trigger_training BOOLEAN DEFAULT FALSE, -- 是否自动触发训练
+    training_config JSONB,                       -- 训练配置模板
+    training_task_id BIGINT,                     -- 关联的训练任务ID
+    
+    -- ========== 错误信息 ==========
+    error_message TEXT,
+    error_stack TEXT,
+    failed_images JSONB,                         -- 失败的图像列表 [{imageId, filename, reason}]
+    
+    -- ========== 审计字段 ==========
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    duration_seconds INT,
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
 
--- 3. 查询可用于训练的已审核切片
-SELECT i.image_id, i.filename, i.pathology_id, b.batch_code
-FROM biz_image i
-JOIN biz_batch b ON i.batch_id = b.batch_id
-WHERE b.project_id = 456
-  AND i.lifecycle_status = 'Verified'
-  AND i.del_flag = false
-ORDER BY i.create_time;
+COMMENT ON TABLE biz_yolo_dataset_task IS 'YOLO训练数据集构建任务表';
+COMMENT ON COLUMN biz_yolo_dataset_task.task_id IS '主键ID';
+COMMENT ON COLUMN biz_yolo_dataset_task.task_no IS '任务编号（唯一）';
+COMMENT ON COLUMN biz_yolo_dataset_task.project_id IS '所属项目ID';
+COMMENT ON COLUMN biz_yolo_dataset_task.batch_id IS '批次ID（可选）';
+COMMENT ON COLUMN biz_yolo_dataset_task.image_ids IS '指定图像ID列表（JSON数组）';
+COMMENT ON COLUMN biz_yolo_dataset_task.lifecycle_status_filter IS '生命周期状态筛选';
+COMMENT ON COLUMN biz_yolo_dataset_task.annotation_types IS '标注类型筛选（JSON数组）';
+COMMENT ON COLUMN biz_yolo_dataset_task.train_ratio IS '训练集比例';
+COMMENT ON COLUMN biz_yolo_dataset_task.val_ratio IS '验证集比例';
+COMMENT ON COLUMN biz_yolo_dataset_task.test_ratio IS '测试集比例';
+COMMENT ON COLUMN biz_yolo_dataset_task.class_mapping IS '类别映射配置（JSON对象）';
+COMMENT ON COLUMN biz_yolo_dataset_task.output_format IS '输出格式（yolov5/yolov8）';
+COMMENT ON COLUMN biz_yolo_dataset_task.status IS '任务状态';
+COMMENT ON COLUMN biz_yolo_dataset_task.progress IS '任务进度（0-100）';
+COMMENT ON COLUMN biz_yolo_dataset_task.current_step IS '当前执行步骤';
+COMMENT ON COLUMN biz_yolo_dataset_task.step_detail IS '步骤详细信息（JSON）';
+COMMENT ON COLUMN biz_yolo_dataset_task.dataset_path IS '生成的数据集文件路径';
+COMMENT ON COLUMN biz_yolo_dataset_task.auto_trigger_training IS '是否自动触发训练';
+COMMENT ON COLUMN biz_yolo_dataset_task.training_task_id IS '关联的训练任务ID';
 
--- 4. 更新切片状态（示例：从Annotated转为Verified）
-UPDATE biz_image
-SET lifecycle_status = 'Verified',
-    update_by = 1001,
-    update_time = NOW()
-WHERE image_id = 789
-  AND lifecycle_status = 'Annotated';
+-- 索引优化
+CREATE INDEX idx_yolo_task_project ON biz_yolo_dataset_task(project_id);
+CREATE INDEX idx_yolo_task_status ON biz_yolo_dataset_task(status);
+CREATE INDEX idx_yolo_task_create_time ON biz_yolo_dataset_task(create_time DESC);
+CREATE INDEX idx_yolo_task_no ON biz_yolo_dataset_task(task_no);
+CREATE INDEX idx_yolo_task_batch ON biz_yolo_dataset_task(batch_id);
 
--- 5. 批量更新状态（示例：项目结项，所有切片归档）
-UPDATE biz_image i
-SET lifecycle_status = 'Archived',
-    update_by = 1001,
-    update_time = NOW()
-FROM biz_batch b
-WHERE i.batch_id = b.batch_id
-  AND b.project_id = 456
-  AND i.lifecycle_status != 'Archived'
-  AND i.del_flag = false;
+-- ============================================================================
+-- YOLO模型训练任务表 (biz_yolo_training_task)
+-- ============================================================================
+CREATE TABLE biz_yolo_training_task (
+    task_id BIGSERIAL PRIMARY KEY,
+    task_no VARCHAR(50) NOT NULL UNIQUE,
+    project_id BIGINT NOT NULL,
+    task_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    
+    -- ========== 数据源 ==========
+    dataset_task_id BIGINT,                      -- 关联的数据集构建任务ID
+    dataset_path VARCHAR(500),                   -- 数据集路径
+    custom_dataset_path VARCHAR(500),            -- 自定义数据集路径
+    dataset_config JSONB,                        -- 数据集配置快照
+    
+    -- ========== 训练配置 ==========
+    model_architecture VARCHAR(50) DEFAULT 'yolov8n', -- 模型架构 (yolov8n/s/m/l/x)
+    pretrained_weights VARCHAR(100),             -- 预训练权重 (coco/imagenet/custom)
+    epochs INT DEFAULT 100,                      -- 训练轮数
+    batch_size INT DEFAULT 16,                   -- 批次大小
+    image_size INT DEFAULT 640,                  -- 图像尺寸
+    learning_rate FLOAT DEFAULT 0.01,            -- 学习率
+    momentum FLOAT DEFAULT 0.937,                -- 动量
+    weight_decay FLOAT DEFAULT 0.0005,           -- 权重衰减
+    optimizer VARCHAR(20) DEFAULT 'SGD',         -- 优化器 (SGD/Adam/AdamW)
+    lr_scheduler VARCHAR(20) DEFAULT 'cosine',   -- 学习率调度器
+    warmup_epochs INT DEFAULT 3,                 -- 预热轮数
+    patience INT DEFAULT 50,                     -- 早停耐心值
+    additional_params JSONB,                     -- 额外参数
+    
+    -- ========== 增强配置 ==========
+    augmentation_config JSONB,                   -- 数据增强配置
+    hsv_h FLOAT DEFAULT 0.015,                   -- HSV色调增强
+    hsv_s FLOAT DEFAULT 0.7,                     -- HSV饱和度增强
+    hsv_v FLOAT DEFAULT 0.4,                     -- HSV亮度增强
+    degrees FLOAT DEFAULT 0.0,                   -- 旋转角度
+    translate FLOAT DEFAULT 0.1,                 -- 平移
+    scale FLOAT DEFAULT 0.5,                     -- 缩放
+    shear FLOAT DEFAULT 0.0,                     -- 剪切
+    perspective FLOAT DEFAULT 0.0,               -- 透视
+    flip_lr BOOLEAN DEFAULT TRUE,                -- 水平翻转
+    flip_ud BOOLEAN DEFAULT FALSE,               -- 垂直翻转
+    
+    -- ========== 硬件配置 ==========
+    gpu_ids VARCHAR(50),                         -- GPU设备ID (0,1,2或cpu)
+    num_workers INT DEFAULT 4,                   -- 数据加载线程数
+    mixed_precision BOOLEAN DEFAULT TRUE,        -- 混合精度训练
+    
+    -- ========== 任务状态 ==========
+    status VARCHAR(20) DEFAULT 'PENDING',        -- PENDING/RUNNING/SUCCESS/FAILED/CANCELLED
+    progress FLOAT DEFAULT 0,                    -- 进度 0-100
+    current_epoch INT DEFAULT 0,                 -- 当前训练轮数
+    current_step VARCHAR(100),                   -- 当前步骤描述
+    
+    -- ========== 训练指标 ==========
+    metrics_json JSONB,                          -- 训练指标（实时）{epoch, loss, map, precision, recall}
+    best_metrics JSONB,                          -- 最佳指标
+    training_logs_path VARCHAR(500),             -- 训练日志路径
+    tensorboard_log_path VARCHAR(500),           -- TensorBoard日志路径
+    
+    -- ========== 模型输出 ==========
+    model_id BIGINT,                             -- 关联的模型注册ID（biz_model）
+    model_path VARCHAR(500),                     -- 最终模型路径
+    best_model_path VARCHAR(500),                -- 最佳模型路径
+    last_model_path VARCHAR(500),                -- 最后一轮模型路径
+    model_size BIGINT,                           -- 模型文件大小
+    inference_time_ms FLOAT,                     -- 推理时间（毫秒）
+    
+    -- ========== 评估结果 ==========
+    evaluation_results JSONB,                    -- 评估结果 {map50, map50_95, precision, recall}
+    confusion_matrix_path VARCHAR(500),          -- 混淆矩阵图片路径
+    pr_curve_path VARCHAR(500),                  -- PR曲线图片路径
+    
+    -- ========== 错误信息 ==========
+    error_message TEXT,
+    error_stack TEXT,
+    
+    -- ========== 审计字段 ==========
+    create_by BIGINT,
+    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    duration_seconds INT,
+    update_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE biz_yolo_training_task IS 'YOLO模型训练任务表';
+COMMENT ON COLUMN biz_yolo_training_task.dataset_task_id IS '关联的数据集构建任务ID';
+COMMENT ON COLUMN biz_yolo_training_task.model_architecture IS '模型架构（yolov8n/yolov8s/yolov8m等）';
+COMMENT ON COLUMN biz_yolo_training_task.pretrained_weights IS '预训练权重路径';
+COMMENT ON COLUMN biz_yolo_training_task.epochs IS '训练轮数';
+COMMENT ON COLUMN biz_yolo_training_task.metrics_json IS '训练指标（JSON格式）';
+COMMENT ON COLUMN biz_yolo_training_task.best_metrics IS '最佳性能指标';
+COMMENT ON COLUMN biz_yolo_training_task.model_id IS '关联的模型注册ID（biz_model表）';
+COMMENT ON COLUMN biz_yolo_training_task.model_path IS '最终模型路径';
+COMMENT ON COLUMN biz_yolo_training_task.best_model_path IS '最佳模型路径';
+COMMENT ON COLUMN biz_yolo_training_task.evaluation_results IS '评估结果';
+
+-- 索引优化
+CREATE INDEX idx_training_task_project ON biz_yolo_training_task(project_id);
+CREATE INDEX idx_training_task_status ON biz_yolo_training_task(status);
+CREATE INDEX idx_training_task_dataset ON biz_yolo_training_task(dataset_task_id);
+CREATE INDEX idx_training_task_create_time ON biz_yolo_training_task(create_time DESC);
+CREATE INDEX idx_training_task_model ON biz_yolo_training_task(model_architecture);
+CREATE INDEX idx_training_task_model_id ON biz_yolo_training_task(model_id);
+

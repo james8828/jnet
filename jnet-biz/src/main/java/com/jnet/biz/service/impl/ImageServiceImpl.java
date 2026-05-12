@@ -260,10 +260,11 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
     
         String newFilePath = storagePathConfig.getImageFilePath(projectCode, targetBatch.getBatchCode(), image.getFilename());
             
-        // 使用 originalFilePath 或 filePath
-        String oldFilePath = image.getOriginalFilePath() != null 
+        // 【改造】将相对路径转换为绝对路径进行文件操作
+        String oldRelativePath = image.getOriginalFilePath() != null 
                 ? image.getOriginalFilePath() 
                 : image.getFilePath();
+        String oldFilePath = storagePathConfig.toAbsolutePath(oldRelativePath);
             
         File oldFile = new File(oldFilePath);
         File newFile = new File(newFilePath);
@@ -274,10 +275,11 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
                     StandardCopyOption.REPLACE_EXISTING);
         }
     
-        // 3. 更新数据库记录
+        // 3. 更新数据库记录（存储相对路径）
         image.setBatchId(targetBatch.getBatchId());
-        image.setFilePath(newFilePath);  // 兼容旧字段
-        image.setOriginalFilePath(newFilePath);  // 【新增】
+        String newRelativePath = storagePathConfig.toRelativePath(newFilePath);
+        image.setFilePath(newRelativePath);  // 兼容旧字段
+        image.setOriginalFilePath(newRelativePath);  // 【新增】
         this.updateById(image);
     
         // 4. 更新批次统计（TODO: 需要在 IBatchService 中添加此方法）
@@ -297,9 +299,11 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         }
 
         // 2. 复制原始文件
-        String originalSourcePath = sourceImage.getOriginalFilePath() != null 
+        String originalSourceRelativePath = sourceImage.getOriginalFilePath() != null 
                 ? sourceImage.getOriginalFilePath() 
                 : sourceImage.getFilePath();  // 兼容旧数据
+        String originalSourcePath = storagePathConfig.toAbsolutePath(originalSourceRelativePath);
+        
         String newOriginalPath = storagePathConfig.getImageFilePath(
                 projectCode, targetBatch.getBatchCode(), sourceImage.getFilename());
         
@@ -313,18 +317,28 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         // 3. 【关键改造】如果有转换文件，也复制转换文件
         String newConvertedPath = null;
         if (sourceImage.getConvertedTiffPath() != null && !sourceImage.getConvertedTiffPath().isEmpty()) {
-            File convertedSourceFile = new File(sourceImage.getConvertedTiffPath());
+            String convertedSourcePath = storagePathConfig.toAbsolutePath(sourceImage.getConvertedTiffPath());
+            
+            File convertedSourceFile = new File(convertedSourcePath);
             if (convertedSourceFile.exists()) {
-                // 方案A：共享转换文件（节省空间）
-                newConvertedPath = sourceImage.getConvertedTiffPath();
-                log.info("共享转换文件（不复制）: {}", newConvertedPath);
+                // 生成新的转换文件路径
+                String newConvertedAbsolutePath = storagePathConfig.getConvertedTiffPath(
+                        sourceImage.getFilename(), projectCode, targetBatch.getBatchCode());
                 
-                // 方案B：复制转换文件（独立，更安全）- 需要新 imageId
-                // String newConvertedPath = storagePathConfig.getConvertedTiffPath(
-                //         newImageId, sourceImage.getFilename());
-                // Files.copy(Paths.get(sourceImage.getConvertedTiffPath()), 
-                //           Paths.get(newConvertedPath), 
-                //           StandardCopyOption.REPLACE_EXISTING);
+                // 确保目录存在
+                File newConvertedDir = new File(newConvertedAbsolutePath).getParentFile();
+                if (!newConvertedDir.exists()) {
+                    newConvertedDir.mkdirs();
+                }
+                
+                // 复制转换文件
+                Files.copy(Paths.get(convertedSourcePath), 
+                          Paths.get(newConvertedAbsolutePath), 
+                          StandardCopyOption.REPLACE_EXISTING);
+                
+                // 存储相对路径
+                newConvertedPath = storagePathConfig.toRelativePath(newConvertedAbsolutePath);
+                log.info("复制转换文件: {} -> {}", convertedSourcePath, newConvertedAbsolutePath);
             }
         }
 
@@ -333,9 +347,13 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         newImage.setBatchId(targetBatch.getBatchId());
         newImage.setFilename(sourceImage.getFilename());
         newImage.setOriginalFilename(sourceImage.getOriginalFilename());
-        newImage.setFilePath(newOriginalPath);  // 兼容旧字段
-        newImage.setOriginalFilePath(newOriginalPath);  // 【新增】
-        newImage.setConvertedTiffPath(newConvertedPath);  // 【新增】
+        
+        // 【改造】存储相对路径
+        String newOriginalRelativePath = storagePathConfig.toRelativePath(newOriginalPath);
+        newImage.setFilePath(newOriginalRelativePath);  // 兼容旧字段
+        newImage.setOriginalFilePath(newOriginalRelativePath);  // 【新增】
+        newImage.setConvertedTiffPath(newConvertedPath);  // 【新增】相对路径
+        
         newImage.setPathologyId(sourceImage.getPathologyId());
         newImage.setPatientId(sourceImage.getPatientId());
         newImage.setFormat(sourceImage.getFormat());
@@ -465,12 +483,14 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
             throw new IOException("文件路径为空");
         }
         
-        File imageFile = new File(filePath);
+        // 【修复】将相对路径转换为绝对路径
+        String absolutePath = storagePathConfig.toAbsolutePath(filePath);
+        File imageFile = new File(absolutePath);
         if (!imageFile.exists()) {
-            throw new IOException("文件不存在: " + filePath);
+            throw new IOException("文件不存在: " + absolutePath);
         }
         
-        log.info("开始解析图像: imageId={}, file={}", image.getImageId(), filePath);
+        log.info("开始解析图像: imageId={}, file={}", image.getImageId(), absolutePath);
         
         // 获取批次和项目信息
         Batch batch = batchService.getById(image.getBatchId());
@@ -482,7 +502,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageMapper, Image> implements
         
         // 1. 如果是 JPG/PNG，先转换为 OpenSlide 兼容的 TIFF
         File processedFile = tiffConverter.ensureOpenSlideCompatible(
-                image.getImageId(), filePath, projectCode, batchCode);
+                image.getImageId(), absolutePath, projectCode, batchCode);
         
         // 2. 使用 OpenSlide 解析元数据
         parseAndSetMetadata(image, processedFile.getAbsolutePath());

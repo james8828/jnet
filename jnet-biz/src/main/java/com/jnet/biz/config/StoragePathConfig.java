@@ -36,12 +36,6 @@ public class StoragePathConfig {
     private String thumbnailPath = "E:/doc/jnet/imageStore/thumbnails";
 
     /**
-     * TIFF 转换文件存储路径（仅用于 JPG/PNG 转换后的 TIFF）
-     * 默认: E:/doc/jnet/imageStore/converted-tiff
-     */
-    private String convertedTiffPath = "E:/doc/jnet/imageStore/converted-tiff";
-
-    /**
      * 瓦片缓存路径（用于阅片加速）
      * 默认: E:/doc/jnet/imageStore/tile-cache
      */
@@ -54,6 +48,71 @@ public class StoragePathConfig {
      */
     public String getThumbnailDir() {
         return thumbnailPath;
+    }
+
+    // ==================== 路径转换工具方法 ====================
+
+    /**
+     * 将绝对路径转换为相对路径（相对于rootPath）
+     *
+     * @param absolutePath 绝对路径
+     * @return 相对路径，如果无法转换则返回原值
+     */
+    public String toRelativePath(String absolutePath) {
+        if (absolutePath == null || absolutePath.isEmpty()) {
+            return absolutePath;
+        }
+        
+        // 统一路径分隔符
+        String normalizedRoot = rootPath.replace("\\", "/");
+        String normalizedPath = absolutePath.replace("\\", "/");
+        
+        if (normalizedPath.startsWith(normalizedRoot)) {
+            String relative = normalizedPath.substring(normalizedRoot.length());
+            // 移除开头的斜杠
+            if (relative.startsWith("/")) {
+                relative = relative.substring(1);
+            }
+            return relative;
+        }
+        
+        // 如果不是rootPath下的路径，返回原值
+        return absolutePath;
+    }
+
+    /**
+     * 将相对路径转换为绝对路径
+     *
+     * @param relativePath 相对路径
+     * @return 绝对路径
+     */
+    public String toAbsolutePath(String relativePath) {
+        if (relativePath == null || relativePath.isEmpty()) {
+            return relativePath;
+        }
+        
+        // 如果已经是绝对路径，直接返回（统一为正斜杠）
+        if (relativePath.startsWith("E:") || relativePath.startsWith("/") || relativePath.startsWith("\\")) {
+            return relativePath.replace("\\", "/");
+        }
+        
+        // 【修复】先将相对路径中的反斜杠统一为正斜杠，再拼接
+        String normalizedRelative = relativePath.replace("\\", "/");
+        
+        // 拼接为绝对路径
+        String path = rootPath + "/" + normalizedRelative;
+        return path.replace("\\", "/");
+    }
+
+    /**
+     * 构建项目批次目录路径（相对路径）
+     *
+     * @param projectCode 项目编码
+     * @param batchCode   批次编码
+     * @return 批次目录相对路径
+     */
+    public String getBatchDirRelative(String projectCode, String batchCode) {
+        return projectCode + "/" + batchCode;
     }
 
     /**
@@ -106,7 +165,19 @@ public class StoragePathConfig {
     }
 
     /**
-     * 构建图像文件完整路径
+     * 构建图像文件完整路径（相对路径）
+     *
+     * @param projectCode 项目编码
+     * @param batchCode   批次编码
+     * @param filename    文件名
+     * @return 图像文件相对路径
+     */
+    public String getImageFilePathRelative(String projectCode, String batchCode, String filename) {
+        return projectCode + "/" + batchCode + "/" + filename;
+    }
+
+    /**
+     * 构建图像文件完整路径（绝对路径）
      *
      * @param projectCode 项目编码
      * @param batchCode   批次编码
@@ -118,15 +189,29 @@ public class StoragePathConfig {
     }
 
     /**
-     * 获取转换后 TIFF 文件的存储路径
+     * 获取转换后 TIFF 文件的存储路径（相对路径）
      * <p>
-     * 路径结构: {rootPath}/{projectCode}/{batchCode}/tiff/{imageId}/{baseName}.tif
-     * 将转换后的TIFF文件存储在对应批次的tiff子目录下
+     * 路径结构: {projectCode}/{batchCode}/tiff/{baseName}.tif
      *
      * @param originalFilename 原始文件名
      * @param projectCode    项目编码
      * @param batchCode      批次编码
-     * @return 转换后 TIFF 文件路径
+     * @return 转换后 TIFF 文件相对路径
+     */
+    public String getConvertedTiffPathRelative(String originalFilename, String projectCode, String batchCode) {
+        String baseName = extractBaseName(originalFilename);
+        return projectCode + "/" + batchCode + "/tiff/" + baseName + ".tif";
+    }
+
+    /**
+     * 获取转换后 TIFF 文件的存储路径（绝对路径）
+     * <p>
+     * 路径结构: {rootPath}/{projectCode}/{batchCode}/tiff/{baseName}.tif
+     *
+     * @param originalFilename 原始文件名
+     * @param projectCode    项目编码
+     * @param batchCode      批次编码
+     * @return 转换后 TIFF 文件绝对路径
      */
     public String getConvertedTiffPath(String originalFilename, String projectCode, String batchCode) {
         // 提取基础文件名（不含扩展名）

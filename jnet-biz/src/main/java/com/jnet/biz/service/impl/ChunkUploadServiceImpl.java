@@ -304,8 +304,12 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
         image.setBatchId(batchId);
         image.setFilename(filename);  // 存储用文件名
         image.setOriginalFilename(filename);  // 原始文件名（用户上传时的名称）
-        image.setFilePath(targetPath);  // 兼容旧字段
-        image.setOriginalFilePath(targetPath);  // 【新增】保存原始文件路径
+        
+        // 【改造】存储相对路径
+        String relativeFilePath = storageConfig.toRelativePath(targetPath);
+        image.setFilePath(relativeFilePath);  // 兼容旧字段（相对路径）
+        image.setOriginalFilePath(relativeFilePath);  // 【新增】保存原始文件相对路径
+        
         image.setPathologyId(pathologyId);
         image.setPatientId(patientId);
         image.setFormat(detectImageFormat(filename));
@@ -346,8 +350,9 @@ public class ChunkUploadServiceImpl implements IChunkUploadService {
                 File convertedFile = openSlideTiffConverter.ensureOpenSlideCompatible(
                         image.getImageId(), targetPath, projectCode, batchCode);
                         
-                // 更新转换后路径和状态
-                image.setConvertedTiffPath(convertedFile.getAbsolutePath());
+                // 【改造】存储转换后TIFF的相对路径
+                String relativeTiffPath = storageConfig.toRelativePath(convertedFile.getAbsolutePath());
+                image.setConvertedTiffPath(relativeTiffPath);
                 image.setConversionStatus(ConversionStatus.COMPLETED.getCode());
                         
                 // 解析转换后文件的元数据
