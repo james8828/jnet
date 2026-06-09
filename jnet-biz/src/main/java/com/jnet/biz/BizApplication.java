@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -36,6 +37,7 @@ import java.net.UnknownHostException;
 @EnableDiscoveryClient
 @MapperScan("com.jnet.biz.mapper")
 @EnableScheduling // 启用定时任务
+@EnableFeignClients(basePackages = {"com.jnet.api.anno.feign", "com.jnet.api.yolo.feign"}) // 启用 Feign 客户端扫描
 public class BizApplication {
 
     public static void main(String[] args) throws UnknownHostException {

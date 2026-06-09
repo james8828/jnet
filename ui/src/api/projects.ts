@@ -20,6 +20,13 @@ export function getProjectPage(query: ProjectQueryDTO) {
 }
 
 /**
+ * 获取所有项目列表（不分页，用于下拉选择）
+ */
+export function getAllProjects() {
+  return request.get<ProjectVO[]>(`${BASE_URL}/list`)
+}
+
+/**
  * 获取项目详情
  */
 export function getProjectById(id: number) {

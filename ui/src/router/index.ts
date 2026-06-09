@@ -48,6 +48,18 @@ const routes: RouteRecordRaw[] = [
         name: 'Dataset',
         component: () => import('@/views/Dataset.vue'),
         meta: { title: '数据管理', icon: 'Folder', keepAlive: true }
+      },
+      {
+        path: 'dataset-builder',
+        name: 'DatasetBuilder',
+        component: () => import('@/views/yolo/DatasetBuilder.vue'),
+        meta: { title: '数据集构建', icon: 'DataAnalysis' }
+      },
+      {
+        path: 'training-manager',
+        name: 'TrainingManager',
+        component: () => import('@/views/yolo/TrainingManager.vue'),
+        meta: { title: '模型训练', icon: 'Cpu' }
       }
     ]
   },

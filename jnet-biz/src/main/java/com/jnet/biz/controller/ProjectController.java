@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 项目管理 Controller
  *
@@ -43,6 +45,17 @@ public class ProjectController {
         voPage.setRecords(BeanConverter.toVOList(page.getRecords(), ProjectVO.class));
         
         return Result.success(voPage);
+    }
+
+    /**
+     * 获取所有项目列表（不分页，用于下拉选择）
+     */
+    @Operation(summary = "获取所有项目列表", description = "获取所有未删除的项目，用于下拉框选择")
+    @GetMapping("/list")
+    public Result<List<ProjectVO>> listAllProjects() {
+        List<Project> projects = projectService.list();
+        List<ProjectVO> voList = BeanConverter.toVOList(projects, ProjectVO.class);
+        return Result.success(voList);
     }
 
     /**

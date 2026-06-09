@@ -119,7 +119,7 @@ public class CocoDatasetParser {
             String annotationsSqlFilePath = "E:\\doc\\jnet\\data-set\\coco\\sql\\coco_train_annotations_import.sql";
             Long slideId = 1L; // 需要根据实际情况设置切片ID
             Long projectId = 3L; // 可选
-            Long batchIdForAnnotations = 3L; // 需要与图片导入时使用的批次ID一致
+            Long batchIdForAnnotations = 4L; // 需要与图片导入时使用的批次ID一致
             
             System.out.println("正在导出标注数据到 SQL 文件...");
             System.out.println("  Slide ID: " + slideId);

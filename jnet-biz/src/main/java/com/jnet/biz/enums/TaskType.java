@@ -14,6 +14,11 @@ import lombok.Getter;
 public enum TaskType {
 
     /**
+     * 数据集构建
+     */
+    DATASET_BUILD("DATASET_BUILD", "数据集构建"),
+
+    /**
      * 模型训练
      */
     TRAINING("TRAINING", "模型训练"),
@@ -26,7 +31,12 @@ public enum TaskType {
     /**
      * 预标注
      */
-    PRE_ANNOTATION("PRE_ANNOTATION", "预标注");
+    PRE_ANNOTATION("PRE_ANNOTATION", "预标注"),
+
+    /**
+     * 模型评估
+     */
+    EVALUATION("EVALUATION", "模型评估");
 
     /**
      * 类型代码
@@ -48,5 +58,17 @@ public enum TaskType {
             }
         }
         throw new IllegalArgumentException("未知的任务类型: " + code);
+    }
+
+    /**
+     * 判断是否为有效的任务类型
+     */
+    public static boolean isValid(String code) {
+        for (TaskType type : values()) {
+            if (type.getCode().equals(code)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

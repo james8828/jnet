@@ -1,0 +1,21 @@
+###
+POST http://localhost:9203/biz/api/v1/dataset-build-tasks/build
+Content-Type: application/json
+
+{
+  "projectId": 0,
+  "taskName": "",
+  "description": "",
+  "algorithmType": "",
+  "batchIds": [],
+  "tagIds": [],
+  "trainRatio": 0,
+  "valRatio": 0,
+  "testRatio": 0,
+  "minImageSize": 0,
+  "maxImageSize": 0,
+  "compress": false,
+  "compressQuality": 0,
+  "outputFormat": "",
+  "extraConfig": ""
+}

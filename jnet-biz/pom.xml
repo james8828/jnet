@@ -13,7 +13,16 @@
     <description>病理AI数据池管理模块 - 项目、批次、资产、标签管理</description>
     
     <dependencies>
-        
+        <dependency>
+            <groupId>com.jnet</groupId>
+            <artifactId>jnet-api-anno</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jnet</groupId>
+            <artifactId>jnet-api-yolo</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- Common 依赖包 -->
         <dependency>
             <groupId>com.jnet</groupId>

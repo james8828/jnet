@@ -8,14 +8,10 @@
     </parent>
     <artifactId>jnet-api</artifactId>
     <name>jnet-api</name>
-    <packaging>jar</packaging>
-    <build>
-        <plugins>
-            <plugin>
-                <!--这个工程没有main方法，所以只需要普通打包即可-->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+    <packaging>pom</packaging>
+    
+    <modules>
+        <module>jnet-api-anno</module>
+        <module>jnet-api-yolo</module>
+    </modules>
 </project>

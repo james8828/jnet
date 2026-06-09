@@ -72,6 +72,25 @@ spring:
           max-wait: 3000ms      # 连接池最大阻塞等待时间（负值表示无限制）
         shutdown-timeout: 100ms # 关闭超时时间
 
+  rabbitmq:
+    host: 192.168.180.131
+    port: 5672
+    username: guest
+    password: admin
+    virtual-host: /
+    publisher-returns: true
+    publisher-confirm-type: correlated
+    listener:
+      simple:
+        default-requeue-rejected: false
+        acknowledge-mode: manual
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2000
+      direct:
+        acknowledge-mode: manual
+
   # Jackson 配置
   jackson:
     time-zone: GMT+8

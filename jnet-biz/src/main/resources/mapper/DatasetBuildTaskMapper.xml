@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jnet.biz.mapper.DatasetBuildTaskMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.jnet.biz.entity.DatasetBuildTask">
+        <id column="task_id" property="taskId"/>
+        <result column="task_no" property="taskNo"/>
+        <result column="project_id" property="projectId"/>
+        <result column="task_name" property="taskName"/>
+        <result column="description" property="description"/>
+        <result column="algorithm_type" property="algorithmType"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="batch_ids" property="batchIds"/>
+        <result column="image_ids" property="imageIds"/>
+        <result column="custom_image_path" property="customImagePath"/>
+        <result column="annotation_source" property="annotationSource"/>
+        <result column="annotation_format" property="annotationFormat"/>
+        <result column="output_format" property="outputFormat"/>
+        <result column="compress_format" property="compressFormat"/>
+        <result column="compress_quality" property="compressQuality"/>
+        <result column="train_ratio" property="trainRatio"/>
+        <result column="val_ratio" property="valRatio"/>
+        <result column="test_ratio" property="testRatio"/>
+        <result column="min_image_size" property="minImageSize"/>
+        <result column="max_image_size" property="maxImageSize"/>
+        <result column="extra_config" property="extraConfig"/>
+        <result column="status" property="status"/>
+        <result column="progress" property="progress"/>
+        <result column="current_step" property="currentStep"/>
+        <result column="step_detail" property="stepDetail"/>
+        <result column="total_images" property="totalImages"/>
+        <result column="total_annotations" property="totalAnnotations"/>
+        <result column="train_count" property="trainCount"/>
+        <result column="val_count" property="valCount"/>
+        <result column="test_count" property="testCount"/>
+        <result column="class_distribution" property="classDistribution"/>
+        <result column="dataset_path" property="datasetPath"/>
+        <result column="dataset_size" property="datasetSize"/>
+        <result column="data_yaml_path" property="dataYamlPath"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="error_stack" property="errorStack"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="duration_seconds" property="durationSeconds"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        task_id, task_no, project_id, task_name, description, algorithm_type, 
+        source_type, batch_ids, image_ids, custom_image_path, annotation_source, 
+        annotation_format, output_format, compress_format, compress_quality, 
+        train_ratio, val_ratio, test_ratio, min_image_size, max_image_size, 
+        extra_config, status, progress, current_step, step_detail, 
+        total_images, total_annotations, train_count, val_count, test_count, 
+        class_distribution, dataset_path, dataset_size, data_yaml_path, 
+        error_message, error_stack, create_by, create_time, start_time, 
+        end_time, duration_seconds, update_by, update_time
+    </sql>
+
+</mapper>

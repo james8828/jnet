@@ -131,4 +131,32 @@ public interface AnnotationRepository extends JpaRepository<Annotation, Long> {
 
     @Transactional(readOnly = true)
     Optional<Long> countByTagId(Long tagId);
+    
+    /**
+     * 根据图像ID集合查询标注（仅查询有效的标注）
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT a FROM Annotation a WHERE a.imageId IN :imageIds AND a.isActive = true")
+    List<Annotation> findByImageIdInAndIsActiveTrue(@Param("imageIds") List<Long> imageIds);
+    
+    /**
+     * 根据项目ID查询标注（仅查询有效的标注）
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT a FROM Annotation a WHERE a.projectId = :projectId AND a.isActive = true")
+    List<Annotation> findByProjectIdAndIsActiveTrue(@Param("projectId") Long projectId);
+    
+    /**
+     * 根据批次ID集合查询标注（仅查询有效的标注）
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT a FROM Annotation a WHERE a.batchId IN :batchIds AND a.isActive = true")
+    List<Annotation> findByBatchIdInAndIsActiveTrue(@Param("batchIds") List<Long> batchIds);
+    
+    /**
+     * 根据标签ID集合查询标注（仅查询有效的标注）
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT a FROM Annotation a WHERE a.tagId IN :tagIds AND a.isActive = true")
+    List<Annotation> findByTagIdInAndIsActiveTrue(@Param("tagIds") List<Long> tagIds);
 }

@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
  * @since 2024-04-16
  */
 @Tag(name = "批次管理", description = "病理图像采集批次相关接口")
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/batches")
 @RequiredArgsConstructor
@@ -83,6 +85,8 @@ public class BatchController {
     @GetMapping("/by-project/{projectId}")
     public Result<List<BatchVO>> listByProject(
             @Parameter(description = "项目ID", required = true, example = "1") @PathVariable("projectId") Long projectId) {
+        log.info("获取项目下的批次列表: projectId={}", projectId);
+        
         List<Batch> batches = batchService.listByProjectId(projectId);
         List<BatchVO> voList = BeanConverter.toVOList(batches, BatchVO.class);
         
@@ -94,6 +98,7 @@ public class BatchController {
             }
         }
         
+        log.info("返回批次数量: {}", voList.size());
         return Result.success(voList);
     }
 

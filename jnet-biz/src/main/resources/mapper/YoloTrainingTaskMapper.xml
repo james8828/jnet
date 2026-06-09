@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jnet.biz.mapper.YoloTrainingTaskMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.jnet.biz.entity.YoloTrainingTask">
+        <id column="task_id" property="taskId"/>
+        <result column="task_no" property="taskNo"/>
+        <result column="project_id" property="projectId"/>
+        <result column="task_name" property="taskName"/>
+        <result column="description" property="description"/>
+        <result column="dataset_task_id" property="datasetTaskId"/>
+        <result column="dataset_path" property="datasetPath"/>
+        <result column="custom_dataset_path" property="customDatasetPath"/>
+        <result column="dataset_config" property="datasetConfig"/>
+        <result column="model_architecture" property="modelArchitecture"/>
+        <result column="pretrained_weights" property="pretrainedWeights"/>
+        <result column="epochs" property="epochs"/>
+        <result column="batch_size" property="batchSize"/>
+        <result column="image_size" property="imageSize"/>
+        <result column="learning_rate" property="learningRate"/>
+        <result column="momentum" property="momentum"/>
+        <result column="weight_decay" property="weightDecay"/>
+        <result column="optimizer" property="optimizer"/>
+        <result column="lr_scheduler" property="lrScheduler"/>
+        <result column="warmup_epochs" property="warmupEpochs"/>
+        <result column="patience" property="patience"/>
+        <result column="additional_params" property="additionalParams"/>
+        <result column="augmentation_config" property="augmentationConfig"/>
+        <result column="hsv_h" property="hsvH"/>
+        <result column="hsv_s" property="hsvS"/>
+        <result column="hsv_v" property="hsvV"/>
+        <result column="degrees" property="degrees"/>
+        <result column="translate" property="translate"/>
+        <result column="scale" property="scale"/>
+        <result column="shear" property="shear"/>
+        <result column="perspective" property="perspective"/>
+        <result column="flip_lr" property="flipLr"/>
+        <result column="flip_ud" property="flipUd"/>
+        <result column="gpu_ids" property="gpuIds"/>
+        <result column="num_workers" property="numWorkers"/>
+        <result column="mixed_precision" property="mixedPrecision"/>
+        <result column="status" property="status"/>
+        <result column="progress" property="progress"/>
+        <result column="current_epoch" property="currentEpoch"/>
+        <result column="current_step" property="currentStep"/>
+        <result column="metrics_json" property="metricsJson"/>
+        <result column="best_metrics" property="bestMetrics"/>
+        <result column="training_logs_path" property="trainingLogsPath"/>
+        <result column="tensorboard_log_path" property="tensorboardLogPath"/>
+        <result column="model_id" property="modelId"/>
+        <result column="model_path" property="modelPath"/>
+        <result column="best_model_path" property="bestModelPath"/>
+        <result column="last_model_path" property="lastModelPath"/>
+        <result column="model_size" property="modelSize"/>
+        <result column="inference_time_ms" property="inferenceTimeMs"/>
+        <result column="evaluation_results" property="evaluationResults"/>
+        <result column="confusion_matrix_path" property="confusionMatrixPath"/>
+        <result column="pr_curve_path" property="prCurvePath"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="error_stack" property="errorStack"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="duration_seconds" property="durationSeconds"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        task_id, task_no, project_id, task_name, description, dataset_task_id, 
+        dataset_path, custom_dataset_path, dataset_config, model_architecture, 
+        pretrained_weights, epochs, batch_size, image_size, learning_rate, 
+        momentum, weight_decay, optimizer, lr_scheduler, warmup_epochs, patience, 
+        additional_params, augmentation_config, hsv_h, hsv_s, hsv_v, degrees, 
+        translate, scale, shear, perspective, flip_lr, flip_ud, gpu_ids, 
+        num_workers, mixed_precision, status, progress, current_epoch, 
+        current_step, metrics_json, best_metrics, training_logs_path, 
+        tensorboard_log_path, model_id, model_path, best_model_path, 
+        last_model_path, model_size, inference_time_ms, evaluation_results, 
+        confusion_matrix_path, pr_curve_path, error_message, error_stack, 
+        create_by, create_time, start_time, end_time, duration_seconds, 
+        update_by, update_time
+    </sql>
+
+</mapper>

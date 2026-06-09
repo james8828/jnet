@@ -42,6 +42,12 @@ public class StoragePathConfig {
     private String tileCachePath = "E:/doc/jnet/imageStore/tile-cache";
 
     /**
+     * YOLO 数据集存储路径
+     * 默认: E:/doc/jnet/imageStore/yolo-datasets
+     */
+    private String yoloDatasetPath = "E:/doc/jnet/imageStore/yolo-datasets";
+
+    /**
      * 获取完整的缩略图目录路径
      *
      * @return 缩略图根目录绝对路径
@@ -234,6 +240,26 @@ public class StoragePathConfig {
     public String getTileCachePath(Long imageId, int zoom, int x, int y) {
         return String.format("%s/%d/%d/%d-%d-%d.jpg", 
                 tileCachePath, imageId, zoom, zoom, x, y);
+    }
+
+    /**
+     * 获取 YOLO 数据集存储目录
+     *
+     * @param taskId 任务ID
+     * @return YOLO 数据集目录绝对路径
+     */
+    public String getYoloDatasetDir(String taskId) {
+        return yoloDatasetPath + "/" + taskId;
+    }
+
+    /**
+     * 获取 YOLO 数据集压缩文件路径
+     *
+     * @param taskId 任务ID
+     * @return YOLO 数据集 zip 文件绝对路径
+     */
+    public String getYoloDatasetZipPath(String taskId) {
+        return yoloDatasetPath + "/" + taskId + ".zip";
     }
 
     /**

@@ -66,11 +66,19 @@ service.interceptors.response.use(
     
     // 开发环境下打印响应信息
     if (import.meta.env.DEV) {
-      console.log('[Response]', response.config.url, res)
+      console.log('[Response] URL:', response.config.url)
+      console.log('[Response] 完整响应:', res)
+      console.log('[Response] res.code:', res?.code)
+      console.log('[Response] res.data:', res?.data)
+      console.log('[Response] res.data 类型:', typeof res?.data)
+      if (res?.data && typeof res.data === 'object') {
+        console.log('[Response] res.data.keys:', Object.keys(res.data))
+      }
     }
     
     // 根据后端返回的code判断请求是否成功
     if (res.code === 10000 || res.code === 200) {
+      console.log('[Response] ✅ 请求成功，返回 res.data')
       return res.data
     } else {
       // 业务错误处理

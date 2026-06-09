@@ -29,6 +29,13 @@ export function getAllTags() {
 }
 
 /**
+ * 根据项目ID获取标签列表
+ */
+export function getTagsByProject(projectId: number) {
+  return request.get<Tag[]>(`${BASE_URL}/project/${projectId}`)
+}
+
+/**
  * 创建标签
  */
 export function createTag(data: Tag) {

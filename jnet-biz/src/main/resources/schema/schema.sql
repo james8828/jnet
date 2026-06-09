@@ -1007,37 +1007,33 @@ $$ LANGUAGE plpgsql;
 
 
 -- ============================================================================
--- YOLO训练数据集构建任务表 (biz_yolo_dataset_task)
+-- 数据集构建任务表 (biz_dataset_build_task) - 通用，支持多种算法
 -- ============================================================================
-CREATE TABLE biz_yolo_dataset_task (
+CREATE TABLE biz_dataset_build_task (
     task_id BIGSERIAL PRIMARY KEY,
     task_no VARCHAR(50) NOT NULL UNIQUE,
     project_id BIGINT NOT NULL,
-    batch_id BIGINT,
+    batch_ids JSONB,                    -- 批次ID列表（JSON数组，可选）
+    tag_ids JSONB,                      -- 标签ID列表（JSON数组，可选）
+    algorithm_type VARCHAR(50) NOT NULL DEFAULT 'YOLO', -- 算法类型（YOLO, RCNN, SSD等）
     task_name VARCHAR(200) NOT NULL,
     description TEXT,
     
-    -- ========== 数据筛选条件 ==========
-    image_ids JSONB,                    -- 指定图像ID列表（为空则使用筛选条件）
-    lifecycle_status_filter VARCHAR(50), -- 生命周期状态筛选
-    annotation_types JSONB,             -- 标注类型筛选 (polygon/rectangle/point)
-    min_annotation_count INT DEFAULT 0, -- 最小标注数量
-    max_annotation_count INT,           -- 最大标注数量
-    tags_filter JSONB,                  -- 标签筛选
-    
     -- ========== 数据集配置 ==========
-    train_ratio FLOAT DEFAULT 0.8,      -- 训练集比例
-    val_ratio FLOAT DEFAULT 0.1,        -- 验证集比例
+    train_ratio FLOAT DEFAULT 0.7,      -- 训练集比例
+    val_ratio FLOAT DEFAULT 0.2,        -- 验证集比例
     test_ratio FLOAT DEFAULT 0.1,       -- 测试集比例
     class_mapping JSONB,                -- 类别映射配置 {old_name: new_name}
     shuffle BOOLEAN DEFAULT TRUE,       -- 是否打乱数据
     
     -- ========== 输出配置 ==========
-    output_format VARCHAR(20) DEFAULT 'yolov8', -- YOLO版本格式 (yolov5/yolov8)
+    output_format VARCHAR(20) DEFAULT 'yolov8', -- 输出格式 (yolov5/yolov8/coco等)
     include_images BOOLEAN DEFAULT TRUE,         -- 是否包含图像文件
-    compress_format VARCHAR(10) DEFAULT 'zip',   -- 压缩格式 (zip/tar.gz)
-    image_resize_width INT,                      -- 图像缩放宽度（可选）
-    image_resize_height INT,                     -- 图像缩放高度（可选）
+    compress_format VARCHAR(10) DEFAULT 'none',  -- 压缩格式 (zip/tar.gz/none)
+    compress_quality INT,                        -- 压缩质量（1-100）
+    min_image_size INT,                          -- 图像最小尺寸过滤
+    max_image_size INT,                          -- 图像最大尺寸过滤
+    extra_config JSONB,                          -- 额外配置（JSON，不同算法可有不同配置）
     
     -- ========== 任务状态 ==========
     status VARCHAR(20) DEFAULT 'PENDING',        -- PENDING/RUNNING/SUCCESS/FAILED/CANCELLED
@@ -1056,15 +1052,9 @@ CREATE TABLE biz_yolo_dataset_task (
     dataset_size BIGINT,                         -- 数据集文件大小（字节）
     data_yaml_path VARCHAR(500),                 -- data.yaml配置文件路径
     
-    -- ========== 训练关联 ==========
-    auto_trigger_training BOOLEAN DEFAULT FALSE, -- 是否自动触发训练
-    training_config JSONB,                       -- 训练配置模板
-    training_task_id BIGINT,                     -- 关联的训练任务ID
-    
     -- ========== 错误信息 ==========
     error_message TEXT,
     error_stack TEXT,
-    failed_images JSONB,                         -- 失败的图像列表 [{imageId, filename, reason}]
     
     -- ========== 审计字段 ==========
     create_by BIGINT,
@@ -1076,33 +1066,31 @@ CREATE TABLE biz_yolo_dataset_task (
     update_time TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE biz_yolo_dataset_task IS 'YOLO训练数据集构建任务表';
-COMMENT ON COLUMN biz_yolo_dataset_task.task_id IS '主键ID';
-COMMENT ON COLUMN biz_yolo_dataset_task.task_no IS '任务编号（唯一）';
-COMMENT ON COLUMN biz_yolo_dataset_task.project_id IS '所属项目ID';
-COMMENT ON COLUMN biz_yolo_dataset_task.batch_id IS '批次ID（可选）';
-COMMENT ON COLUMN biz_yolo_dataset_task.image_ids IS '指定图像ID列表（JSON数组）';
-COMMENT ON COLUMN biz_yolo_dataset_task.lifecycle_status_filter IS '生命周期状态筛选';
-COMMENT ON COLUMN biz_yolo_dataset_task.annotation_types IS '标注类型筛选（JSON数组）';
-COMMENT ON COLUMN biz_yolo_dataset_task.train_ratio IS '训练集比例';
-COMMENT ON COLUMN biz_yolo_dataset_task.val_ratio IS '验证集比例';
-COMMENT ON COLUMN biz_yolo_dataset_task.test_ratio IS '测试集比例';
-COMMENT ON COLUMN biz_yolo_dataset_task.class_mapping IS '类别映射配置（JSON对象）';
-COMMENT ON COLUMN biz_yolo_dataset_task.output_format IS '输出格式（yolov5/yolov8）';
-COMMENT ON COLUMN biz_yolo_dataset_task.status IS '任务状态';
-COMMENT ON COLUMN biz_yolo_dataset_task.progress IS '任务进度（0-100）';
-COMMENT ON COLUMN biz_yolo_dataset_task.current_step IS '当前执行步骤';
-COMMENT ON COLUMN biz_yolo_dataset_task.step_detail IS '步骤详细信息（JSON）';
-COMMENT ON COLUMN biz_yolo_dataset_task.dataset_path IS '生成的数据集文件路径';
-COMMENT ON COLUMN biz_yolo_dataset_task.auto_trigger_training IS '是否自动触发训练';
-COMMENT ON COLUMN biz_yolo_dataset_task.training_task_id IS '关联的训练任务ID';
+COMMENT ON TABLE biz_dataset_build_task IS '数据集构建任务表（通用，支持多种算法）';
+COMMENT ON COLUMN biz_dataset_build_task.task_id IS '主键ID';
+COMMENT ON COLUMN biz_dataset_build_task.task_no IS '任务编号（唯一）';
+COMMENT ON COLUMN biz_dataset_build_task.project_id IS '所属项目ID';
+COMMENT ON COLUMN biz_dataset_build_task.batch_ids IS '批次ID列表（JSON数组）';
+COMMENT ON COLUMN biz_dataset_build_task.tag_ids IS '标签ID列表（JSON数组）';
+COMMENT ON COLUMN biz_dataset_build_task.algorithm_type IS '算法类型：YOLO, RCNN, SSD等';
+COMMENT ON COLUMN biz_dataset_build_task.train_ratio IS '训练集比例';
+COMMENT ON COLUMN biz_dataset_build_task.val_ratio IS '验证集比例';
+COMMENT ON COLUMN biz_dataset_build_task.test_ratio IS '测试集比例';
+COMMENT ON COLUMN biz_dataset_build_task.class_mapping IS '类别映射配置（JSON对象）';
+COMMENT ON COLUMN biz_dataset_build_task.output_format IS '输出格式（yolov5/yolov8/coco等）';
+COMMENT ON COLUMN biz_dataset_build_task.status IS '任务状态';
+COMMENT ON COLUMN biz_dataset_build_task.progress IS '任务进度（0-100）';
+COMMENT ON COLUMN biz_dataset_build_task.current_step IS '当前执行步骤';
+COMMENT ON COLUMN biz_dataset_build_task.step_detail IS '步骤详细信息（JSON）';
+COMMENT ON COLUMN biz_dataset_build_task.dataset_path IS '生成的数据集文件路径';
+COMMENT ON COLUMN biz_dataset_build_task.extra_config IS '额外配置（JSON，不同算法可有不同配置）';
 
 -- 索引优化
-CREATE INDEX idx_yolo_task_project ON biz_yolo_dataset_task(project_id);
-CREATE INDEX idx_yolo_task_status ON biz_yolo_dataset_task(status);
-CREATE INDEX idx_yolo_task_create_time ON biz_yolo_dataset_task(create_time DESC);
-CREATE INDEX idx_yolo_task_no ON biz_yolo_dataset_task(task_no);
-CREATE INDEX idx_yolo_task_batch ON biz_yolo_dataset_task(batch_id);
+CREATE INDEX idx_dataset_build_project ON biz_dataset_build_task(project_id);
+CREATE INDEX idx_dataset_build_status ON biz_dataset_build_task(status);
+CREATE INDEX idx_dataset_build_algorithm ON biz_dataset_build_task(algorithm_type);
+CREATE INDEX idx_dataset_build_create_time ON biz_dataset_build_task(create_time DESC);
+CREATE INDEX idx_dataset_build_task_no ON biz_dataset_build_task(task_no);
 
 -- ============================================================================
 -- YOLO模型训练任务表 (biz_yolo_training_task)

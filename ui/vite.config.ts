@@ -17,10 +17,19 @@ export default defineConfig({
         target: 'http://localhost:9005',
         changeOrigin: true
       },
-      // 代理业务服务 /biz 请求
+
+      // 1. HTTP 接口代理 (保持现状)
       '/biz': {
         target: 'http://localhost:9203',
-        changeOrigin: true
+        changeOrigin: true,
+      },
+
+      // 2. WebSocket 代理 (新增)
+      '/ws': {
+        target: 'ws://localhost:9203', // 注意这里是 ws://
+        changeOrigin: true,
+        ws: true, // 关键：开启 WebSocket 代理支持
+        rewrite: (path) => path.replace(/^\/ws/, '/ws') // 保持路径不变，或者根据后端实际路径调整
       }
     }
   }

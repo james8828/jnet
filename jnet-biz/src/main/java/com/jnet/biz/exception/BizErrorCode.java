@@ -52,6 +52,14 @@ public enum BizErrorCode {
     TASK_CANCEL_FAILED(24005, "任务取消失败"),
     TASK_TIMEOUT(24006, "任务执行超时"),
     
+    // ==================== 算法任务相关错误 (241xx) ====================
+    ALGORITHM_TYPE_UNSUPPORTED(24101, "不支持的算法类型"),
+    ALGORITHM_BUILDER_NOT_FOUND(24102, "未找到算法构建器"),
+    ALGORITHM_TRAINER_NOT_FOUND(24103, "未找到算法训练器"),
+    ALGORITHM_CONFIG_INVALID(24104, "算法配置无效"),
+    ALGORITHM_CONFIG_PARSE_ERROR(24105, "算法配置解析失败"),
+    ALGORITHM_TASK_EXECUTE_ERROR(24106, "算法任务执行失败"),
+    
     // ==================== 模型相关错误 (25xxx) ====================
     MODEL_NOT_FOUND(25001, "模型不存在"),
     MODEL_VERSION_EXISTS(25002, "模型版本已存在"),
