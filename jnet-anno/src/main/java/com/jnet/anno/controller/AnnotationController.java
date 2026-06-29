@@ -88,7 +88,8 @@ public class AnnotationController {
         if (slideId == null) {
             throw new IllegalArgumentException(MessageSourceUtil.getMessage("ARGUMENT_INVALID"));
         }
-        List<Annotation> annotations = spatialAnnotationRepository.findBySlideId(slideId);
+        // 使用带标签关联的查询方法
+        List<Annotation> annotations = spatialAnnotationRepository.findBySlideIdWithTag(slideId);
         List<AnnotationFeature> resp = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : AnnotationMessageGenerator.generateFeatures(annotations);
         return Result.success(resp);
     }

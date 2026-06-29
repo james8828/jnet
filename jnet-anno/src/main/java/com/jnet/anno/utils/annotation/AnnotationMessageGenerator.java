@@ -8,18 +8,14 @@ import com.jnet.anno.domain.User;
 import com.jnet.anno.netty.message.AnnotationFeature;
 import com.jnet.anno.netty.message.AnnotationMessage;
 import com.jnet.anno.netty.message.AnnotationProperties;
-import com.jnet.anno.vo.StructureTagPageVo;
 import org.apache.commons.collections4.CollectionUtils;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author mugw
  * @version 1.0
- * @description
- * @date 2025/5/22 13:53:05
+ * @since  2025/5/22 13:53:05
  */
 public class AnnotationMessageGenerator {
 
@@ -45,10 +41,9 @@ public class AnnotationMessageGenerator {
 
 
     public static List<AnnotationFeature> generateFeatures(List<Annotation> annotations){
-        Map<Long, StructureTagPageVo> tagMap = getTagMap(annotations);
         Map<Long, User> userMap = getUserMap();
         List<AnnotationFeature> features = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : annotations.stream().map(annotation -> {
-            AnnotationFeature feature = generateFeatures(annotation, generateProperties(annotation, tagMap, userMap));
+            AnnotationFeature feature = generateFeatures(annotation, generateProperties(annotation, userMap));
             return feature;
         }).collect(Collectors.toList());
         return features;
@@ -66,18 +61,16 @@ public class AnnotationMessageGenerator {
         return generateProperties(Collections.singletonList(annotation)).getFirst();
     }
 
-    public static AnnotationProperties generateProperties(Annotation annotation,Map<Long,StructureTagPageVo> tagMap,Map<Long, User> userMap) {
-        return generateProperties(Collections.singletonList(annotation),tagMap,userMap).getFirst();
+    public static AnnotationProperties generateProperties(Annotation annotation,Map<Long, User> userMap) {
+        return generateProperties(Collections.singletonList(annotation),userMap).getFirst();
     }
 
     public static List<AnnotationProperties> generateProperties(List<Annotation> annotations) {
-
-        Map<Long,StructureTagPageVo> tagMap = getTagMap(annotations);
         Map<Long, User> userMap = getUserMap();
-        return generateProperties(annotations,tagMap,userMap);
+        return generateProperties(annotations,userMap);
     }
 
-    public static List<AnnotationProperties> generateProperties(List<Annotation> annotations,Map<Long,StructureTagPageVo> tagMap,Map<Long, User> userMap) {
+    public static List<AnnotationProperties> generateProperties(List<Annotation> annotations,Map<Long, User> userMap) {
 
         List<AnnotationProperties> result = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : annotations.stream().map(annotation -> {
             AnnotationProperties properties = new AnnotationProperties();
@@ -93,8 +86,8 @@ public class AnnotationMessageGenerator {
             properties.setCreatedAt(DateUtil.format(annotation.getCreateTime(), DatePattern.NORM_DATETIME_PATTERN));
             properties.setUpdatedAt(DateUtil.format(annotation.getUpdateTime(), DatePattern.NORM_DATETIME_PATTERN));
             
-            // 设置标签信息
-            setTagInfo(properties, tagMap.get(annotation.getTagId()));
+            // 设置标签信息（优先从关联实体获取）
+            properties.setTagName(annotation.getTag().getName());
             // 设置用户信息
             setUserInfo(properties, annotation.getCreateBy(), userMap, true);
             setUserInfo(properties, annotation.getUpdateBy(), userMap, false);
@@ -102,25 +95,6 @@ public class AnnotationMessageGenerator {
             return properties;
         }).collect(Collectors.toList());
         return result;
-    }
-
-    public static String formatBigDecimal(BigDecimal value) {
-        if (value == null) {
-            return "0.000";
-        }
-        DecimalFormat df = new DecimalFormat("#,##0.000");
-        return df.format(value);
-    }
-
-    /**
-     * 设置标签信息
-     * @param properties
-     * @param tag
-     */
-    private static void setTagInfo(AnnotationProperties properties, StructureTagPageVo tag) {
-        if (tag != null) {
-            properties.setTagName(tag.getStructureTagName());
-        }
     }
 
     /**
@@ -139,38 +113,6 @@ public class AnnotationMessageGenerator {
         if (isCreator) {
             properties.setCreatedBy(user.getUserName());
         }
-    }
-
-    /**
-     * 根据 Annotation 列表生成标签字典
-     * @param annotations
-     * @return
-     */
-    private static  Map<Long,StructureTagPageVo> getTagMap(List<Annotation> annotations){
-        Map<Long,StructureTagPageVo> tagMap = new HashMap<>();
-        try {
-            List<Long> tagIds = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : annotations.stream()
-                    .map(Annotation::getTagId)
-                    .collect(Collectors.toList());
-            /*StructureTagPageQuery query = new StructureTagPageQuery();
-            query.setStructureTagIds(tagIds);
-            RemoteBizService remoteBizService = SpringUtil.getBean(RemoteBizService.class);
-            R<List<StructureTagPageVo>> tagResp = remoteBizService.queryTag(query);
-            if (tagResp.getCode() == 200){
-                List<StructureTagPageVo> tags = tagResp == null ? null : tagResp.getData();
-                tagMap = tags == null ? new HashMap<>() : tags.stream()
-                        .collect(Collectors.toMap(
-                                StructureTagPageVo::getStructureTagId,
-                                tag -> tag,
-                                (existing, replacement) -> existing // 遇到重复 key 保留第一个
-                        ));
-            }else {
-                throw new RuntimeException(tagResp.getMsg());
-            }*/
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return tagMap;
     }
 
     /**

@@ -118,6 +118,14 @@ public interface AnnotationRepository extends JpaRepository<Annotation, Long> {
     List<Annotation> findBySlideId(@Param("slideId") Long slideId);
 
     /**
+     * 批量查询某个切片的所有标注（带标签关联）
+     * 使用 FETCH JOIN 确保 Tag 实体被加载
+     */
+    @Transactional(readOnly = true)
+    @Query("SELECT a FROM Annotation a LEFT JOIN FETCH a.tag WHERE a.slideId = :slideId AND a.isActive = true")
+    List<Annotation> findBySlideIdWithTag(@Param("slideId") Long slideId);
+
+    /**
      * 根据 annotationId 查询单个标注
      */
     @Transactional(readOnly = true)

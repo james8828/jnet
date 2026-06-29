@@ -82,6 +82,13 @@ public class Annotation implements Serializable {
     private Long tagId;
 
     /**
+     * 关联标签实体（级联查询）
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tag_id", insertable = false, updatable = false)
+    private Tag tag;
+
+    /**
      * 父标注ID（支持层级标注，如：脏器->组织）
      */
     @Column(name = "parent_annotation_id")
