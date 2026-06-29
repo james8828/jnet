@@ -81,20 +81,24 @@ public class AnnotationMessageGenerator {
 
         List<AnnotationProperties> result = CollectionUtils.isEmpty(annotations) ? new ArrayList<>() : annotations.stream().map(annotation -> {
             AnnotationProperties properties = new AnnotationProperties();
-            properties.setA0(String.valueOf(annotation.getAnnotationId()));
-            properties.setA1(annotation.getCreationSource());
-            properties.setA2(annotation.getGeomType());
-            properties.setA3(annotation.getTagId());
-            properties.setA6(formatBigDecimal(annotation.getPerimeter()));
-            properties.setA7(formatBigDecimal(annotation.getArea()));
-            properties.setA8(annotation.getDescription());
-            properties.setA11(annotation.getCreateBy());
-            properties.setA12(DateUtil.format(annotation.getCreateTime(), DatePattern.NORM_DATETIME_PATTERN));
-            properties.setA13(annotation.getUpdateBy());
-            properties.setTagId(String.valueOf(annotation.getTagId()));
+            // 设置标准属性字段
+            properties.setAnnotationId(annotation.getAnnotationId());
+            properties.setSlideId(annotation.getSlideId());
+            properties.setImageId(annotation.getImageId());
+            properties.setTagId(annotation.getTagId());
+            properties.setGeomType(annotation.getGeomType());
+            properties.setDescription(annotation.getDescription());
+            properties.setArea(annotation.getArea() != null ? annotation.getArea().doubleValue() : null);
+            properties.setPerimeter(annotation.getPerimeter() != null ? annotation.getPerimeter().doubleValue() : null);
+            properties.setCreatedAt(DateUtil.format(annotation.getCreateTime(), DatePattern.NORM_DATETIME_PATTERN));
+            properties.setUpdatedAt(DateUtil.format(annotation.getUpdateTime(), DatePattern.NORM_DATETIME_PATTERN));
+            
+            // 设置标签信息
             setTagInfo(properties, tagMap.get(annotation.getTagId()));
+            // 设置用户信息
             setUserInfo(properties, annotation.getCreateBy(), userMap, true);
             setUserInfo(properties, annotation.getUpdateBy(), userMap, false);
+            
             return properties;
         }).collect(Collectors.toList());
         return result;
@@ -109,14 +113,13 @@ public class AnnotationMessageGenerator {
     }
 
     /**
-     * 设置分类信息
+     * 设置标签信息
      * @param properties
      * @param tag
      */
     private static void setTagInfo(AnnotationProperties properties, StructureTagPageVo tag) {
         if (tag != null) {
-            properties.setA4(tag.getRgb());
-            properties.setA5(tag.getStructureTagName());
+            properties.setTagName(tag.getStructureTagName());
         }
     }
 
@@ -134,9 +137,7 @@ public class AnnotationMessageGenerator {
             return;
         }
         if (isCreator) {
-            properties.setA9(user.getUserName());
-        } else {
-            properties.setA10(user.getUserName());
+            properties.setCreatedBy(user.getUserName());
         }
     }
 
@@ -192,4 +193,3 @@ public class AnnotationMessageGenerator {
         return userMap;
     }
 }
-

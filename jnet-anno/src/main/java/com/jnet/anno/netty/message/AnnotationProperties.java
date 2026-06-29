@@ -1,76 +1,80 @@
 package com.jnet.anno.netty.message;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
+ * 标注属性类 - 符合标准 GeoJSON Feature 的 properties 结构
+ * 
  * @author mugw
- * @version 1.0
- * @description
- * @date 2025/5/22 13:55:08
+ * @version 3.0
+ * @since 2025/5/22 13:55:08
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AnnotationProperties {
-    private String A0;
 
-    private String A1;
+    /**
+     * 标注ID（主键）
+     */
+    private Long annotationId;
 
-    private String A2;
+    /**
+     * 切片ID
+     */
+    private Long slideId;
 
-    private Long A3;
+    /**
+     * 图像ID
+     */
+    private Long imageId;
 
-    private String A4;
+    /**
+     * 标签ID
+     */
+    private Long tagId;
 
-    private String A5;
+    /**
+     * 标签名称
+     */
+    private String tagName;
 
-    private String A6;
+    /**
+     * 几何类型：Point / LineString / Polygon / MultiPolygon
+     */
+    private String geomType;
 
-    private String A7;
+    /**
+     * 创建时间
+     */
+    private String createdAt;
 
-    private String A8;
+    /**
+     * 更新时间
+     */
+    private String updatedAt;
 
-    private String A9;
+    /**
+     * 创建者
+     */
+    private String createdBy;
 
-    private String A10;
+    /**
+     * 描述信息
+     */
+    private String description;
 
-    private Long A11;
+    /**
+     * 标注面积（计算字段）
+     */
+    private Double area;
 
-    private String A12;
-
-    private Long A13;
-
-    private String A14;
-
-    private String A15;
-
-    private String A16;
-
-    private String A17;
-
-    private Double A18;
-
-    private Double A19;
-
-    private Double A20;
-
-    private String A21;
-
-    private Integer A22;
-
-    private String A23;
-
-    private Integer A24;
-
-    private String A25;
-
-    private String A26;
-
-    private Integer A27;
-
-    private Long A28;
-
-    private String A29;
-
-    private Object A30;
-
-    private String tagId;
+    /**
+     * 标注周长（计算字段）
+     */
+    private Double perimeter;
 }

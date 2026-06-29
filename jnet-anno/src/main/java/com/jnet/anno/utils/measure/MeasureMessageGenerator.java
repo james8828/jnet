@@ -60,24 +60,6 @@ public class MeasureMessageGenerator {
         R<List<User>> r = remoteUserService.query(new User());
         List<User> users = r == null ? null : r.getData();*/
         AnnotationProperties properties = new AnnotationProperties();
-        properties.setA0(String.valueOf(measure.getMeasureId()));
-        properties.setA7(measure.getArea());
-        properties.setA6(measure.getPerimeter());
-        properties.setA2(measure.getAnnotationType());
-        properties.setA1(measure.getLocationType());
-        properties.setA12(DateUtil.format(measure.getCreateTime(), DatePattern.NORM_DATETIME_PATTERN));
-        properties.setA21(measure.getMeasureName());
-        properties.setA24(measure.getMeasureType());
-        properties.setA23(measure.getMeasureRelation());
-        properties.setA22(measure.getMeasureNumber());
-        properties.setA19(measure.getMeanDistance());
-        properties.setA20(measure.getMinDistance());
-        properties.setA18(measure.getMaxDistance());
-        properties.setA16(measure.getInnerAngle());
-        properties.setA15(measure.getExteriorAngle());
-        properties.setA14(measure.getCenterPoint());
-        properties.setA17(measure.getRadius());
-        properties.setA25(measure.getMeasureFullName());
         /*Map<Long, User> userMap = users == null ? new HashMap<>() : users.stream()
                 .filter(user -> user.getUserId() != null)
                 .collect(Collectors.toMap(
@@ -113,11 +95,11 @@ public class MeasureMessageGenerator {
         if (user == null) {
             return;
         }
-        if (isCreator) {
+        /*if (isCreator) {
             properties.setA9(user.getUserName());
         } else {
             properties.setA10(user.getUserName());
-        }
+        }*/
     }
 }
 
