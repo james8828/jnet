@@ -196,7 +196,14 @@ export const useAnnotationInteractions = (
           slideId: properties.slideId,
           imageId: properties.imageId,
           tagId: properties.tagId,
+          tagName: properties.tagName,
           geomType: properties.geomType,
+          area: properties.area,
+          perimeter: properties.perimeter,
+          createdAt: properties.createdAt,
+          updatedAt: properties.updatedAt,
+          createdBy: properties.createdBy,
+          description: properties.description,
           properties: properties
         }
         toolbarRef.value?.setSelectedAnnotation(annotation)
