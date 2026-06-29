@@ -1,7 +1,7 @@
 /**
  * 标签管理API接口
  */
-import request from '@/utils/request'
+import request,{ApiResponse} from '@/utils/request'
 import { createApiPath, SERVICES } from '@/config/services'
 import type { Tag, BatchAssignTagsDTO } from '@/types/tag'
 
@@ -25,7 +25,7 @@ export function getTagTree(category?: string) {
  * 获取所有标签列表
  */
 export function getAllTags() {
-  return request.get<Tag[]>(BASE_URL)
+  return request.get<ApiResponse<Tag[]>>(BASE_URL)
 }
 
 /**

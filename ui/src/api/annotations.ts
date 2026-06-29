@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request,{ApiResponse} from '@/utils/request'
 import { createApiPath, SERVICES } from '@/config/services'
 import type { AnnotationDTO, AnnotationFeature } from '@/types/annotation'
 
@@ -37,7 +37,7 @@ export function updateAnnotation(data: AnnotationDTO) {
  * 查询切片的所有标注
  */
 export function getAnnotations(slideId: number) {
-  return request.post<AnnotationFeature[]>(createApiPath(SERVICES.ANNO, '/api/v1/annotation/selectLists'), { slideId })
+  return request.post<ApiResponse<AnnotationFeature[]>>(createApiPath(SERVICES.ANNO, '/api/v1/annotation/selectLists'), { slideId })
 }
 
 /**

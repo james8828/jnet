@@ -38,6 +38,14 @@
 
     <!-- 地图容器 -->
     <div ref="mapContainer" class="map-container"></div>
+    
+    <!-- 标注属性展示窗口 -->
+    <AnnotationPropertyPanel
+      :visible="showPropertyPanel"
+      :annotation="selectedAnnotation"
+      @close="showPropertyPanel = false"
+      @edit="handleEditAnnotation"
+    />
   </div>
 </template>
 
@@ -46,6 +54,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import AnnotationToolbar from '@/components/AnnotationToolbar.vue'
+import AnnotationPropertyPanel from '@/components/AnnotationPropertyPanel.vue'
 import { useMapCore } from '@/composables/useMapCore'
 import { useAnnotationInteractions } from '@/composables/useAnnotationInteractions'
 import GeoJSON from 'ol/format/GeoJSON'
@@ -80,6 +89,10 @@ const imageId = ref<number>()
 const tags = ref<Tag[]>([])
 const mouseCoordinates = ref<{ x: number; y: number } | null>(null)
 
+// 属性面板相关
+const showPropertyPanel = ref(false)
+const selectedAnnotation = ref<any>(null)
+
 // 加载标签列表
 const loadTags = async () => {
   try {
@@ -111,9 +124,24 @@ const goBack = () => router.back()
 // 倍率变化处理
 const handleMagnificationChange = (zoom: number) => setMagnification(zoom)
 
-// 标注选择处理（简化）
+// 标注选择处理
 const handleAnnotationSelect = (annotation: any) => {
-  // 调用交互层的选择逻辑
+  if (annotation) {
+    selectedAnnotation.value = annotation
+    showPropertyPanel.value = true
+    console.log('[Viewer] 选中标注，显示属性面板:', annotation.annotationId)
+  } else {
+    selectedAnnotation.value = null
+    showPropertyPanel.value = false
+    console.log('[Viewer] 取消选中标注')
+  }
+}
+
+// 编辑标注处理
+const handleEditAnnotation = (annotation: any) => {
+  console.log('[Viewer] 编辑标注:', annotation.annotationId)
+  // 切换到编辑模式
+  handleToolChange('edit')
 }
 
 // 标注加载处理
