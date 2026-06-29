@@ -45,16 +45,29 @@ export const useAnnotationInteractions = (
   // --- 清理逻辑 ---
   const clearInteractions = () => {
     if (!map.value) return
-    const interactions = [drawInteraction, modifyInteraction, translateInteraction, snapInteraction]
+    
+    // 调试：检查当前地图上的所有交互
+    const mapInteractions = map.value.getInteractions()
+    const drawCount = mapInteractions.getArray().filter(i => i instanceof Draw).length
+    console.log('[Interaction] clearInteractions - 清理前地图上的 Draw 交互数量:', drawCount)
+    
+    // 将 selectInteraction 加入清理列表
+    const interactions = [drawInteraction, selectInteraction, modifyInteraction, translateInteraction, snapInteraction]
     interactions.forEach(interaction => {
       if (interaction) {
         map.value!.removeInteraction(interaction)
+        console.log('[Interaction] 已移除交互:', interaction.constructor.name)
       }
     })
     drawInteraction = null
+    selectInteraction = null  // 重置 selectInteraction
     modifyInteraction = null
     translateInteraction = null
     snapInteraction = null
+    
+    // 调试：检查清理后的交互数量
+    const afterDrawCount = map.value.getInteractions().getArray().filter(i => i instanceof Draw).length
+    console.log('[Interaction] clearInteractions - 清理后地图上的 Draw 交互数量:', afterDrawCount)
   }
 
   // --- 绘制交互 ---
@@ -131,17 +144,34 @@ export const useAnnotationInteractions = (
     })
 
     map.value.addInteraction(drawInteraction)
+    console.log('[Interaction] Draw 交互已添加到地图')
     snapInteraction = new Snap({ source: vectorSource.value })
     map.value.addInteraction(snapInteraction)
+    
+    // 调试：检查添加后的 Draw 交互数量
+    const drawCount = map.value.getInteractions().getArray().filter(i => i instanceof Draw).length
+    console.log('[Interaction] setupDraw - 地图上的 Draw 交互总数:', drawCount)
   }
 
   // --- 选择与编辑交互 ---
   const setupSelect = () => {
     if (!map.value || !vectorSource.value) return
     
-    // 注意：这里只清理 Draw 和 Snap，保留 Select/Modify/Translate 以便后续控制
-    if (drawInteraction) { map.value.removeInteraction(drawInteraction); drawInteraction = null }
-    if (snapInteraction) { map.value.removeInteraction(snapInteraction); snapInteraction = null }
+    // 强制移除地图上所有的 Draw 交互（防止多个 Draw 交互存在）
+    const mapInteractions = map.value.getInteractions().getArray()
+    mapInteractions.forEach(interaction => {
+      if (interaction instanceof Draw) {
+        map.value!.removeInteraction(interaction)
+        console.log('[Interaction] 强制移除地图上的 Draw 交互')
+      }
+    })
+    drawInteraction = null
+    
+    // 移除 Snap 交互
+    if (snapInteraction) { 
+      map.value.removeInteraction(snapInteraction)
+      snapInteraction = null 
+    }
 
     // 如果已经存在 Select 交互，先移除再重建（确保样式和配置最新）
     if (selectInteraction) map.value.removeInteraction(selectInteraction)
@@ -153,6 +183,26 @@ export const useAnnotationInteractions = (
       hitTolerance: 10,
       layers: vectorLayer.value ? [vectorLayer.value] : undefined,
       style: createHighlightStyle
+    })
+
+    selectInteraction.on('select', (event) => {
+      const selectedFeatures = event.target.getFeatures()
+      const selectedFeature = selectedFeatures.getArray()[0]
+
+      if (selectedFeature) {
+        const properties = selectedFeature.getProperties()
+        const annotation = {
+          annotationId: properties.annotationId,
+          slideId: properties.slideId,
+          imageId: properties.imageId,
+          tagId: properties.tagId,
+          geomType: properties.geomType,
+          properties: properties
+        }
+        toolbarRef.value?.setSelectedAnnotation(annotation)
+      } else {
+        toolbarRef.value?.setSelectedAnnotation(null)
+      }
     })
 
     map.value.addInteraction(selectInteraction)
@@ -220,7 +270,26 @@ export const useAnnotationInteractions = (
     }
 
     if (tool === 'select') {
+      // 调试：检查切换前的状态
+      console.log('[Interaction] 切换到 select 模式 - drawInteraction:', drawInteraction)
+      if (map.value) {
+        const drawCount = map.value.getInteractions().getArray().filter(i => i instanceof Draw).length
+        console.log('[Interaction] 切换到 select 模式 - 地图上的 Draw 交互数量:', drawCount)
+      }
+      
+      // 无论 selectInteraction 是否存在，都强制调用 setupSelect()
+      // 确保绘制交互被正确移除，选择交互被正确设置
       setupSelect()
+      
+      // 调试：检查切换后的状态
+      setTimeout(() => {
+        if (map.value) {
+          const drawCount = map.value.getInteractions().getArray().filter(i => i instanceof Draw).length
+          console.log('[Interaction] 切换到 select 模式后 - 地图上的 Draw 交互数量:', drawCount)
+        }
+        console.log('[Interaction] 切换到 select 模式后 - drawInteraction:', drawInteraction)
+      }, 50)
+
       // 强制进入只读模式：禁用修改和平移
       setTimeout(() => {
         if (modifyInteraction) {
