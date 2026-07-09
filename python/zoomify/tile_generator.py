@@ -106,7 +106,7 @@ def generate_zoomify_tiles(slide, output_dir, tile_size=TILE_SIZE, parallel=True
                                 try:
                                     future.result()
                                     tile_count += 1
-                                    if tile_count % 100 == 0:
+                                    if tile_count % 10000 == 0:
                                         print(f"Processed {tile_count} tiles at {time.strftime('%Y-%m-%d %H:%M:%S')}")
                                 except Exception as e:
                                     print(f"Error processing tile: {e}")
@@ -155,6 +155,7 @@ def generate_zoomify_tiles(slide, output_dir, tile_size=TILE_SIZE, parallel=True
     print(f"\n{'='*50}")
     print(f"Total tiles processed: {tile_count}")
     print(f"Time taken: {elapsed_time:.2f} seconds")
+    print(f"Throughput: {tile_count / elapsed_time:.1f} tiles/s")
     print(f"Output directory: {output_dir}")
     print(f"{'='*50}")
     
@@ -187,8 +188,8 @@ def main():
     else:
         # 默认测试路径（仅用于开发调试）
         print("警告: 未提供命令行参数，使用默认测试路径")
-        wsi_path = 'E:\\需求\\机构版\\bug\\D26-0224-RD 260224001-31 1F.svs'
-        output_dir = 'E:\\需求\\机构版\\bug\\D26-0224-RD 260224001-31 1F'
+        wsi_path = 'image.svs'
+        output_dir = 'openslide/tile'
         tile_size = TILE_SIZE
     
     # 检查文件是否存在
