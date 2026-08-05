@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: jnet-nova
+  main:
+    web-application-type: servlet
+
+# DML Protocol Server Configuration
+dml:
+  server:
+    port: 57380
+    boss-threads: 1
+    worker-threads: 0
+    read-idle-seconds: 60
+    write-idle-seconds: 60
+    kpa-interval-seconds: 60
+    max-kpa-timeouts: 4
+    max-message-size: 32768
+
+# Database Configuration (defaults to H2 for development)
+spring.datasource:
+  url: jdbc:h2:mem:jnetnova;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+  driver-class-name: org.h2.Driver
+  username: sa
+  password: password
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+      continue-on-error: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        hbm2ddl:
+          auto: none
+
+bioconnect:
+  # Inbound MLLP server: receives ADT from HIS and Results (ORU/OUL) from device
+  inbound:
+    enabled: true
+    port: 2575
+    worker-threads: 4
+  # Outbound MLLP client: forwards ADT to device/instrument (e.g. NOVANET)
+  device:
+    enabled: true
+    host: 127.0.0.1
+    port: 2580
+    reconnect-delay-ms: 5000
+  # Outbound MLLP client: forwards Results (ORU^R01 / OUL^R21) to LIS/HIS
+  lis:
+    enabled: true
+    host: 127.0.0.1
+    port: 2590
+    reconnect-delay-ms: 5000
+  # Default MSH identities used when Bio-Connect originates a message
+  sending-application: BIO-CONNECT
+  sending-facility: NOVA
+  processing-id: P        # P = Production, D = Debug
+  version: "2.4"
+  charset: UTF-8
+
+logging:
+  level:
+    com.nova.bioconnect: INFO
+    io.netty: INFO

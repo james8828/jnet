@@ -1,0 +1,4826 @@
+
+========== PAGE 1 ==========
+ 
+SW 
+ 
+REMOTE TEST MANAGER 
+DML INTERFACE 
+ 
+ 
+Authors: 
+Name Position Signature Date 
+Bill Breda Software Manager   
+ 
+Approvals: 
+Name Position Signature Date 
+Jim Sidwell, Ph.D. VP of Diabetes Research 
+and Development 
+  
+Paul MacDonald Chief Corporate Quality 
+Assurance Officer 
+  
+Bill Breda Software Manager   
+ 
+ 
+ 
+
+========== PAGE 2 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 2 of 117 
+Change History 
+ 
+1.0 01/08/2005 REM Initial Revision 
+1.1 03/01/2005 REM Clean up 
+1.2 03/07/2005 QWU Add Appendix A 
+1.3 04/01/2005 REM Add Location list and firmware upgrade stuff 
+1.4 05/05/2005 REM Add Incremental list stuff and revise STATSTRIP and 
+add STATRIP categories 
+1.5 05/10/2005 REM Revise per review 
+1.6 05/25/2005 REM Add End of Topic 
+1.7  REM  
+1.8 09/14/2005 REM Revise Longitude setup messages 
+1.9 09/30/2005 REM Further revise Longitude setup messages 
+2.0 10/05/2005 REM Add Longitude type comments to Observation messages 
+2.1 10/31/2005 REM Add POCT1-b changes and eliminate new elements in 
+favor of additions to element text. 
+2.2 11/07/2005 REM Add REAG.type and Location unit DF attribute. 
+2.3 01/31/2006 REM Add Third Party interfaces 
+2.4 03/29/2006 REM Revise REAG 
+2.5 04/052006 KN Add how a Supervisor ID is transmitted from Device to 
+Observation Reviewer in the Operator Object. 
+Add how the ID Flags of a Sample are transmitted from 
+Device to Observation Reviewer in the Observation 
+Message. 
+2.6 04/05/2006 KN Check out to add entry in revision history. 
+2.7 04/05/2006 KN Add how a Physician ID of the ordering Physician is 
+transmitted in the ORDER Object 
+Add how the Reagent type is transmitted in the 
+REAGENT Object. 
+2.8 04/25/2006 REM Use term ‘third party’.  Use LOINC in test list.  Expand 
+TOD directive. 
+2.9 04/27/2006 KN Add “NEW_ID” to the Sample ID Flags. Send 
+“UNKNOWN” for patient ID when a Sample has 
+Accession number. 
+2.10 05/19/2006 KN Add how a device sends Main actions and Errors as 
+Device Events. 
+2.11 7/7/2006 KN  Remove all references firmware update datetime 
+2.12 7/21/2006 KN Use a Note object to send the type of the sample id in 
+the Observation message. 
+2.13 8/7/2006 KN Use a Note object to send the diagnosis code of a 
+sample. Use a Note object to send the TGC flag of a 
+sample. 
+2.14 8/15/2006 KN Add the Test Comment types to the <COMMENTS> 
+section of the Nova Setup message. 
+2.15 9/8/2006 BB Corrected Footer. 
+2.16 10/27/2006 KN Make corrections to the example of the TEST_CONFIG 
+section in the Nova StatStrip Setup message. 
+2.17 11/01/2006 KN Check in the initial revision (not reviewed) on how 
+StatStrip devices send Creatinine, GFR and Manual tests 
+to observation reviewer 
+2.18 11/21/2006 KN Document on how the device transmits GFR and manual 
+test results to observation reviewer. Document on how 
+the observation reviewerwill send the test configurations 
+========== PAGE 3 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 3 of 117 
+in the Nova Setup message. 
+2.19 11/28/2006 KN Add the following items: 
+• In the <TEST> element of the Nova Setup 
+message, add the ED attribute to enable/disable 
+the de-selection of a test parameter in the 
+device. 
+• In the <SINGLE_MANUAL_TEST> and the 
+<COMPOUND_MANUAL_TEST>, add the 
+LOT_NUM_REQ and QC_RES_REQ 
+attributes to require the entry of a lot number 
+and the entry of a QC result for a manual test 
+result. 
+2.20 11/29/2006 KN Change the name of the GFR equations. 
+2.21 12/4/2006 KN Add the Patient R ace attribute “RACE” to the RANGE 
+element in the TEST_CONFIG element of the Nova 
+Setup message. 
+2.22 12/20/2006 KN Fix the format of the GFR data in the text element of the 
+Note object. 
+2.23 3/14/2007 KN Add the documentation of the “condition_cd” and 
+“status_dttm” attributes in the Device Status message. 
+2.24 3/26/2007 KN Document the content of the “OBS.observation_id” 
+attribute. 
+2.25 3/30/2007 KN Update the transmission of the “observation_id” 
+attribute of the “OBS” object in the Patient Observation 
+message and the Non-patient observation message. 
+2.26 04/04/2007 KN Update the transmission of the lot number in the 
+“CTC.name” attribute. 
+2.27 04/20/07 REM CODE_SYSTEM => CODE_SYS 
+2.28 04/24/2007 KN Update the transmission of GFR associated data in the 
+Patient observation message. 
+Re-write the documentation of the <KEY_VALUE> 
+section. 
+Re-write the documentation of the <DIAGCODES> 
+section. 
+Re-write the documentation of the <COMMENTS> 
+section. 
+Define an empty reagent list topic and an empty reagent 
+list message. 
+2.29 04/27/2007 KN • Rewrite the documentation of Patient-related 
+Observation Message 
+• Rewrite the documentation of Non-patient 
+related Observation Message. 
+2.30 04/30/2007 KN • Rewrite the Nova Reagent List Message. 
+• Update the KeyValues section, the Comments 
+section, and the Diagnosis Codes section of the 
+Nova Setup Topic. 
+• Update the Device Event Message. 
+2.31 5/7/2007 KN Update to get the document ready for a formal review. 
+2.32 5/17/2007 KN Update after the formal review. 
+2.33 6/13/2007 KN Add a section to describe how proficiency results are 
+transmitted. Add the interface to send QC configuration 
+to device. 
+2.34 6/20/2007 KN Transmit the Proficiency results as Non-patient 
+observation message. 
+========== PAGE 4 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 4 of 117 
+2.35 6/22/2007 KN Modified after a formal review on the Transmission of 
+Proficiency results and QC Configuration. 
+2.36 6/27/2007 KN Added the “ result_valid_time” xml element to the 
+QC_CONFIG xml element. 
+2.37 7/17/2007 KN Added section 4 to specify that values with decimal 
+places must decimal point. 
+2.38 8/1/2007 KN Added support for proficiency lot in the Nova Reagent 
+List topic 
+2.39 8/23/2007 KN Added the transmission of the language code in the 
+“sw_version” attribute. 
+2.40 8/30/2007 KN Added Message Encoding Format section. 
+2.41 9/11/2007 KN Updated the transmission of manual test results.  
+2.42 9/19/2007 KN Send the value “OVR” for the attribute “SVC.status_cd” 
+if a test result was obtained while the device was out of 
+QC. 
+2.43 11/06/2007 KN Update the requirements of the text node of the 
+“operator id” attribute of the operator object. 
+2.44 12/12/2007 KN Removed the “QC_RES_REQ” attribute from the 
+“COMPOUND_MANUAL_TEST” element and add it 
+to the “SUB_TEST” element. 
+2.45 03/17/2008 KN Modified the description of the attribute “status_cd” of a 
+non-patient Service object. “OVR” will be sent for this 
+attribute if the sample is a linearity sample or a 
+proficiency sample and the test results were obtained 
+while the device was out of QC. 
+2.46 04/02/2008 KN Added the attribute “NF” to the “SUB_TEST” element. 
+Updated the Order Object in the Patient Observation 
+Message. 
+2.47 04/02/2008 KN Updated the example at the end of the section “Lot 
+number entered for a manual test result”. 
+Updated the example at the end of the section “QC 
+result entered for a manual test result”. 
+2.48 05/06/2008 KN Extended Table 10 of the POCT1 standard to add 
+custom Access Control Values. 
+2.49 08/13/2009 
+– 
+10/27/2009 
+DK Replaced “RTM” with “NovaNet”, “Observation 
+Reviewer” with “NovaNet or Result Server/LIS/HIS”, 
+“Remote Testing Manager” with “Instrument 
+Controller/Observation Concentrator” and “Privilege” 
+with “Certification” as appropriate. Added definitions 
+for Result Server and Operator List Server. Made 
+privilege levels conform to Khan’s table 21. 
+Updated operator list interface specifications to conform 
+to NovaNet database requirements. 
+2.50 2/20/2010 BB Updated XML examples with real examples of 
+transmissions. 
+Updated table 8 section 6.3.1 
+Updated table 12 section 6.4.1.2.1 
+Updated sections 6.4.1.6, 6.7, 6.7.4 
+Updated table 20 section 6.8.3 
+Updated table 24 section 6.15.4 
+Updated Section 6.7 Manual Tests 
+Updated Section 6.15.4, 6.15.5 (added lot types) 
+Updated Section 6.19.6 (new definition of Manual Tests 
+Added Section 6.20 (Key-Value Pairs 
+2.51 3/15/2010 BB Updated Section 6.8.5, 6.8.7: Removed cert. Dates 
+========== PAGE 5 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 5 of 117 
+download to meters. 
+Added Key_value pairs for MTE 
+Corrected Typos from document review. 
+For Manual Test moved attribute RT from 
+<SUB_TEST> to <TEST> 
+Changed “QC RESULT” to “QC_BAR” for int. Control 
+in NTE form Manual Test Result reporting. 
+Section 6.19.6.1: Remove “SKIP” attribute for <TEST>. 
+Indicated “ED” as not implemented. Corrected <TEST> 
+attributes table. 
+Section 6.19.6.1.3 <SUB_TEST>: Changed attribute 
+“TN” to “DN”. Removed attribute “ED”. Added 
+attribute tables for 
+<MANUAL_TEST/MANUAL_QC_TEST>,  
+<SUB_TEST> 
+2.52 4/26/2010 BB Updated section 6.7.6 (one or more internal controls can 
+be defined per test. 
+Section 6.19.6.1.3 indicate that a MTE test must be 
+unique and must = “panel name” for patient tests. 
+Section 6.2.3 Added new topic: 
+NOVA.MANUAL_TEST 
+Section 6.7 Added note to indicate support 
+restrictions for the MTE feature. 
+Section 6.20 Added missing MTE key value pairs. 
+2.53 7/13/2010 DDK Added “wildcards” for location and facility parameters 
+in operator lists from third party; Changed logic for 
+effective date/time of operator list updates to reflect 
+changes made to RTMOPL in NovaNet v3.2.12.10. 
+2.54 2/17/11 BB Section 6.14: Added Terminate message description 
+Section 6.21: Corrected ‘bit’ definition for OP = 2, and 
+SUP = 1 as values for the ‘PrivLevel…’ keys 
+2.55 7/11/11 BB Section 6.8.1:  
+Added a restriction on the use of OPL.R02 
+Section 6.9:  
+Added a restriction on the use of PTL.R02 
+Section 6.14.1: 
+Change Reconnect range (05-99) was 01-99 
+Section 6.20.3:  
+Added requirement that ALL key values must be sent to 
+the meter. 
+Section 6.21:  
+Deleted all RESERVED key-value pairs. 
+Marked all MeterMax… keys as “DO NOT ALTER” 
+Corrected the values for the QcLockMethodCd. 
+Added keys: 
+QcLockKetElapsedHrs, 
+QcLockKetAlertMins, QcLockKetModeCd, 
+QcLockKetShiftTimes, QcLockKetInterval, 
+QcLockKetLevelxReq (x= 1,2,3) specific for QC Lock 
+of Ket independent of Glu in Multi-test meter 
+Deleted QcLockAllowStatQty. 
+Added Section 6.22 
+2.56 8/15/11 BB Section 6.2.1: Define the contents of hw_version  
+Section 6.2.4: Updated example 
+Added section 6.19.3 Firnware File idenftification. 
+2.57 3/5/12 BB Added Datetime key value pair. 
+========== PAGE 6 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 6 of 117 
+3/29/12 
+ 
+Section 6.21:  
+Corrected typo for PatHtUnits “INS” was “IN”. 
+Corrected default value for 
+LinObsFailCommentReqCd and 
+LinObsPassCommentReqCd fro “DIS” to 
+“ALLOW” (TYPO)  
+Corrected Typo for Scan Enable Keys “DIS, was 
+“NONE”. Added missing scak enable keys for 2D.
+ 
+7/16/12 Section 6.8.3 Udate the Operator Access Control 
+Permission Level Values 
+Added new value for OpLogoffModeCd 
+(NEVER= Auto login)Added “PatIdAutoEnable 
+(controls prompt for Patient ID entry at the meter. 
+Added “16” Admin user value for “PrivLevel…” 
+keys. 
+Added “StripIdAutoEnable (controls prompt for 
+Strip Lot entry at the meter. 
+Section 6.9: Added Physician’s Note. 
+ 
+7/31/12 Section 6.21: Added range values definition for 
+QCLockElapsedHrs and QCLockKetElapsedHrs 
+Section 6.82: Added length restrictions of operator name 
+components  
+Section 6.92: Added length restrictions of patient name 
+components.
+ 
+2.58 
+09/07/12 Section 6.4.1.6: Typo change “PF” to “PRO” (reagent 
+name as sent from the meter). 
+Section 6.16,4 Typo change reagent type “PF” to “PRO” 
+2.59 09/12/12 
+BB 
+Section 6.8.4: Limit OP message to “zero-or-one” 
+Section 6.9.3: (new) Note Object for Patients 
+Section 6.9.4: updated Example to show note’s date. 
+ 
+========== PAGE 7 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 7 of 117 
+TABLE OF CONTENTS 
+1 INTRODUCTION ......................................................................................... 11 
+1.1 Purpose................................................................................................................. 11 
+1.2 Scope..................................................................................................................... 11 
+1.3 Definitions, Acronyms, and Abbre viations....................................................... 11 
+1.4 References ............................................................................................................ 12 
+1.5 Message Flow  for DML Instruments/Meters ................................................... 13 
+2 THIRD PARTY INTERFACES ..................................................................... 14 
+2.1 Result Interface ................................................................................................... 14 
+2.2 Operator L ist Interface ...................................................................................... 15 
+3 NOTATION .................................................................................................. 18 
+4 REGIONAL SETTINGS ............................................................................... 19 
+4.1 Decimal Comma/Decimal Point ......................................................................... 19 
+5 MESSAGE ENCODING FORMA T ..............................................................19 
+6 MESSAGES ................................................................................................ 19 
+6.1 Header Ob ject (HDR)......................................................................................... 19 
+6.2 Hello Message (HEL.R01) .................................................................................. 20 
+6.2.1 Device Object (DEV).................................................................................... 21 
+6.2.2 Device Capabilities Object (DCP)................................................................ 23 
+6.2.3 Device Static Capabilities Object (DSCP).................................................... 23 
+6.2.4 Example ........................................................................................................ 24 
+6.2.5 Example ........................................................................................................ 25 
+6.2.6 Example ........................................................................................................ 25 
+6.3 Device Status Message (DST.R01)
+ ..................................................................... 26 
+6.3.1 The Device Status Object (DST) .................................................................. 26 
+6.3.2 Example ........................................................................................................ 27 
+6.3.3 Example ........................................................................................................ 27 
+6.3.4 Example ........................................................................................................ 28 
+========== PAGE 8 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 8 of 117 
+6.4 Observations Message (OBS.R01) - Patient Related Results .......................... 29 
+6.4.1 Service Object (SVC) ................................................................................... 30 
+6.4.2 Example ........................................................................................................ 38 
+6.5 Observations Message (OBS.R02) - Non-Patient Related Results ................. 40 
+6.5.1 Service Object (SVC) ................................................................................... 41 
+6.5.2 Example ........................................................................................................ 43 
+6.6 Proficiency Results
+ .............................................................................................. 44 
+6.7 Manual Test Results ........................................................................................... 44 
+6.7.1 Numerical...................................................................................................... 44 
+6.7.2 Select List...................................................................................................... 45 
+6.7.3 Text ............................................................................................................... 45 
+6.7.4 Manual Test Panels....................................................................................... 46 
+6.7.5 Lot numbers entered for a manual test result................................................ 47 
+6.7.6 Internal Control result entered for a m anual test result................................. 48 
+6.8 Operator L ist message (OPL.R01, OPL.R02).................................................. 49 
+6.8.1 Update Action Object (UPD)........................................................................ 50 
+6.8.2 Operator Object (OPR) ................................................................................. 50 
+6.8.3 Access Control Object (ACC) ...................................................................... 51 
+6.8.4 Note Object (NTE)........................................................................................ 52 
+6.8.5 Example ........................................................................................................ 53 
+6.8.6 Example ........................................................................................................ 54 
+6.8.7 Example ........................................................................................................ 55 
+6.8.8 Example ........................................................................................................ 56 
+6.9 Patient List message (PTL.R01, PTL.R02)
+ ....................................................... 58 
+6.9.1 Update Action Object (UPD)........................................................................ 58 
+6.9.2 Patient Object (PT) ....................................................................................... 58 
+6.9.3 Note Object (NTE)........................................................................................ 59 
+6.9.4 Example ........................................................................................................ 61 
+6.9.5 Example ........................................................................................................ 62 
+6.10 Device Events message (EVS.R01)
+ .................................................................... 63 
+6.10.1 Device Event Object (EVT).......................................................................... 64 
+6.10.2 Operator Object (OPR) ................................................................................. 65 
+6.10.3 Example ........................................................................................................ 66 
+6.11 Basic Directive Message (DTV.R01) ................................................................. 67 
+6.11.1 Element Details............................................................................................. 67 
+6.11.2 Example ........................................................................................................ 67 
+6.12 Complex Directive Message (DTV.R02) ........................................................... 68 
+6.12.1 Complex Directive Message Notes............................................................... 68 
+6.12.2 Example ........................................................................................................ 68 
+========== PAGE 9 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 9 of 117 
+6.13 End of Topi c message (EOT.R01) ..................................................................... 69 
+6.13.1 End Of Topic Object (EOT) ......................................................................... 69 
+6.14 Terminate Message (E ND.R01) .........................................................................70 
+6.14.1 Terminate Object (END)............................................................................... 70 
+6.14.2 Example ........................................................................................................ 70 
+6.15 Other Messages ................................................................................................... 70 
+6.16 Nova Reagent List Message (NOVA.REAG).................................................... 71 
+6.16.1 Nova Reagent List Topic Rules and Notes................................................... 71 
+6.16.2 Nova Reagent List Message Rules and Notes .............................................. 71 
+6.16.3 The Empty Reagent List Topic..................................................................... 71 
+6.16.4 Lot Object (LOT).......................................................................................... 72 
+6.16.5 Level Object (Level)..................................................................................... 73 
+6.16.6 Test Object (TST) ......................................................................................... 73 
+6.16.7 Example ........................................................................................................ 74 
+6.17 Nova Location List Message (NOV A.LOC) ..................................................... 76 
+6.17.1 Element Details............................................................................................. 76 
+6.17.2 Example ........................................................................................................ 76 
+6.18 Nova Physician List Message (NOVA.PHYS.R01, NOVA.PHYS.R02) ......... 77 
+6.18.1 Update Action Object (UPD)........................................................................ 77 
+6.18.2 Physician Object (PHYS) ............................................................................. 78 
+6.18.3 Example ........................................................................................................ 78 
+6.18.4 Example ........................................................................................................ 79 
+6.19 Nova Firmw are Update Message (NOVA.FRM) .............................................80 
+6.19.1 Firmware Data Object (FRM)....................................................................... 80 
+6.19.2 Example ........................................................................................................ 80 
+6.19.3 Firmware File Identification ......................................................................... 81 
+6.20 Nova Setup Message (NOVA.STATSTRIP.SETUP) ....................................... 81 
+6.20.1 Nova Setup Topic Rules and Notes .............................................................. 82 
+6.20.2 Nova Setup Message Rules and Notes.......................................................... 82 
+6.20.3 KeyValues..................................................................................................... 82 
+6.20.4 Diagnosis Codes............................................................................................ 83 
+6.20.5 Comments ..................................................................................................... 84 
+6.20.6 Test Configuration Element <TEST_CONFIG>.......................................... 87 
+6.20.7 QC Configuration (QC_CONFIG) ............................................................... 98 
+6.20.8 Example of Nova Setup Message ............................................................... 106 
+6.21 Key Value Definitions
+ ....................................................................................... 107 
+6.22 StatStrip /StatSensor Device definitions ..........................................................117 
+ 
+========== PAGE 10 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 10 of 117 
+ 
+Figure 1 - Object Cardinality ............................................................................................18 
+Figure 2 - Hello Message Model ...................................................................................... 20 
+Figure 3 - Device Status Message Model ......................................................................... 26 
+Figure 4 - Patient-related Observation Message Model ................................................... 29 
+Figure 5 - Non-patient related Observation Message Model ............................................ 40 
+Figure 6 - Operator List Com plete Update Message Model............................................. 49 
+Figure 7 - Operator List Incremental Update Message Model ......................................... 49 
+Figure 8 - Patient List Complete Update Message Model ................................................ 58 
+Figure 9 - Patient List Incremental Update Message Model ............................................ 58 
+Figure 10 - Device Event Message Model........................................................................ 63 
+Figure 11 - End of Topic Message Model ........................................................................ 69 
+Figure 12 - Terminate Message Model............................................................................. 70 
+Figure 13 - Nova Reagent List Message Model ............................................................... 71 
+Figure 14 - Physician List Complete Update Message Model ......................................... 77 
+Figure 15 - Physician List Incremental Update Message Model...................................... 77 
+Figure 15 - Firmware Update Message Model ................................................................. 80 
+Figure 16 - Nova Setup Message Model........................................................................... 81 
+========== PAGE 11 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 11 of 117 
+1 Introduction 
+1.1 Purpose 
+This document is the Software Requirements Specification for the Nova NovaNet implementation of 
+the POCT1-A Device Messaging Layer (DML) protocol.  It describes the details of the messages 
+transmitted between the Instrument Controller/Observation Concentrator (NovaNet) and DML 
+devices (lab computers, analyzers, meters, etc). 
+1.2 Scope 
+This document details the fields used in each of the messages. 
+1.3 Definitions, Acronyms, and Abbreviations 
+Table 1 - Terms and Definitions 
+Terms Definitions 
+HIS Hospital information system 
+HL7 Standard for electronic exchange of clinical and administrative 
+data (NCCLS POCT1-A Point of Care Connectivity; Approved 
+Standard) 
+HM Host Module 
+I/O Input/Output 
+LCD Liquid crystal display 
+LIS Laboratory information system 
+Longitude Nova Biomedical ho spital POC meter system  
+PIN Personal identification number 
+POC Point-of-Care 
+NovaNet Nova Biomedical’s Instrument Controller/Observation 
+Concentrator 
+RS-232 An electrical serial communications interface (EIA/TIA-232-E) 
+Device Instrument (analyzer or meter) or external system (e.g.: result 
+server, laboratory information system, hospital information 
+system, operator list server) 
+Result Server Any third party system th at receives observations from NovaNet 
+and transmits them to an LIS/HIS system  
+Operator List 
+Server 
+Any third party system that maintains lists of instrument/meter 
+operators and transmits these lists to NovaNet 
+POCT1-A 
+document 
+NCCLS, Point-of-Care Connectivity; Approved Standard. 
+NCCLS document POCT1-A [ISBN 1-56238-450-3] 
+ 
+ 
+========== PAGE 12 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 12 of 117 
+ 
+1.4 References 
+The following specifications and references have been considered in the preparation of this SRS: 
+Table 2 Reference Documents 
+Document Name Revision Date 
+NCCLS, Point-of-Care 
+Connectivity; Approved Standard. 
+NCCLS document POCT1-A 
+[ISBN 1-56238-450-3], NCCLS, 
+940 West Valley Road, Suite 
+1400, Wayne, Pennsylvania 
+19087-1898 USA, 2001 
+1.0 12/1/2001 
+ 
+========== PAGE 13 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 13 of 117 
+1.5 Message Flow for DML Instruments/Meters 
+A DML device connecting to NovaNet must follow the Basic Messaging Profile as described in the 
+POCT1-A document where NovaNet acts as the Observation Reviewer.  It may or may not then 
+proceed to the Continuous Mode: 
+ 
+• When a device connects to NovaNet, it must initiate a dialog by sending a Hello message as 
+described below. 
+• When the Hello message is acknowledged, the device must then send the Device Status 
+Message described below to continue the dialog. 
+• The device must respond then and at any time thereafter to a Request Observations message 
+by sending an Observations message - or an End of Topic message if there are no 
+Observations. 
+• The device must then respond to the Observations message Acknowledgement by sending 
+another Observations message - or an End of Topic message if all Observation messages 
+have been sent. 
+• The device must respond then and at any time thereafter to a Request Device Events message 
+by sending a Device Events message - or an End of Topic message if there are no events. 
+• The device must then respond to the Device Events message Acknowledgement by sending 
+another Device Events message - or an End of Topic message if all Device Events messages 
+have been sent. 
+• The device must respond then and at any time thereafter to a Location, Operator, Patient, 
+Physician, Reagent or Setup list message by sending an Acknowledgement message.  It must 
+process the message and expect more list messages until an End of Topic message is 
+received. 
+• The device must respond then and at any time thereafter to a Start Continuous Directive 
+message by sending an Acknowledgement message if capable of Continuous Mode 
+communication or an Escape Message if not. 
+• If a Continuous Mode Directive has been acknowledged, the device must enter Continuous 
+Mode until a Terminate message is received from NovaNet. 
+• In Continuous Mode the device may send Observation, Device Event, Keep Alive, or Vendor 
+custom messages to NovaNet at any time (except when NovaNet is expecting an 
+acknowledgement). 
+• In Continuous Mode the device must receive and acknowledge Directive, Location List, 
+Operator List, Patient List, Physician List, Reagent List, Setup List and End of Topic 
+messages. 
+• If a Terminate message is received in Continuous Mode the device must acknowledge and 
+terminate the current conversation. The device may then reconnect to NovaNet.  Currently 
+NovaNet does not terminate Continuous Mode. 
+========== PAGE 14 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 14 of 117 
+ 
+2 Third Party Interfaces 
+The DML protocol shall be adapted for use in two non-device interfaces between NovaNet and 
+THIRD PARTY services, a Result interface for reporting results from NovaNet to THIRD PARTY 
+and an Operator interface for sending operator lists from THIRD PARTY to NovaNet. 
+2.1 Result Interface 
+• NovaNet shall initiate a session with the receiving system (THIRD PARTY) for each result to be 
+sent as if it were the device sending the results. 
+The Device object of the Hello record shall contain the identifiers of the device on which the 
+analyses were performed. 
+ 
+• This interface will not be capable of receiving operator lists or patient lists. 
+The Device Static Capabilities object of the Hello message shall not list these capabilities for 
+the Result interface.  These lists must be transmitted on separate interfaces. 
+ 
+• This interface will send reagent information with results (name, lot_number and 
+expiration_date). 
+ 
+• This interface will send the operator ID of the operator responsible for each observation (if 
+available). It will not send the operator's name. 
+ 
+• This interface can send comments associated with the sample and/or an observation, including 
+the chartable and flagable flags, using the following format: 
+<comment.text V="text of the comment">CH={0,1}^FL={0,1}</comment.text> 
+for example: <comment.text V="insulin given">CH=1^FL=0</comment.text> indicates that 
+this comment is chartable but not flagable. 
+• This interface will communicate the location and facility where the instrument (that produced the 
+result) was located at the time when the result was transmitted, using the following format: 
+<DEV.device_name V="device name">facility^location</DEV.device_name> 
+for example: <DEV.device_name V="ICU-4 Glucose">Cambridge 
+Hosp^ICU</DEV.device_name> 
+The receiving system should add this location (where the instrument was at the time the test 
+was run) as a note in their system. 
+ 
+• This interface shall send the patient's location at the time the sample was drawn (location field in 
+patient object) in the following format: 
+<PT.location V="facility^location^room^bed (or facility^location if room and bed are not 
+available)"/> 
+for example: <PT.location V="Cambridge Hosp^ICU^101^1/> 
+• NovaNet shall terminate the session (but not the connection) at the end of the DML Basic Profile 
+Flow. 
+The Device Static Capabilities object of the Hello message shall define the connection profile 
+as Synchronous Acknowledgement (SA). 
+========== PAGE 15 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 15 of 117 
+NovaNet shall then initiate a new session for each new result set as they are received from 
+analyzers.  Note that, with meters, the usual pattern will have a series of sessions as multiple 
+results are downloaded from the meter followed by an indefinite period until the next meter 
+is attached for the next batch download. 
+2.2 Operator List Interface 
+• This interface will initiate a single session and will stay connected after being asked to go into 
+continuous mode. 
+The Device Static Capabilities object of the Hello message shall list continuous mode as a 
+capability and the connection profile as Synchronous Acknowledgement (SA) 
+ 
+• This interface will be capable of receiving both incremental and complete operator lists for all 
+locations supported by the NovaNet system. 
+The Device Static Capabilities object of the Hello message shall list both these capabilities 
+for the Operator List interface. 
+ 
+• This interface is not intended for receiving patient lists or sending results. 
+ 
+• The sending system (THIRD PARTY) will send complete operator lists when NovaNet is first 
+brought on-line. Otherwise it will generally send incremental lists. 
+The Device Status message shall give the last update time for operators.  From this and its 
+knowledge of the connection history of the interface, it is envisioned that the server can 
+determine if a complete list needs to be sent.  Typically a complete list would be sent at 
+startup and incremental lists thereafter. 
+ 
+• The facility, location and instrument type will be included with each operator entry using the 
+following format: 
+ <OPR.operator_id V="operatorid">facil ity^location^inst_type</OPR.operator_id> 
+for example: <OPR.operator_id V="op123">Cambridge 
+Hosp^ER^StatStrip</OPR.operator_id> 
+ 
+• This interface shall only accept facility, location and inst_type names of 16 characters or less. 
+The facility field may be “ALL” to denote all facilities supported by NovaNet. The location may 
+be “ALL” to denote all NovaNet locations in the given facility or facilities. If the facility field is 
+“ALL”, then the location field must also be “ALL”. 
+ 
+• This interface will use current date and time as the date/time that the operator list is valid. 
+ 
+ 
+• This interface will accept only the following privilege levels (ACC.permission_level_cd) for 
+operators: 1 (Supervisor), 4 (User), 7 (Supervisor with GFR privilege) and 8 (Operator with GFR 
+privilege) – see table 21. 
+ 
+• Operators must be assigned the same privilege level for all instruments of the same type, in all 
+locations in which they are authorized to work. 
+ 
+========== PAGE 16 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 16 of 117 
+• Operators must be assigned the same set of methods (ACC.method_cd) for all instruments of the 
+same type, in all locations in which they are authorized to work. 
+ 
+Operator authorization is managed by location, and Operator Certifications are managed by 
+instrument type and test (method) in the NovaNet system. For example, an operator can have the 
+Certifications to perform glucose tests on StatStrip instruments and ketone tests on StatStrip79 
+instruments (but not glucose tests on StatStrip79 instruments and no tests on StatSensor39 
+instruments), and they can be authorized to operate these instruments in locations A and C, (but not 
+in location B). See below: 
+Location StatStrip 
+Glucose 
+StatStrip79 
+Ketone 
+StatStrip79 
+Glucose 
+StatSensor39
+Creatinine 
+A Yes Yes No No 
+B No No No No 
+C Yes Yes No No 
+           OK 
+ 
+Location StatStrip 
+Glucose 
+StatStrip79 
+Ketone 
+StatStrip79 
+Glucose 
+StatSensor39
+Creatinine 
+A Yes Yes No No 
+B Yes No Yes No 
+C No Yes No Yes 
+           Not possible 
+ 
+• POCT1-A specifies ‘I’ for insert and D for delete in the UPD.action_cd field. This interface will 
+interpret "I" as insert or update (if the operator information already exists). 
+In variance from a strict reading of POCT1-A, a preceding delete shall not be required for an 
+update since whenever an operator record is sent it shall always be a complete record. 
+ 
+• For NovaNet, an operator instance is fully qualified by id, instrument type, test (method), 
+facility, and location.  The following points ensue from this requirement and all of the above 
+requirements: 
+ 
+o Every time an operator's demographic information, certifications or authorization are 
+updated in the sending system, it must send a set of inserts/updates that include the 
+modified operator demographics, each instrument type and test (method) for which the 
+operator’s Certification has been added or modified, and each facility (or “ALL”) and 
+each location (or “ALL”) for which the operator's authorization has been added, along 
+with deletes for each facility (or “ALL”) and each location (or “ALL”) for which the 
+operator is no longer authorized. The following bullets break this down: 
+ 
+o Every time an operator’s demographic information is modified, the sending system must 
+send an insert/update with the operator’s new demographic information, plus the 
+instrument type and test (method) for any one of the operator’s Certifications, plus any 
+one of the operator’s facilities (or “ALL”) and locations (or “ALL”) to which they are 
+authorized. 
+ 
+========== PAGE 17 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 17 of 117 
+ 
+o Whenever an operator is given the Certification to operate a new type of instrument and 
+test (method) or the Certification information for that instrument and test is modified, the 
+sending system must send an insert/update with the operator’s ID, plus the instrument 
+type, test name (method) and Certification information for that instrument type and test, 
+plus any one of the facilities (or “ALL”) and locations (or “ALL”) for which that operator 
+is authorized. 
+ 
+o Whenever an operator's authorization to operate instruments in a set of locations is 
+revoked, the sending system must send a delete for each facility (or “ALL”) and each 
+location (or “ALL”) where their authorization has been revoked. If an instrument type or 
+test (method) is sent it will be ignored. 
+ 
+o Whenever an operator’s Certifications to operate a set of instruments and tests (methods) 
+are revoked, the sending system must send an update for each instrument type and test 
+(method) for which the operator’s Certification has been revoked, with a Certification 
+expiration date equal to the date the operator’s Certification was revoked for that 
+instrument type and test. 
+ 
+o Whenever an operator is deleted (or marked inactive) in the sending system, the sending 
+system must send a delete for each facility (or “ALL”) and each location (or “ALL”) for 
+which the operator was authorized. 
+ 
+• The method_cd field sent by the sending system must match either the test name used by the 
+Nova Biomedical instrument or Nova Biomedical’s internal “generic” test name. Anything else 
+would cause the operator update to be rejected. For example: 
+“Glucose” or “Glu” will be translated to “Glu” 
+“Creatinine” or “Creat” will be translated to “Creat” 
+“eGFR”, “CrCl”, or “GFR” will be translated to “eGFR” 
+“Lactate” or “Lac” will be translated to “Lac” 
+“Ketone” or “Ket” will be translated to “Ket” 
+ 
+========== PAGE 18 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 18 of 117 
+ 
+3 Notation 
+• The attributes of objects are described in tables. The first column of the table will contain 
+symbols that indicate whether an attribute is required or optional. The following notation 
+conventions apply to all attributes: 
+ 
+Symbol Description 
++ Required. 
+- Optional. 
+# Required by NovaNet 
+ 
+• In a message model figure, object cardinality is noted as part of the object name. The following 
+notation conventions will be used for object cardinality: 
+o (0…1) – zero or one instance 
+o (0…*) – zero or more instances 
+o (1…*) – one or more instances 
+o The absence of a cardinality notation indicates one, and only one instance. 
+ 
+• The following figure illustrates the connector notation used to relate objects within a hierarchy: 
+ 
+Figure 1 - Object Cardinality 
+Parent
+Child (0…*)
+Test (0…1)
+Header (1…*)
+Parent-Child
+Relationship
+Sibling
+Relationship
+ 
+========== PAGE 19 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 19 of 117 
+ 
+4 Regional Settings 
+4.1 Decimal Comma/Decimal Point 
+• All values with decimal places shall use the decimal point rather than the decimal comma. 
+• This will apply to the values in the reference and critical ranges of the Nova Setup Message. 
+• This will apply to the observation value in the “OBS.value” attribute of the Patient and Non-
+patient Observation Message. 
+ 
+5 Message Encoding Format 
+• In order to support the characters beyond the ASCII character set, the exchanged messages 
+between the device and NovaNet must be encoded in the UTF-8 format. This format is an 
+8-bit, variable length character encoding for Unicode. 
+6 Messages 
+6.1 Header Object (HDR) 
+The Header object is a mandatory component of every message. The following table describes the 
+attributes that are supported by the device. 
+Table 3 – Header Object Attributes 
+ Attribute Type Description 
+- message_type CV Refer to the POCT1 st andard. Example: “HEL.R01”, “OPL.R02”,… 
++ control_id ST Refer to the POCT1 standard. 
++ version_id ST Refer to the POCT1 standard. 
++ creation_dttm TS Refer to the POCT1 standard 
+ 
+========== PAGE 20 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 20 of 117 
+ 
+6.2 Hello Message (HEL.R01) 
+A Device sends the Hello message as the first message in a Conversation. The Hello message 
+identifies the device and its connection parameters. The type of this message is HEL.R01. 
+ 
+Header
+Device
+Device Capabilities
+Device Static Capabilities
+ 
+Figure 2 - Hello Message Model 
+ 
+The device does not support the Access Point Object, which is specified as an optional object of the 
+Hello message in the POCT1 standard. 
+========== PAGE 21 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 21 of 117 
+ 
+6.2.1 Device Object (DEV) 
+The following table describes the attributes that are supported by the device. 
+Table 4 - Device Object Attributes 
+ Attribute Type Description 
++ device_id ST • If a device id is available, the device id shall be sent. If a 
+device id is not available, an empty string shall be sent. 
+• The text node of this element shall contain the name of the 
+facility and location to which the device is assigned. The 
+format of this string is ass follows: 
+facility^location 
+• Example: 
+      <DEV.device_id V="">MGH^ICU</DEV.device_id> 
+- vendor_id ST Refer to the POCT1 standard 
+# model_id ST Contain the device type. The valid device types are: 
+• StatStrip 
+• StatSensor39 
+• StatSensor39i 
+• StatStrip79 
+• StatStrip 32 
+# serial_id ST Refer to the POCT1 standard 
+- manufacturer_name ON Refe r to the POCT1 standartd 
+- hw_version ST The V attribute shall co ntain one or more components defining 
+the hardware version. 
+For First generation meters, this field is empty. For second 
+generation meters the field shall be: 
+V= “Kxxxxx” where x is representative of up to 5 alphanumeric 
+characters. Any sub-components if present shall be separated by a 
+“^” (V=”K1^P2^S3” ) 
+# sw_version ST The “V” attribute shall contain a four-component software 
+version of the device. 
+For example: 2.0.5.10. 
+The first 2 components specify the major version. The last 2 
+components specify the minor version. 
+The text node shall contain an alternate representation of the 
+software version. This alternate representation shall include the 
+language code of the device. See section “Language Code” 
+below. 
+# device_name ST Refer to the POCT1 standard. 
+ 
+========== PAGE 22 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 22 of 117 
+ 
+6.2.1.1 Language Code 
+• The text node of the “DEV.sw_version” attribute shall contain an alternate representation of 
+the software version. This alternate representation shall include the software version and the 
+language code of the device. 
+• Following is an example of a software version of a device with the English language code: 
+ 
+<DEV.sw_version V="0.0.5.14">0.0.5.14_en</DEV.sw_version> 
+ 
+• In the above example, “en” is the language code of the English language. 
+• In the text node, the language code is the first component that follows the software version. 
+• The language code may be a neutral language code. For example, "en" is the language code 
+for the English language. Or it may be a specific culture code that contains a language code 
+and a country/region code. An example is "en-AU" for English - Australia. 
+• The language code is a lowercase two-letter code derived from ISO 639-1. 
+• The country/region code is an uppercase two-letter code derived from ISO 3166. 
+========== PAGE 23 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 23 of 117 
+ 
+6.2.2 Device Capabilities Object (DCP) 
+The following table describes the attributes that are supported by the device. 
+Table 5 - Device Capabilities Attributes 
+ Attribute Type Description 
++ application_timeout REAL Application-level tim eout the Device uses (specified in seconds) 
+ 
+6.2.3 Device Static Capabilities Object (DSCP) 
+The following table describes the attributes that are supported by the device. 
+Table 6 - Device Static Capabilities Attributes 
+ Attribute Type Description 
++ connection_profile_cd CS “SA”. Curre ntly, the device uses the synchronous 
+acknowledgement message flow. 
++ topics_supported_cd SET(CV) • Refer to the POCT1 standard for a list of topic 
+codes that may be sent in this attribute. 
+• This attribute may include the Nova Custom 
+Topics. Table 7 contains a list of Nova custom 
+topic codes. 
++ directives_supported_cd SET(CV) Refer to the POCT1 standard. 
++ max_message_sz INT Refer to the POCT1 standard. 
+ 
+Table 7 – Nova Custom Topic Codes Values 
+Code Description 
+NOVA.STATSTRIP.SETUP Nova Co mplete Update Setup topic 
+NOVA.LOC Nova Complete Update Location List topic 
+NOVA.PHYS Nova Complete Update Physician List topic 
+NOVA.PHYS_I Nova Incremental Update Physician List topic 
+NOVA.REAG Nova Complete Update Reagent List topic. 
+NOVA.FRM Nova Firmware Upgrade topic 
+NOVA.MANUAL_TEST Nova MTE topic 
+ 
+ 
+ 
+========== PAGE 24 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 24 of 117 
+ 
+6.2.4 Example 
+Following is an example of a Hello Message from a Device to NovaNet. 
+<HEL.R01> 
+<HDR> 
+<HDR.message_type V="HEL.R01" SN="POCT1" SV="1" />  
+<HDR.control_id V="7135" />  
+<HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-02-22T14:06:34.00-05:00" />  
+</HDR> 
+<DEV> 
+<DEV.device_id V="">MGH^ICU</DEV.device_id>  
+<DEV.vendor_id V="NOVABIO" />  
+<DEV.model_id V="StatStrip" />  
+<DEV.serial_id V="0600100736" />  
+<DEV.manufacturer_name V="Nova Biomedical" />  
+<DEV.hw_version V="K1" />  
+<DEV.sw_version V="3
+.10.8.0">3.10.8.0_it-IT</DEV.sw_version>  
+<DEV.device_name V="DLO-OV" />  
+<DCP> 
+<DCP.application_timeout V="120" />  
+</DCP> 
+<DSC> 
+<DSC.connection_profile_cd V="SA" />  
+<DSC.topics_supported_cd V="D_EV" SN="POCT1" SV="1" />  
+<DSC.topics_supported_cd V="DTV" SN="POCT1" SV="1" />  
+<DSC.topics_supported_cd V="OP_LST_I" SN="POCT1" SV="1" />  
+<DSC.topics_supported_cd V="PT_LST_I" SN="PO CT1" SV="1" />  
+<DSC.topics_supported_cd V="NOVA.STATSTRIP.SETUP" SN="POCT1" SV="1" />  
+<DSC.topics_supported_cd V="NOVA.LOC" SN="POCT1" SV="1" />  
+<DSC.topics_supported_cd V="NOVA.FRM" SN="POCT1" SV="1" />  
+<DSC.topics_supported_cd V="NOVA.PHYS_I" SN="POCT1" SV="1" />  
+<DSC.topics_supported_cd V="NOVA.REAG" SN="POCT1" SV="1" /> 
+<DSC.topics_supported_cd V=" NOVA.MANUAL_TEST" SN="POCT1" SV="1" />   
+<DS
+C.directives_supported_cd V="START_CONTINUOUS" SN="POCT1" SV="1" />  
+<DSC.directives_supported_cd V="SET_TIME" SN="POCT1" SV="1" />  
+<DSC.max_message_sz V="32768" />  
+</DSC> 
+</DEV> 
+</HEL.R01> 
+ 
+========== PAGE 25 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 25 of 117 
+6.2.5 Example 
+Following is an example of a Hello Message from NovaNet to a Third Party Result Server/ LIS/HIS. 
+ 
+<HEL.R01> 
+<HDR> 
+<HDR.control_id V="4000" />  
+<HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-02-22T15:33:21-05:00" />  
+</HDR> 
+<DEV> 
+<DEV.vendor_id V="DLO-OV^StatStrip^0600100736" />  
+<DEV.device_id V="0600100736">MGH^ICU</DEV.device_id>  
+<DSC> 
+<DSC.connection_profile_cd V="SA" />  
+</DSC> 
+</DEV> 
+</HEL.R01> 
+ 
+6.2.6 Example 
+Following is an example of a Hello Message from NovaNet to a Third Party Operator List Server. 
+ 
+<HEL.R01> 
+<HDR> 
+<HDR.control_id V="4000" />  
+<HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-02-22T15:42:10-05:00" />  
+</HDR> 
+<DEV> 
+<DEV.device_id V="OPLIST CLIENT" />  
+<DSC> 
+<DSC.connection_profile_cd V="SA" />  
+<DSC.topics_supported_cd V="OP_LST" />  
+<DSC.topics_supported_cd V="OP_LST_I" />  
+<DSC.directives_supported_cd V="START_CONTINUOUS" />  
+</DSC> 
+</DEV> 
+</HEL.R01> 
+ 
+ 
+========== PAGE 26 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 26 of 117 
+ 
+6.3 Device Status Message (DST.R01) 
+The Device Status message reports the current status of the device. The type of this message is 
+DST.R01 
+ 
+Header
+Device Status
+ 
+Figure 3 - Device Status Message Model 
+6.3.1 The Device Status Object (DST) 
+The following table describes the attributes that are supported by the device. 
+Table 8 - Device Status Object Attributes 
+ Attribute Type Description 
++ status_dttm TS Refer to the POCT1 standard. 
++ new_observations_qty INT Refer to the POCT1 standard. 
+- new_events_qty INT Refer to the POCT1 standard. 
++ condition_cd CV Refer to the POCT1 standard. 
+# observations_update_dttm TS Refe r to the POCT1 standard. 
+# events_update_dttm TS Refer to the POCT1 standard. 
+# operators_update_dttm TS Re fer to the POCT1 standard. 
+# patients_update_dttm TS Refer to the POCT1 standard. 
+# loc_list_update_dttm TS This attribute is added here by Nova Biomedical. 
+This attribute is required if the device supports the 
+Nova Location List Topic. 
+This is the time the Device last successfully completed 
+the Nova Location List Topic. 
+# phys_update_dttm TS This attribute is added here by Nova Biomedical. 
+This attribute is required if the device supports the 
+Nova Physician List Topic. 
+This is the time the Device last successfully completed 
+the Nova Physician List Topic. 
+# reag_update_dttm TS This attribute is added here by Nova Biomedical. 
+This attribute is required if the device supports the 
+Nova Reagent List Topic. 
+This is the time the Device last successfully completed 
+the Nova Reagent List Topic. 
+# setup_update_dttm TS This attribute is added here by Nova Biomedical. 
+This attribute is required if the device supports the 
+Nova Setup Topic. 
+========== PAGE 27 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 27 of 117 
+ Attribute Type Description 
+This is the time the Device last successfully completed 
+the Nova Setup Topic. 
+6.3.2 Example 
+Following is an example of a Device Status Message from a Device to NovaNet. 
+ 
+<DST.R01> 
+  <HDR> 
+   <HDR.message_type V="DST.R01" SN="POCT1" />  
+   <HDR.control_id V="1019" />  
+   <HDR.version_id V="POCT1" />  
+   <HDR.creation_dttm V="2007-04-12T18:53:04.00-05:00" />  
+  </HDR> 
+  <DST> 
+   <DST.status_dttm V="2007-04-12T18:53:04.00-05:00" />  
+   <DST.new_observations_qty V="0" />  
+   <DST.new_events_qty V="0" />  
+   <DST.condition_cd V="R" SN="POCT1" />  
+   <DST.observations_update_dttm V="2000-01-01T00:00:00.00-05:00" />  
+   <DST.operators_update_dttm V="2007-04-12T18:49:09-05:00" />  
+   <DST.events_update_dttm V="2007-04-12T18:49:08.00-05:00" />  
+   <DST.patients_update_dttm V="2007-04-12T18:49:09-05:00" />  
+   <DST.setup_update_dttm V="2007-04-12T18:49:07-05:00" />  
+   <DST.phys_update_dttm V="2007-04-12T18:49:10-05:00" />  
+   <DST.reag_update_dttm V="2000-01-01T00:00:00.00-05:00" />  
+   <DST.loc_list_update_dttm V="2007-04-12T18:49:08-05:00" />  
+  </DST> 
+</DST.R01> 
+6.3.3 Example 
+Following is an example of a Device Status Message from NovaNet to a Third Party Result Server. 
+ 
+<DST.R01> 
+<HDR> 
+<HDR.control_id V="4001" />  
+<HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-02-22T15:33:21-05:00" />  
+</HDR> 
+<DST> 
+<DST.status_dttm V="2010-02-22T15:33:21-05:00" />  
+<DST.new_observations_qty V="1" />  
+<DST.condition_cd V="R" />  
+<DST.patients_update_dttm V="2010-02-22T15:33:21-05:00" />  
+<DST.operators_update_dttm V="2010-02-22T15:33:21-05:00" />  
+</DST> 
+</DST.R01> 
+ 
+ 
+========== PAGE 28 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 28 of 117 
+ 
+6.3.4 Example 
+Following is an example of a Device Status Message from a NovaNet to a Third Party Operator List 
+Server. 
+ 
+<DST.R01> 
+<HDR> 
+<HDR.control_id V="4001" />  
+<HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-02-22T15:43:21-05:00" />  
+</HDR> 
+<DST> 
+<DST.status_dttm V="2010-02-22T15:43:21-05:00" />  
+<DST.new_observations_qty V="0" />  
+<DST.condition_cd V="R" />  
+<DST.patients_update_dttm V="2010-02-22T15:43:21-05:00" />  
+<DST.operators_update_dttm V="2010-02-19T17:52:18-05:00" />  
+</DST> 
+ 
+========== PAGE 29 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 29 of 117 
+ 
+6.4 Observations Message (OBS.R01) - Patient Related Results 
+The Patient-related Observation message reports patient results. The type of this message is 
+OBS.R01. 
+ 
+Header
+Service(1…*)
+Patient
+Observation(1…*)
+Note(0…*)
+Operator(0...1)
+Order(0...1)
+Specimen(0...1)
+Reagent(0…*)
+Note(0…*)
+ 
+Figure 4 - Patient-related Observation Message Model 
+========== PAGE 30 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 30 of 117 
+6.4.1 Service Object (SVC) 
+The Service object is a component of the Observations message. For the device, each service object 
+represents one test sample. The following table describes the attributes that are supported by the 
+device. 
+Table 9 - Service Object Attributes 
+ Attribute Type Description 
++ role_cd CS Refer to the POCT1 standard. 
+# observation_dttm TS Refer to the POCT1 standard. 
+- status_cd CS Refer to the POCT1 standard. 
+“NRM”: default. The results were obtained under normal 
+conditions. 
+“OVR”: If any one of the following conditions exists: 
+• There was a supervisor id assigned to the test results. 
+• At least one of the test results was obtained while the 
+device was out of QC. 
+ 
+6.4.1.1 Patient Object (PT) 
+There shall be one Patient Object assigned to each Service Object. The following table describes the 
+attributes that are supported by the device. All attributes have the data types specified in the POCT1 
+standard. 
+Table 10 - Patient Object Attributes - Patient Observation Message 
+ Attribute Type Description 
++ patient_id ST If the sample identifier type is patient id, patient MRN number, 
+or patient account number, this attribute shall contain the 
+patient id, the patient MRN number, or the patient account 
+number respectively. 
+ 
+This attribute shall contain “UNKNOWN” if the sample id is 
+an accession number. 
+# location ST This attribute shall contai n the name of the facility and location 
+at the time the sample was drawn. The format of this string is: 
+facility^location, where facility is the name of the 
+facility, and location is the name of a location within that 
+facility. 
+ 
+========== PAGE 31 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 31 of 117 
+ 
+6.4.1.2 Observation Object (OBS) 
+The following table describes the attributes that are supported by the device. 
+Table 11 - Patient-related Observation Object 
+ Attribute Type Description 
++ observation_id CE The test name of the result. 
+ 
+This attribute shall contain either a test name that is 
+recognized by the device (“Glu”, “Creat”, etc…) or a test 
+code with the name of the coding system (“2314-6”, 
+“CRESS”). 
+ 
+• If a test name is sent, the test name shall be sent in 
+the “V” attribute. For example: 
+•  
+<OBS.observation_id V=”Glu” /> 
+<OBS.observation_id V=”Creat” /> 
+ 
+• If a test code is sent, the test code shall be sent in the 
+“V” attribute, the test’s display name shall be sent in 
+the “DN” attribute, the name of the coding system 
+shall be sent in the “SN” attribute. For example: 
+ 
+ <OBS.observation_id V=”2341-6” DN=”Glu” SN=”LN”/> 
+ <OBS.observation_id V=”CRESS” DN=”Creat” SN=”NOVABIO”/>
+- value PQ The observation result, if expressed quantitatively. For 
+example: 
+      <OBS.value V=”85” U=”mg/dL” /> 
+ 
+• If no value could be obtained because the user 
+canceled the test before completion, the “NULL” 
+attribute shall be used with the value of “NI”. 
+            Example: 
+ 
+            <OBS.value NULL=”NI” /> 
+- qualitative_value CV The observation result, if expressed qualitatively. 
++ method_cd CS Refer to the POCT1 standard 
+- status_cd CS Refer to the POCT1 standard 
+- interpretation_cd CS Refe r to the POCT1 standard 
+- normal_lo-hi_limit IVL<PQ> Refer to the POCT1 standard 
+- critical_lo-hi_limit IVL<PQ> Refer to the POCT1 standard 
+ 
+6.4.1.2.1 Note Object (NTE) – GFR Data Items 
+========== PAGE 32 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 32 of 117 
+• If the observation object contains a GFR result, the data items that were used in the 
+calculation of the GFR result shall be sent in one Note Object. This Note object will be a 
+child object of the observation object. 
+ 
+• The GFR data items include: 
+o The patient age or the patient age range. 
+o The patient gender. 
+o The patient ethnicity (black, japanese or non-black) 
+o The patient weight. 
+o The patient height. 
+• The GFR data items shall be included in the “V” attribute of the “NTE.text” attribute. 
+Following is the format of the Note Object that contains the GFR data items: 
+ 
+<NTE> 
+<NTE.text 
+V=”PAT_AGE=value ^PAT_AGE_RANGE=value^PAT_SEX=value 
+^PAT_ETHNICITY=value ^PAT_WEIGHT=value ^PAT_HEIGHT=value” /> 
+</NTE.text> 
+</NTE> 
+ 
+• The data items are separated by the caret character “^”. Each data item shall have the 
+format: 
+name=value 
+• Depend on the calculation method of GFR, certain data items may not be applicable. In that 
+case, the value of the data item shall be NA for not applicable. For example, if patient weight 
+is not applicable, it will be transmitted as: 
+PAT_WEIGHT=NA. 
+• If a data item has a value, the format of the value is dependent on the data item. The 
+following table describes the formats of the data items. 
+Table 12 - Data Items Used In The Calculation Of GFR 
+Name Value 
+PAT_AGE Contains the patient age. This value shall be numeric and the unit is days 
+PAT_AGE_RANGE The Patient Age Range, which wa s used to select the K constant in the 
+Schwartz equation. 
+Example: Male 13-18 Yr 
+PAT_SEX Contains the patient gender. This value shall be one of the values from 
+table 43 of the POCT1-A DML specification 
+PAT_ETHNICITY Value shall be either: 
+• B: for black 
+• NB: for non-black 
+• JP: for Japanese 
+PAT_WEIGHT Contains the patie nt weight. The format of this data item shall be: 
+PAT_WEIGHT=weight, unit 
+where: 
+    weight:  the patient’s s weight 
+    unit:       the unit of weight. 
+========== PAGE 33 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 33 of 117 
+PAT_HEIGHT Contains the patient height. The format of this data item shall be: 
+PAT_HEIGHT=height, unit 
+where: 
+    height: the patient’s height 
+    unit:     the unit of height. 
+ 
+• Following is an example of an Observation object that contains a GFR result. 
+ 
+- <OBS> 
+  <OBS.observation_id V="CREGFR" DN="eGFR" 
+SN="NOVABIO" />  
+  <OBS.value V="42" U="mL/min/1.73 m2" />  
+  <OBS.method_cd V="C" />  
+  <OBS.status_cd V="A" />  
+  <OBS.interpretation_cd V="null" />  
+- <NTE> 
+  <NTE.text 
+V="PAT_AGE=25^PAT_AGE_RANGE=NA^PAT_SEX
+=M^PAT_ETHNICITY=NB^PAT_WEIGHT=NA^PAT
+_HEIGHT=NA" />  
+  </NTE> 
+  </OBS> 
+ 
+< 
+6.4.1.3 Operator Object (OPR) 
+The following table describes the attributes that are supported by the device. 
+Table 13 - Operator Object Attributes - Patient Observation Message 
+ Attribute Type Description 
++ operator_id ST The unique identifie r for the operator of the Device. 
+If there was a supervisor override, the Supervisor ID will be 
+concatenated to the Operator ID in the following format: 
+operator_id^supervisor_id 
+where: 
+operator_id: the operator id string. 
+supervisor_id: the supervisor id string. 
+ 
+6.4.1.4 Order Object (ODR) 
+An Order Object is only sent to NovaNet or the Result Server/LIS/HIS if any one of the following 
+conditions exists: 
+• The sample is identified by an accession number 
+• The sample has an ordering physician. 
+• The sample is a manual test 
+ 
+The following table describes the attributes that are supported by the device. 
+========== PAGE 34 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 34 of 117 
+ 
+Table 14 - Order Object Attributes  - Patient Observation Message 
+ Attribute Type Description 
++ universal_service_id CE • If the sample is a manual test, this attribute will 
+contain the name of the manual test. 
+• If the sample is NOT a manual test, this attribute 
+will contain “CHEM”. For more details on 
+manual test, see section “Manual Test” below. 
+- ordering_provider_id ST If the sample has an ordering physic ian, this attribute 
+contains the identifier of the ordering physician. 
+- order_id CV If the sample is  identified by an accession number, 
+this attribute contains the accession number. 
+ 
+6.4.1.5 Specimen Object (SPC) 
+One Specimen Object shall be sent to NovaNet or the Result Server/LIS/HIS. 
+The specimen object shall contain the time the sample was taken and the type of the sample. 
+The following table describes the attributes that are supported by the device. 
+Table 15 - Specimen Object Attributes 
+ Attribute Type Description 
++ specimen_dttm TS The date and time the sample was taken 
+- specimen_id CV The code identifying the specimen. 
+- type_cd CE The sample type. For a list of possible values, please refer to the 
+Specimen Object documentation in the POCT1 standard. 
+ 
+========== PAGE 35 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 35 of 117 
+ 
+6.4.1.6 Reagent Object (RGT) 
+The device shall send one Reagent Object, which contains information about the Test Strip used in 
+the testing of the sample. 
+ 
+The following table describes the attributes that are supported by the device.  
+ 
+ Attribute Description 
++ name The lot name. 
+For the device, a test strip lot has no lot name. Therefore, 
+an empty string shall be sent 
+The text node of this attribute shall contain a string that 
+specifies the lot type. The format of this string is: 
+TY=reagent_type 
+where reagent_type can be one of the following values: 
+TS:      Test Strip 
+QC:     Control solution lot 
+LN:     Linearity lot 
+PRO:      Proficiency lot 
+RG:     Reagent 
+MT_TS: Manual Test Card/strip Lot 
+MT_QC: Manual Test Control Lot 
+MT_DE: Manual Test Developer Lot 
+ 
+Example: 
+<RGT.name V=””>TY=TS< /RGT.name > 
++ lot_number The lot number. For the device, it is the test strip lot 
+number 
++ expiration_date The expiration date of the lot. 
+ 
+6.4.1.7 Note Object (NTE) 
+The device shall send Note Objects as child elements of the Service Object to send information that 
+are associated with the sample (the service object). The device shall use Note Objects to send the 
+following information about the sample: 
+• Comments of the sample 
+• Status flags of the IDs in the sample. 
+• The type of the sample id (patient id, accession number…) 
+• Diagnosis code of the sample. 
+• Whether the results of the sample were obtained under tight glycemic control. 
+========== PAGE 36 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 36 of 117 
+6.4.1.7.1 Comments 
+There may be one or more comments associated with the sample. The device uses Note Objects to 
+send the comments to NovaNet or the Result Server/LIS/HIS. Each Note Object represents one 
+comment. 
+ 
+Following is the format of a Note Object that contains a comment. 
+ 
+<NTE> 
+   <NTE.text V=” comment_text”>TY=comment_type^CH=bool_flag^FL=bool_flag</NTE.text > 
+</NTE> 
+ 
+where: 
+ comment_text : the comment text 
+ TY:  keyword for the comment type 
+ comment_type : The comment type. Valid values are 
+ C:  this note object represents a comment 
+ E: this note object represents an error associated with the sample. 
+ CH: Keyword for the chartable flag 
+ bool_flag : 0 to disable the chartable flag, 1 to enable. 
+ FL: Keyword for the flaggable flag 
+ bool_flag : 0 to disable the flaggable flag, 1 to enable. 
+ 
+Example
+: 
+Following is an example of a comment with the comment text “Out of range”. The chartable flag is 
+enabled, and the flaggable flag is disabled. 
+ 
+<NTE> 
+<NTE.text V=”Out of range”>TY=C^CH=1^FL=0</ NTE.text > 
+</NTE>
+ 
+ 
+6.4.1.7.1.1 ID flags of the IDs in the sample 
+Each sample shall send one Note Object that contains the flags of the following IDs in the sample: 
+• Operator ID. 
+• Supervisor ID. 
+• Sample ID. 
+• Physician ID. 
+ 
+Following is the format of the Note Object: 
+ 
+<NTE> 
+<NTE.text V=”ID FLAGS”> 
+ OPR_ID= FLAG 1|…|FLAG N ^ 
+ SPVR_ID= FLAG 1|…|FLAG N ^ 
+ SMPL_ID= FLAG 1|…|FLAG N ^ 
+ PHYS_ID= FLAG 1|…|FLAG N  
+</NTE.text> 
+========== PAGE 37 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 37 of 117 
+</NTE> 
+ 
+• ”ID FLAGS” in the V attribute of “NTE.text” identifies that this Note Object is transferring 
+the flags of the IDs in the sample. 
+• OPR_ID, SPVR_ID, SMPL_ID, PHYS_ID identifies the ID flags of the Operator ID, the 
+Supervisor ID, the Sample ID, and the Physician ID respectively. 
+• The flags of the different IDs are separated by the “^” character. 
+• For a specific ID if there are more than one flags, the flags are separated by the “|” character. 
+FLAG1 through FLAGN represents the combination of the flags. Valid values for the flags 
+are: 
+o DONT_CARE 
+o ENTERED_TEXT 
+o SCANNED_TEXT 
+o IN_LIST 
+o NOT_IN_LIST 
+o NEW_ID 
+o DOWN_TIME 
+Example: 
+ 
+<NTE> 
+<NTE.text V=”ID FLAGS”> 
+OPR_ID=IN_LIST^ 
+  SPVR_ID=ENTERED_TEXT|NOT_IN_LIST^ 
+  SMPL_ID= ENTERED_TEXT|NOT_IN_LIST |DOWN_TIME^ 
+  PHYS_ID=IN_LIST 
+</NTE.text> 
+</NTE>
+ 
+ 
+6.4.1.7.2 Sample ID Type 
+• One Note object shall be used to send the type of the sample id to NovaNet or the Result 
+Server/LIS/HIS. 
+• Following is the format of the Note Object 
+ 
+<NTE.text V="SAMPLE ID TYPE">sample_id_type</NTE.text> 
+ 
+• The V attribute shall contain “SAMPLE ID TYPE” 
+• The text node of the “NTE.text” attribute shall contain the sample id type. Valid values are: 
+o PATID:  Sample id is patient id 
+o MRN:  Sample id is MRN number 
+o ACCT:  Sample id is patient account number.  
+ 
+6.4.1.7.3 Diagnosis Code 
+If a diagnosis code was assigned to the sample, a Note Object shall be used to send the diagnosis 
+code to NovaNet or the Result Server/LIS/HIS. 
+ 
+Following is the format of the Note Object: 
+========== PAGE 38 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 38 of 117 
+ 
+<NTE> 
+ <NTE.text V=”DIAGCODE”> diagnosis_code</NTE.text> 
+</NTE> 
+ 
+The “V” attribute of “NTE.text” shall contain “DIAGCODE” to identify that this Note Object is 
+transferring the diagnosis code of the sample. 
+ 
+The text node shall contain the diagnosis code. 
+ 
+Example: 
+ 
+<NTE> 
+ <NTE.text V=”DIAGCODE”>250.1</NTE.text> 
+</NTE>
+ 
+ 
+6.4.1.7.4 Tight Glycemic Control 
+One Note object shall be sent to indicate if the results of the sample were obtained under tight 
+glycemic control. 
+ 
+Following is the format of the Note Object that contains the Tight Glycemic Control flag: 
+ 
+<NTE> 
+ <NTE.text V=”TGC FLAG”>1</NTE.text> 
+</NTE>
+ 
+ 
+The “V” attribute of “NTE.text” shall contain “TGC FLAG” to identify that this Note Object is 
+transferring the TGC flag of the sample 
+ 
+The text node of “NTE.text” shall contain either 0 or 1. A “1” indicates that the results were obtained 
+under tight glycemic control. A zero indicates otherwise. 
+ 
+6.4.2 Example 
+Following is an example of a Patient-related Observation Message from Device to NovaNet or from 
+NovaNet to a Third Party Result Server. 
+ 
+<OBS.R01> 
+ <HDR> 
+  <HDR.message_type V="OBS.R01"/> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+ <SVC> 
+  <SVC.role_cd V="OBS"/> 
+  <SVC.observation_dttm V="2001-11-01T16:29:54-05:00"/> 
+<SVC.status_cd V="NRM" /> 
+========== PAGE 39 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 39 of 117 
+  <PT> 
+   <PT.patient_id V="PT222-55-7777"/> 
+   <PT.location V="Cambridge Hosp^ICU-4"/> 
+   <OBS> 
+    <OBS.observation_id V="2341-6" DN="Glu" SN="LN" /> 
+    <OBS.value V="145" U="mg/dL"/> 
+    <OBS.method_cd V="M"/> 
+    <OBS.status_cd V="A"/> 
+    <OBS.interpretation_cd V="HH" /> 
+<OBS.normal_lo-hi_limit V="[80;120]" U="mg/dL"/>    <OBS.critical_lo-
+hi_limit V="[60;140]" U="mg/dL"/> 
+   </OBS> 
+  </PT> 
+  <OPR> 
+   <OPR.operator_id V="OP777-88-9999"/> 
+  </OPR> 
+<ORD> 
+<ORD.universal_service_id V="CHEM" />  
+<ORD.ordering_provider_id V="120" />  
+</ORD> 
+  <SPC> 
+   <SPC.specimen_dttm V="2001-11-01T16:27:00-05:00"/> 
+   <SPC.type_cd V="BLD"/> 
+  </SPC> 
+<NTE> 
+<NTE.text V=”New strip”>TY=C^CH=1^FL=0</NTE.text> 
+</NTE> 
+<NTE> 
+<NTE.text V=”ID FLAGS”> 
+   OPR_ID=IN_LIST^ 
+   SPVR_ID=ENTERED_TEXT|NOT_IN_LIST^ 
+   SMPL_ID=ENTERED_TEXT|NOT_IN_LIST |DOWN_TIME^ 
+   PHYS_ID=IN_LIST 
+ </NTE.text> 
+</NTE> 
+<NTE> 
+ <NTE.text V=”SAMPLE ID TYPE”>MRN</NTE.text> 
+</NTE> 
+<NTE> 
+<NTE.text V=”TGC FLAG”>1</NTE.text> 
+</NTE> 
+<NTE> 
+<NTE.text V=”DIAGCODE”>250.01</NTE.text> 
+</NTE> 
+ </SVC> 
+</OBS.R01> 
+========== PAGE 40 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 40 of 117 
+ 
+6.5 Observations Message (OBS.R02) - Non-Patient Related Results 
+The Non-patient related  Observation message reports non-patient results. The type of this message 
+is OBS.R02. 
+ 
+Figure 5 - Non-patient related Observation Message Model 
+Header
+Service(1…*)
+Control/Calibration
+Observation(1…*)
+Note(0…*)
+Operator(0...1)
+Reagent(0…*)
+Note(0…*)
+ 
+========== PAGE 41 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 41 of 117 
+ 
+6.5.1 Service Object (SVC) 
+The Service object is a component of the Observations message. For the device, each service object 
+represents one test sample. The following table describes the attributes that are supported by the 
+device.  
+Table 16 - Service Object Attributes 
+ Attribute Type Description 
++ role_cd CS Refer to the POCT1 standard. 
++ observation_dttm TS Refer to the POCT1 standard. 
+- status_cd CS Refer to the POCT1 standard. 
+ 
+“NRM”: 
+Default. The results were obtained under normal conditions. 
+ 
+“OVR”: 
+If there was a supervisor id assigned to the sample. 
+If the sample is a proficiency sample or a linearity sample and 
+the test results were obtained while the device was out of QC. 
+ 
+6.5.1.1 Control/Calibration Object (CTC) 
+The Control/Calibration object contains identification information for Calibration tests, Quality 
+Control tests, Proficiency tests, Linearity tests, and Correlation tests. 
+ 
+The following table describes the attributes that are supported by the device. All attributes have the 
+data types specified in the POCT1 standard. 
+Table 17 - Control/Calbration Object Attributes 
+ Attribute Type Description 
++ name ST This attribute shall contain th e lot number since Quality Control lot, 
+Proficiency lot and Linearity lot do not have lot name. 
+# lot_number CS Refer to the POCT1 standard. The lot number 
+# expiration_date TS Refer to the POCT1 st andard. The expiration date of the lot. 
+# level_cd CV Refer to the POCT1 standard. The lot level. 
+ 
+6.5.1.1.1 Observation Object (OBS) 
+The Observation object is a component of the Observations message. 
+The following table describes the attributes that are supported by the device. 
+========== PAGE 42 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 42 of 117 
+ 
+Table 18 - Non-patient related Observation Object 
+ Attribute Type Description 
++ observation_id CE The test name of the result. 
+ 
+This attribute shall contain either a test name that is 
+recognized by the device (“Glu”, “Creat”, etc…) or a test 
+code with the name of the coding system (“2314-6”, 
+“CRESS”). 
+ 
+• If a test name is sent, the test name shall be sent in 
+the “V” attribute. For example: 
+ 
+<OBS.observation_id V=”Glu”/> 
+<OBS.observation_id V=”Creat”/> 
+ 
+• If a test code is sent, the test code shall be sent in the 
+“V” attribute. The name of the coding system shall 
+be sent in the “SN” attribute. For example: 
+ 
+<OBS.observation_id V=”2341-6” DN=”Glu” SN=”LN”/> 
+<OBS.observation_id V=”CRESS” DN=”Creat” SN=”NOVABIO”/> 
+- value PQ The observation result , if expressed quantitatively. 
+- qualitative_value CV The observation result, if expressed qualitatively. 
++ method_cd CS Refer to the POCT1 standard 
+- status_cd CS Refer to the POCT1 standard 
+- interpretation_cd CS Refe r to the POCT1 standard 
+- normal_lo-hi_limit IVL<PQ> Refer to the POCT1 standard 
+ 
+6.5.1.2 Operator Object (OPR) 
+Refer to the Operator Object section in the patient-related Observation Message. 
+6.5.1.3 Reagent Object (RGT) 
+Refer to the Reagent Object section in the patient-related Observation Message. 
+6.5.1.4 Note Object (NTE) 
+The device shall send Note Objects under the Service Object to send additional information 
+associated with the sample (the service object). The device shall use Note Objects to send the 
+following information: 
+• Comments 
+• Status flags of the IDs in the sample. 
+ 
+For the comments, refer to the Comments section in the Note Object section of the patient-related 
+Observation Message. 
+========== PAGE 43 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 43 of 117 
+ 
+For the Status Flags of the IDs, refer to the “ID flags of the IDs in the sample” section of the patient-
+related Observation message. 
+6.5.2 Example 
+<OBS.R02> 
+ <HDR> 
+  <HDR.message_type V="OBS.R02" SN="POCT1" SV="1" /> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V=" 2010-02-22T17:09:02.00-05:00 "/> 
+ </HDR> 
+ <SVC> 
+  <SVC.role_cd V="LQC"/> 
+  <SVC.observation_dttm V=" 2010-02-22T17:08:29.00-05:00 "/> 
+  <SVC.status_cd V="NRM" /> 
+<CTC> 
+   <CTC.name V=" 0410010242"/> 
+   <CTC.lot_number V=" 0410010242"/> 
+   <CTC.expiration_date V=" 2012-01-31T00:00:00.00-05:00"/> 
+   <CTC.level_cd V="2" SN="POCT1" SV="1" /> 
+   <OBS> 
+    <OBS.observation_id V="2341-6" DN="Glu" SN="LN" /> 
+    <OBS.value V="85" U="mg/dL"/> 
+    <OBS.method_cd V="M"/> 
+    <OBS.status_cd V="A"/> 
+    <OBS.interpretation_cd V="N"/> 
+    <OBS.normal_lo-hi_limit V="[80;120]" U="mg/dL"/> 
+   </OBS> 
+  </CTC> 
+<OPR> 
+   <OPR.operator_id V="OP777-88-9999"/> 
+  </OPR> 
+<RGT> 
+<RGT.name V="">TY=TS</RGT.name>  
+<RGT.lot_number V="0310010249" />  
+<RGT.expiration_date V="2012-01-31T00:00:00.00-05:00" />  
+</RGT> 
+<NTE> 
+<NTE.text V=”New strip”>TY=C^CH=1^FL=0</NTE.text> 
+</NTE> 
+<NTE> 
+  <NTE.text V=”ID FLAGS”> 
+   OPR_ID=IN_LIST^ 
+   SPVR_ID=ENTERED_TEXT|NOT_IN_LIST^ 
+   SMPL_ID= ENTERED_TEXT|NOT_IN_LIST |DOWN_TIME^ 
+   PHYS_ID=DONT_CARE 
+  </NTE.text> 
+</NTE> 
+ </SVC> 
+</OBS.R02> 
+========== PAGE 44 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 44 of 117 
+6.6 Proficiency Results 
+• A sample with proficiency results shall be transmitted using the Non-patient Observations 
+Message (OBS.R02) 
+• The “SVC.role_cd” attribute of the Service object shall contain “PRF” to indicate that the 
+Service object contains proficiency results. 
+• The “CTC.lot_number” attribute of the Control/Calibration object shall contain the 
+Proficiency lot. Since the “CTC.name” attribute is a required attribute and there is no lot 
+name, this attribute shall be filled with the Proficiency lot. 
+6.7 Manual Test Results 
+This feature is limited to meters that report “NOVA.MANUAL_TEST” as a supported topic, see section 
+“Device Static Capabilities Object (DSCP)” elsewhere in this document. The Meter limits the max 
+number of manual patient test panels to 10 and the max number of manual QC tests to 30 
+• Manual Test Results shall be transmitted using the Patient-related Observations Message 
+(OBS.R01), and QC-related Observation Message (OBS.R02) 
+•  
+• A manual Test can consist of one or more subtests 
+• Each manual test result shall be sent to NovaNet or the Result Server/LIS/HIS as an 
+observation object in the Patient or QC Observation Message. 
+• A manual test can be one of the following types: 
+o Numerical: the test result is a numeric value with optional units of measure 
+o Select List: the test result is selected from a list of pre-defined values. 
+o Text: the user enters the test result as text. 
+ 
+The following paragraphs describe how the result of a manual test, Patient, internal Control or 
+External Control is inserted into the observation object for each of the above manual test types. 
+6.7.1 Numerical 
+• The manual test result is a numerical value with optional units of measure 
+• The OBS.value field shall contain the manual test result. 
+• The OBS.interpretation_cd field shall contain one of the following interpretation codes 
+from table 38 of the POCT1-A DML specification: 
+o LL: Critical Low 
+o L: Abnormal Low 
+o H: Abnormal High 
+o HH: Critical High 
+o N: Normal 
+o A: Abnormal 
+o AA: Very Abnormal 
+• Following is an example of a manual test that has numerical result: 
+<OBS> 
+<OBS.observation_id V="1234-45" DN="pH" SN="NB" />  
+<OBS.value V="7.500" />  
+<OBS.method_cd V="I" />  
+<OBS.status_cd V="A" />  
+========== PAGE 45 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 45 of 117 
+<OBS.interpretation_cd V="L" />  
+<OBS.normal_lo-hi_limit V="[7.600;7.800]" />  
+<OBS.critical_lo-hi_limit V="[7.400;7.900]" />  
+</OBS> 
+6.7.2  Select List 
+• The manual test result is selected from a list of pre-defined values. 
+• The manual test result shall be treated as not a numerical value. 
+• The OBS.qualitative_value field shall contain the manual test result. 
+• The OBS.interpretation_cd field shall contain one of the following interpretation codes 
+from table 38 of the POCT1-A DML specification: 
+o LL: Critical Low 
+o L: Abnormal Low 
+o H: Abnormal High 
+o HH: Critical High 
+o N: Normal 
+o A: Abnormal 
+o AA: Very Abnormal 
+• Following is an example of a positive pregnancy test result. The user selected “Positive” out 
+of two possible choices: Negative or Positive. 
+<OBS> 
+<OBS.observation_id V="1234-56" DN="Pregnancy" SN="NB" />  
+<OBS.qualitative_value V="Negative" SN="NOVABIO" SV="1.0" />  
+<OBS.method_cd V="I" />  
+<OBS.status_cd V="A" />  
+<OBS.interpretation_cd V="N" />  
+</OBS> 
+6.7.3  Text 
+• The test result was entered by the user as text. 
+• The manual test result shall be treated as not a numerical value. 
+• The OBS.qualitative_value field shall contain the manual test result. 
+• The OBS.interpretation_cd field shall contain one of the following interpretation codes 
+from table 38 of the POCT1-A DML specification: 
+o N: Normal 
+o A: Abnormal 
+If an interpretation code was not entered by the user, this field shall be transmitted as null. 
+ 
+• Following is an example of a manual test result that has the text result type: 
+ 
+<OBS> 
+<OBS.observation_id V="1234-56" DN="Pat weight" SN="NB" />  
+<OBS.qualitative_value V="195 KG" SN="NOVABIO" SV="1.0" />  
+<OBS.method_cd V="I" />  
+<OBS.status_cd V="A" />  
+<OBS.interpretation_cd V="null" />  
+</OBS> 
+ 
+========== PAGE 46 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 46 of 117 
+ 
+6.7.4 Manual Test Panels 
+• For a manual multi test, the Order object (ORD) shall be used to send the name of the 
+manual test to NovaNet or the Result Server/LIS/HIS. 
+o The attribute ORD.universal_service_id shall contain the name of the manual test 
+panel. Example: 
+ 
+<ORD> 
+<ORD.universal_service_id V=”Urinalysis”/> 
+</ORD> 
+ 
+• Each sub-test of the test panel shall be sent as an observation object. Depend on the type of 
+the sub-test (numeric, select list, or text), the observation object shall be formatted as 
+specified in the Single Manual Test section. 
+Following is an example of a Patient Observation Message of a Urinalysis test: 
+<OBS.R01> 
+<HDR> 
+<HDR.message_type V="OBS.R01" SN="POCT1" SV="1" />  
+<HDR.control_id V="7406" />  
+<HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-02-22T17:48:10.00-05:00" />  
+</HDR> 
+<SVC> 
+<SVC.role_cd V="OBS" />  
+<SVC.observation_dttm V="2010-02-22T17:47:21.00-05:00" />  
+<SVC.status_cd V="NRM" />  
+<PT> 
+<PT.patient_id V="898989" />  
+<PT.location V="MGH^ICU" />  
+    < OBS> 
+    < OBS.observation_id V="123-456" DN="Color" SN="123" /> 
+<OBS.qualitative_value V="Colorless" SN="NOVABIO" SV="1.0" /> 
+<OBS.method_cd V=“I”/> 
+<OBS.status_cd V="A" /> 
+<OBS.interpretation_cd V=“LL”/> 
+ 
+   < / O B S >  
+<OBS.observation_id V="111-222" DN="Appearance" SN="123" />  
+<OBS.qualitative_value V="Cloudy" SN="NOVABIO" SV="1.0" />  
+<OBS.method_cd V="I" />  
+<OBS.status_cd V="A" />  
+<OBS.interpretation_cd V="A" />  
+</OBS> 
+<OBS> 
+<OB
+S.observation_id V="111-333" DN="S Gravity" SN="123" />  
+<OBS.value V="1.400" />  
+<OBS.method_cd V="I" />  
+<OBS.status_cd V="A" />  
+<OBS.interpretation_cd V="H" />  
+<OBS.normal_lo-hi_limit V="[1.000;1.100]" />  
+<OBS.critical_lo-hi_limit V="[0.700;1.500]" />  
+========== PAGE 47 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 47 of 117 
+ 
+</OBS> 
+<OBS> 
+<OBS.observation_id V="111-444" DN="Leukocytes" SN="123" />  
+<OBS.qualitative_value V="Trace" SN="NOVABIO" SV="1.0" />  
+<OBS.method_cd V="I" />  
+<OBS.status_cd V="A" />  
+<OBS.interpretation_cd V="N" /> 
+</OBS> 
+  </PT> 
+  <OPR> 
+   <OPR.operator_id V="User9876"/> 
+   <  
+  </OPR> 
+  <ORD> 
+   <ORD.universal_service_id V="Urinalysis"/> 
+  </ORD> 
+RGT> 
+ <RGT.name V="">TY=MT_TS</RGT.name>  
+ <RGT.lot_number V="08539632" />  
+ <RGT.expiration_date V="2012-01-31T00:00:00.00-05:00" />  
+</RGT> 
+ 
+  <NTE> 
+   <NTE.text V="Dr. G. John notified of result"/> 
+  </NTE> 
+ </SVC> 
+</OBS.R01> 
+6.7.5 Lot numbers entered for a manual test result 
+•  
+• Lot numbers, Card/Strip/Kit, QC, Developer solutions entered for a manual test shall be 
+reported in the reagent object 
+• Following is an example of a Pregnancy QC test result with a lot number associated with the 
+test strip and QC material: 
+ 
+RGT> 
+ <RGT.name V="Pregnancy">TY=MT_TS</RGT.name>  
+ <RGT.lot_number V="08539632" />  
+ <RGT.expiration_date V="2012-01-31T00:00:00.00-05:00" />  
+</RGT> 
+RGT> 
+ <RGT.name V="Pregnancy">TY=MT_QC</RGT.name>  
+ <RGT.lot_number V="1000725" />  
+ <RGT.expiration_date V="2012-01-31T00:00:00.00-05:00" />  
+</RGT> 
+========== PAGE 48 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 48 of 117 
+ 
+6.7.6 Internal Control result entered for a m anual test result 
+• Each manual test result may be associated with one or more internal control results. 
+• Internal control test results can be defined as a Numeric, Text or Select List type. Internal 
+Control interpretation shall not be supported. 
+• A Note object shall be used to send these internal control results. This Note object shall be a 
+child object of the observation object that carries the manual test result. 
+• Following is the format of the Note object: 
+<NTE> 
+  
+<NTE.text 
+V=”CONTROL_VALUE">NAME=qc_bar_name1^VALUE=qc_bar_resul</NTE.text><NTE.text 
+V=”CONTROL_VALUE">NAME=qc_bar_name2^VALUE=qc_bar_resul</NTE.text> 
+</NTE> 
+• “CONTROL_VALUE” in the V attribute of “NTE.text” identifies that the Note object 
+contains an internal control result. 
+• The CONTROL_VALUE result shall be contained in the VALUE component of “NTE.text”. 
+• The CONTROL_VALUE name shall be contained in the NAME component of “NTE.text”. 
+• Following is an example of a pH test result that has a QC result: 
+ 
+<OBS> 
+<OBS.observation_id V="1234-45" DN="pH" SN="NB" />  
+<OBS.value V="7.500" />  
+<OBS.method_cd V="I" />  
+<OBS.status_cd V="A" />  
+<OBS.interpretation_cd V="L" />  
+<OBS.normal_lo-hi_limit V="[7.600;7.800]" />  
+<OBS.critical_lo-hi_limit V="[7.400;7.900]" />  
+<NTE> 
+<NTE.text V="CONTROL_VALUE”>NAME=QC_Bar1^VALUE=PASS</NTE.text> 
+<NTE.text V="CONTROL_VALUE”>NAME=QC_Bar2^VALUE=PASS</NTE.text> 
+</NTE> 
+</OBS> 
+ 
+========== PAGE 49 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 49 of 117 
+ 
+6.8 Operator List message (OPL.R01, OPL.R02) 
+• The Operator List Message is a message of the Operator List Topic. 
+• The message type of the complete update message is OPL.R01. 
+• The message type of the incremetal update message is OPL.R02. 
+ 
+Figure 6 - Operator List Complete Update Message Model 
+ 
+ 
+ 
+ 
+Figure 7 - Operator List Incremental Update Message Model 
+ 
+========== PAGE 50 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 50 of 117 
+ 
+6.8.1 Update Action Object (UPD) 
+The Update Action Object is a component of the Incremental Update Operator List Message. The 
+device supports this object as specified in the POCT1 standard. 
+NOTE: Incremental List is used to Update, Add or Delete a subset of operators. Use 
+Incremental List ONLY when the number of changes is < 200.  
+6.8.2 Operator Object (OPR) 
+The following table describes the attributes that are supported by the device. 
+ 
+Table 19 - Operator Object Attributes 
+ Attribute Type Description 
++ operator_id ST The unique identifier for the operator. 
+ 
+Communication between NovaNet and Third Party:
+ 
+When this interface is being used by NovaNet to receive operators from 
+a third party, the text node shall be filled with the facility and location 
+to which the operator is being added or deleted, and the instrument type 
+of the device. See section 6.8.2.1 for details. 
+ 
+- name PN The operator name. 
+Name components, First, Last must be limited to 16 characters 
+ 
+6.8.2.1 Requirements of the text node of the “operator_id” attribute when  
+receiving operator information from third party 
+• When this interface is being used to receive operator list from a third party, the text node of 
+the “operator_id” attribute shall be filled with the facility, location, and instrument type. 
+Following is the format of the text node: 
+ 
+facility^location^inst_type 
+ 
+• facililty and location contains the facility and location to which the operator is 
+being inserted, updated or deleted. The facility and location information are required for all 
+operators in the incremental operator list and complete operator list. Following is an 
+example of a text node with facility, location and instrument type. 
+ 
+<OPR.operator_id V="OP1000">MGH^ICU^StatStrip</OPR.operator_id> 
+========== PAGE 51 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 51 of 117 
+ 
+• inst_type contains the instrument type of the device (example: StatStrip). 
+o The instrument type is not required for delete operator. The instrument type shall 
+be empty for a delete operator in the incremental operator list. Following is an 
+example of a text node with facility, location and empty instrument type. 
+ 
+<OPR.operator_id V="OP1000">MGH^ICU</OPR.operator_id> 
+ 
+o The instrument type is required for insert and update operator. 
+ The instrument type is required for insert and update operator objects in the 
+incremental operator list. 
+ The instrument type is required for all operators in the complete operator list. 
+6.8.3 Access Control Object (ACC) 
+The following table describes the attributes that are supported by the device. 
+ 
+Table 20 - Access Control Object Attributes 
+ Attribute Type Description 
++ method_cd SET(CV) Refer to the POCT1 standard. (Glu, Creat, Ket, Lac). MTE 
+shall be used to indicate operator certification for ALL 
+Manual Tests configured on a meter. 
+- password ED Refer to the POCT1 standard. 
+- active_date TS Refer to the POCT1 standard 
+- expiration_date TS Refer to the POCT1 standard 
+- permission_level_cd CV Nova Biomedical   overrides Table 10 of the POCT1 
+standard. See Table 21 below for details. 
+ 
+Table 21 - Access Control Permission Level Values 
+Code Value Description 
+1 SUPERVISOR Supervisor 
+2 ADMIN Nova Biomedical overrides the POCT1A (KEY OPERATOR) 
+3 TRUSTED USER Not supported. 
+4 USER Operator 
+5 SERVICE Not supported 
+6 TRAINING Not supported 
+========== PAGE 52 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 52 of 117 
+ 
+6.8.4 Note Object (NTE) 
+• The operator object may contain zero-or-one child note objects. 
+• One Note object may be used to send the operator message to the operator specified in the 
+operator object. An operator has only one active message at any time. 
+6.8.4.1 Note Object For Operator Message 
+• Following is the format of the Note object that is used to send an operator message: 
+ 
+<NTE> 
+<NTE.text V=”message”>message_created__datetime</NTE.text> 
+</NTE> 
+ 
+ message: the operator message 
+ message_created_datetime: the date and time that the message was created. This date and 
+time should have the TS data type. 
+ 
+Example of how to send an operator message using a Note object: 
+ 
+<NTE> 
+<NTE.text V=”Server is ready”>2007-01-01T16:29:54-05:00</NTE.text> 
+</NTE> 
+ 
+• When NovaNet wants to indicate to the device that an operator does not have any more 
+messages, NovaNet shall send a Note object with: 
+o An empty string in the “V” attribute of “NTE.text”. 
+o No Note Object. 
+ 
+Example of how to indicate that an operator has no more messages using a Note object: 
+ 
+<NTE> 
+<NTE.text V=””></NTE.text> 
+</NTE> 
+ 
+• The Operator Message Note Object must be a child object of the Operator Object. 
+ 
+ 
+ 
+========== PAGE 53 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 53 of 117 
+ 
+6.8.5 Example 
+Following is an example of a Complete Operator List Message from NovaNet to Device  
+<OPL.R01> 
+ <HDR> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+   <OPR> 
+<OPR.operator_id V="OP777-88-9999"/> 
+  <OPR.name V="Pat Operator"> 
+   <GIV V="Patrick"/> 
+   <FAM V="Operator"/> 
+  </OPR.name> 
+  <ACC> 
+ <ACC.method_cd V="Glu"/> 
+ <ACC.method_cd V="MTE" /> 
+ 
+ <ACC.permission_level V="1"/> 
+  </ACC> 
+<NTE> 
+   <NTE.text V=”Reset your meter”>2001-11-01T16:29:54-05:00 
+</NTE.text> 
+ </NTE> 
+ </OPR> 
+<OPR> 
+ <OPR.operator_id V="123456" />  
+ <OPR.name V="Marcus Welby"> 
+ <FAM V="Welby" />  
+ <GIV V="Marcus" />  
+  </OPR.name> 
+ <ACC> 
+ <ACC.method_cd V="MTE" />  
+  
+ <ACC.permission_level_cd V="4" />  
+ </ACC> 
+</OPR> 
+</OPL.R01> 
+ 
+========== PAGE 54 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 54 of 117 
+6.8.6 Example 
+Following is an example of a Complete Operator List Message from a Third Party Operator List 
+Server to NovaNet. 
+ 
+<OPL.R01> 
+ <HDR> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+   <OPR> 
+<OPR.operator_id V="OP777-88-9999">General Hospital^ICU^StatStrip 
+  <OPR.name V="Pat Operator"> 
+   <GIV V="Patrick"/> 
+   <FAM V="Operator"/> 
+  </OPR.name> 
+  <ACC> 
+ <ACC.method_cd V="Glu"/> 
+ <ACC.active_date V="2001-11-01T16:29:54-05:00"/> 
+ <ACC.expiration_date V="2008-11-01T16:29:54-05:00"/> 
+ <ACC.permission_level V="1"/> 
+  </ACC> 
+<NTE> 
+   <NTE.text V=”Reset your meter”>2001-11-01T16:29:54-05:00 
+</NTE.text> 
+ </NTE> 
+ </OPR> 
+<OPR> 
+ <OPR.operator_id V="123456">
+ General Hospital^ICU^StatStrip />  
+ <OPR.name V="Marcus Welby"> 
+ <FAM V="Welby" />  
+ <GIV V="Marcus" />  
+  </OPR.name> 
+ <ACC> 
+ <ACC.method_cd V="MTE" />  
+ <ACC.active_date V="2010-02-02T00:00:00-05:00" />  
+ <ACC.expiration_date V="2010-02-28T23:59:59-05:00" />  
+ <ACC.permission_level_cd V="4" />  
+ </ACC> 
+</OPR> 
+</OPL.R01> 
+ 
+Please note in the above example: 
+ 
+• The only difference between the above example (from a Third Party Operator 
+List Server to NovaNet) and the previous example (from NovaNet to a 
+device), is that the facility, location and instrument type fields are 
+required when coming from a Third Party Operator List Server.
+========== PAGE 55 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 55 of 117 
+ 
+6.8.7 Example 
+Following is an example of an Incremental Update Operator List Message from NovaNet to Device. 
+ 
+<OPL.R02> 
+ <HDR> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+   <UPD> 
+<UPD.action_cd V=”D”/>  
+<OPR> 
+ <OPR.operator_id V="OP000-00-0000"/> 
+</OPR> 
+ </UPD> 
+<UPD> 
+<UPD.action_cd V=”I”/> 
+<OPR> 
+  <OPR.operator_id V="OP777-88-9999"/> 
+  <OPR.name V="Pat Operator"> 
+   <GIV V="Patrick"/> 
+   <FAM V="Operator"/> 
+  </OPR.name> 
+  <ACC> 
+  <ACC.method_cd V="Glu"/> 
+   
+  <ACC.permission_level V="1"/> 
+  </ACC> 
+  <NTE> 
+    <NTE.text V=”Reset your meter”> 
+2001-11-01T16:29:54-05:00 
+</NTE.text> 
+  </NTE> 
+ </OPR> 
+ </UPD> 
+</OPL.R02> 
+========== PAGE 56 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 56 of 117 
+ 
+6.8.8 Example 
+Following is an example of an Incremental Update Operator List Message from a Third Party 
+Operator List Server to NovaNet. 
+ 
+<OPL.R02> 
+ <HDR> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+<UPD> 
+<UPD.action_cd V=”D”/> 
+<OPR> 
+  <OPR.operator_id V="OP000-00-0000"> 
+General Hospital^ER 
+</OPR.operator_id> 
+ </OPR> 
+ </UPD> 
+<UPD> 
+<UPD.action_cd V=”I”/> 
+<OPR> 
+<OPR.operator_id V="OP777-88-9999"/> 
+General Hospital^ER^StatStrip 
+</OPR.operator_id> 
+  <ACC> 
+  <ACC.method_cd V="Glu"/> 
+  <ACC.active_date V="2002-11-01T16:29:54-05:00"/> 
+  <ACC.expiration_date V="2018-11-01T16:29:54-05:00"/> 
+  <ACC.permission_level V="1"/> 
+  </ACC> 
+ </OPR> 
+<OPR> 
+<OPR.operator_id V="OP777-88-9999"/> 
+General Hospital^ER^StatStrip79 
+</OPR.operator_id> 
+  <ACC> 
+  <ACC.method_cd V="Glu"/> 
+  <ACC.active_date V="2009-06-01T16:29:54-05:00"/> 
+  <ACC.expiration_date V="2010-06-01T16:29:54-05:00"/> 
+  <ACC.permission_level V="4"/> 
+  </ACC> 
+ </OPR> 
+<OPR> 
+<OPR.operator_id V="OP777-88-9999"/> 
+General Hospital^ICU^StatStrip79 
+</OPR.operator_id> 
+  <ACC> 
+  <ACC.method_cd V="Ket"/> 
+  <ACC.active_date V="2009-08-01T16:29:54-05:00"/> 
+  <ACC.expiration_date V="2010-08-01T16:29:54-05:00"/> 
+  <ACC.permission_level V="4"/> 
+  </ACC> 
+ </OPR> 
+========== PAGE 57 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 57 of 117 
+ </UPD> 
+</OPL.R02> 
+ 
+Please note in the above example: 
+ 
+• The operator OP000-00-0000
+ is removed from location ER in General Hospital 
+for all device types for which she has certification. 
+• The instrument type field is optional and ignored for deletes. 
+• The operator OP777-88-9999 is granted three certifications: 
+o Level 1 for Glucose on StatStrip starting on 2002-11-01 
+o Level 4 for Glucose on StatStrip79 starting on 2009-06-01 
+o Level 4 for Ketone on StatStrip79 starting on 2009-08-01 
+• The operator OP777-88-9999 is authorized in two locations: 
+o ER in General Hospital 
+o ICU in General Hospital 
+• Every instrument and test that operator OP777-88-9999 is certified for in 
+location ER, they can also use in ICU and vice versa. 
+• Operator OP777-88-9999 has permission level 1 for glucose on StatStrip, 
+but he has permission level 4 for glucose and ketone on StatStrip79. It 
+would not be correct to grant him different permission levels for 
+different tests on the same device.  
+========== PAGE 58 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 58 of 117 
+•  
+6.9 Patient List message (PTL.R01, PTL.R02) 
+• The Patient List Message is a message of the Patient List Topic. 
+• The message type of the complete update message is PTL.R01. 
+• The message type of the incremetal update message is PTL.R02. 
+• The Patient List Topic shall adhere to the rules applied to the Update List Topics (Patient List 
+Topic) in the POCT1 standard, except for the addition of a NOTE segment herein used to 
+attach a ‘Physician’s Note that will appear in the patient’s demographics confirmation screen. 
+Omitting a note segment will cause any previously sent note to be cleared. 
+ 
+NOTE: Incremental List is used to Update, Add or Delete a subset of Patients. Use 
+Incremental List ONLY when the number of changes is < 200.  
+ 
+Figure 8 - Patient List Complete Update Message Model 
+ 
+ 
+Figure 9 - Patient List Incremental Update Message Model 
+Patient  (1…*)
+Header
+Update Action (1…*)
+Note  (0…1)
+ 
+6.9.1 Update Action Object (UPD) 
+The Update Action Object is a component of the Incremental Update Patient List Message. The 
+device supports this object as specified in the POCT1 standard. 
+6.9.2 Patient Object (PT) 
+The following table describes the attributes supported by the device: 
+========== PAGE 59 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 59 of 117 
+ 
+Table 22 - Patient Object Attributes 
+ Attribute Type Description 
++ patient_id ST Contains the uni que identifier for the Patient. 
+ 
+The text node of this attribute contains the type of the  
+patient id. 
+ 
+Valid types are: 
+PATID:     for Patient ID 
+MRN:        for Medical Record number 
+ACCTNO: for Account number 
+ 
+Example of MRN as patient id: 
+<PT.patient_id V="PT38485">MRN</PT.patient_id> 
+- location ST Contains the location of  the Patient. This attribute has the 
+following format: 
+facility^location^room^bed 
+ 
+facility:   the name of the facility 
+location: the name of the location 
+room:      the room number 
+bed:        the bed number. 
+- name PN The name of the Patient. Required by NovaNet 
+- birth_date TS The patient’s date of birth. 
+- gender_cd CS The patient’s gender. Fo r valid gender codes, refer to the 
+POCT1 standard. 
+ 
+Name components, First, Last, Middle must be limited to 16 characters 
+Name components, Suffix, Prefix must be limited to 4 characters 
+6.9.3 Note Object (NTE) 
+• The patient object may contain zero-or-one child note object. 
+• One Note object may be used to send a note for the patient that will display in the patient 
+confirmation screen. A patient has only one active note at any time. 
+6.9.3.1 Note Object For Patients 
+• Following is the format of the Note object that is used to send a note for a patient: 
+ 
+<NTE> 
+<NTE.text V=”note”>note_created_datetime</NTE.text> 
+</NTE> 
+ 
+ note: the note to display 
+========== PAGE 60 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 60 of 117 
+ note_created_datetime:the date and time that the note was created. This date and time 
+should have the TS data type. 
+ 
+Example of how to send a physician’s note using a Note object: 
+ 
+<NTE> 
+<NTE.text V=”This is a TGC patient”>2012-09-12T16:29:54-05:00</NTE.text> 
+</NTE> 
+ 
+• When NovaNet wants to indicate to the device that a patient note should be deleted, NovaNet 
+shall send a Note object with: 
+o An empty string in the “V” attribute of “NTE.text”. 
+o No Note Object 
+ 
+Example of how to indicate that a patient’s not must be deleted 
+<NTE> 
+<NTE.text V=””></NTE.text> 
+</NTE> 
+ 
+• The patient’s   Note Object must be a child object of the Patient Object. 
+========== PAGE 61 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 61 of 117 
+ 
+6.9.4 Example 
+Following is an example of a Complete Update Patient List Message. 
+ 
+<PTL.R01> 
+ <HDR> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+ <PT> 
+  <PT.patient_id V="PT38485">MRN</PT.patient_id> 
+  <PT.location V="Bellevue^ICU^256^10A"/> 
+  <PT.name V="Mary Patient"> 
+   <GIV V="Mary"/> 
+   <FAM V="Patient"/> 
+  </PT.name> 
+  </PT.birth_date V="1977-11-01T00:00:00-00:00"/> 
+  </PT.gender_cd V="F"/> 
+ </PT> 
+ <PT> 
+  <PT.patient_id V="PT31185">PATID</PT.patient_id> 
+  <PT.location V="St. Mary’s^OB^111^1"/> 
+  <PT.name V="Sam Iam"> 
+   <GIV V="Sam"/> 
+   <FAM V="Iam"/> 
+  </PT.name> 
+  <PT.birth_date V="1965-10-21T00:00:00-00:00"/> 
+  <PT.gender_cd V="M"/> 
+    <NTE> 
+    <NTE.text V=”This is a physician’s note” >2012-09-12T16:29:54-05:00 /> 
+  </NTE> 
+</PT> 
+</PTL.R01> 
+========== PAGE 62 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 62 of 117 
+ 
+6.9.5 Example 
+Following is an example of an Incremental Update Patient List Message. 
+ 
+<PTL.R02> 
+<HDR> 
+<HDR.control_id V="4003" />  
+<HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-03-04T19:06:28-05:00" />  
+</HDR> 
+<UPD> 
+<UPD.action_cd V="D" />  
+<PT> 
+<PT.patient_id V="100">MRN</PT.patient_id>  
+</PT> 
+</UPD> 
+<UPD> 
+<UPD.action_cd V="I" />  
+<PT> 
+<PT.patient_id V="100">MRN</PT.patient_id>  
+<PT.location V="Private Practice^ICU^RM100^BD2" />  
+<PT
+.name V="Bill Jones"> 
+  <FAM V="Jones" />  
+  <GIV V="Bill" />  
+  <MID V="A" />  
+  </PT.name> 
+  <PT.birth_date V="2010-01-15T00:00:00-05:00" />  
+  <PT.gender_cd V="M" />  
+  </PT> 
+<PT> 
+<PT.patient_id V="120">MRN</PT.patient_id>  
+<PT.location V="Private Practice^ICU^RM100^BD1" />  
+<PT.name V="Mary Jones"> 
+  <FAM V="Jo nes" />  
+  <GIV V="Mary" />  
+  <MID V="C" />  
+  </PT.name> 
+  <PT.birth_date V="2010-01-15T00:00:00-05:00" />  
+  <PT.gender_cd V="F" />  
+  </PT> 
+  </UPD> 
+  </PTL.R02> 
+========== PAGE 63 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 63 of 117 
+ 
+6.10 Device Events message (EVS.R01) 
+• The Device Events message is a message of the Device Events Topic. 
+• The Device Events message (EVS.R01) is used by the device to: 
+o Report that an operator has read his/her message. 
+o Report the maintenance actions. 
+o Report system errors. 
+ 
+Figure 10 - Device Event Message Model 
+Operator
+Header
+Device Event (1…*)
+ 
+========== PAGE 64 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 64 of 117 
+ 
+6.10.1 Device Event Object (EVT) 
+The following table describes the attributes supported by the device. 
+ 
+ Attribute Type Description 
++ description ST If the device event message is reporting that an Operator has read 
+his/her message, this attribute shall contain “OP MSG READ” in the 
+“V” attribute. The created date and time of the message is then included 
+in the text node of this attribute. 
+ 
+Example: 
+<EVT.description V=”OP MSG READ”> 
+ 2001-11-01T14:12:35-05:00 
+</EVT.description> 
+ 
+If the device event message is reporting either a Maintenance Action 
+or a System Error: 
+• The “V” attribute of this attribute shall contain the Maintenance 
+Action text or the System error text, respectively. 
+• The text node of this attribute shall specify whether this device 
+event message is a Maintenance Action or System Error. The 
+format of the text node is as follows: 
+            TY=type 
+ 
+            Valid values of type are: 
+• MT for Maintenance actions. 
+• SE for system errors. 
+ 
+Example of a Maintenance Action 
+<EVT.description V=”Clean Screen”>TY=MT</EVT.description> 
+ 
+Example of a System Error: 
+<EVT.description V=”Out Of Memory”>TY=SE</EVT.description> 
++ event_dttm TS Time the event occurred. 
+ 
+If this message is reporting that an operator message has been read, then 
+this attribute shall contain the date and time that the message was  read. 
++ severity_cd CS “N” if the device event me ssage is reporting that an operator message 
+has been read. 
+“W” or “C” for System Error. 
+“N” for Maintenance Action. 
+ 
+========== PAGE 65 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 65 of 117 
+ 
+6.10.2 Operator Object (OPR) 
+The following table describes the attributes supported by the device. 
+ Attribute Type Description 
++ operator_id ST Unique operator identifier for the given facility 
+ 
+When there is a Supervisor Override, this attribute shall contain both 
+the Operator ID and the Supervisor ID. In that case, the format of this 
+attribute shall be as follows: 
+operator_id^supervisor_id 
+ 
+where operator_id is the Operator ID and supervisor_id is the 
+Supervisor ID. 
+- name PN The operator’s name if any. 
+ 
+========== PAGE 66 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 66 of 117 
+ 
+6.10.3 Example 
+Following is an example of a Device Event Message. 
+ 
+<EVS.R01> 
+ < HDR> 
+  < HDR.message_type V="EVS.R01" SN="POCT1" SV="1" />  
+  < HDR.control_id V="1193" />  
+  < HDR.version_id V="POCT1" />  
+  < HDR.creation_dttm V="2010-02-26T16:11:45.00-05:00" />  
+ </ HDR> 
+ < EVT> 
+    <EVT.description V="Re-build RAM DB-Re-assign Fac&Loc">TY=SE</EVT.description>  
+    <EVT.event_dttm V="2010-02-26T16:11:43.00-05:00" />  
+    <EVT.severity_cd V="C" />  
+     < OPR> 
+   < OPR.operator_id V="AUTO" />  
+   < OPR.name V="" />  
+   
+ </OPR> 
+ </ EVT> 
+ < EVT> 
+<EVT.description V="3, K: Unassigned^Unassigned C: Unassigned^Unassigned NL: a^Default 
+Location">TY=SE</EVT.description>  
+  < EVT.event_dttm V="2010-02-26T16:11:43.00+00:00" />  
+    <EVT.severity_cd V="C" />  
+  < OPR> 
+     <OPR.operator_id V="9" />  
+     <OPR.name V="" />  
+    </OPR> 
+   </EVT> 
+  </EVS.R01> 
+ 
+========== PAGE 67 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 67 of 117 
+ 
+6.11 Basic Directive Message (DTV.R01) 
+The Basic Directive message (DTV.R01) is used by NovaNet to initiate continuous mode. 
+6.11.1 Element Details 
+NovaNet implements the full POCT1-A model without modification. 
+6.11.2 Example 
+<DTV.R01> 
+ < HDR> 
+  < HDR.control_id V="4015" />  
+  < HDR.version_id V="POCT1" />  
+  < HDR.creation_dttm V="2010-03-05T11:06:04-05:00" />  
+ </ HDR> 
+ < DTV> 
+  < DTV.command_cd V="START_CONTINUOUS" />  
+ </ DTV> 
+</DTV.R01> 
+========== PAGE 68 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 68 of 117 
+ 
+6.12 Complex Directive Message (DTV.R02) 
+The Complex Directive message (DTV.R02) is used by NovaNet to set the date/time of the device. 
+6.12.1 Complex Directive Message Not es 
+• In the Time element (TM), the device does not support the “TM.accy” attribute 
+• In the “TM.dttm” attribute, the date & time in the “V” attribute shall contain the local date 
+and time of the device. 
+• The device does not support the Time Zone (TZ) object. 
+6.12.2 Example 
+<DTV.R02> 
+ < HDR> 
+  < HDR.control_id V="4004" />  
+  < HDR.version_id V="POCT1" />  
+<HDR.creation_dttm V="2010-03-05T11:06:00-05:00" />  
+ </ HDR> 
+ < DTV> 
+  < DTV.command_cd V="SET_TIME" />  
+ </ DTV> 
+ < TM> 
+<TM.dttm V="2010-03-05T11:06:00-05:00" />  
+ </ TM> 
+</DTV.R02> 
+========== PAGE 69 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 69 of 117 
+6.13 End of Topic message (EOT.R01) 
+• Because the size of the data to be transferred in some Topics can be quite large, the protocol 
+provides a scheme to break large transfers into a series of messages. The End of Topic 
+message is used to indicate that all messages in such a series have been transmitted. 
+• The type of this message is EOT.R01. 
+• This message also allows NovaNet or an Operator List Server to report the last update date 
+and time for the topic that has just been completed. 
+Figure 11 - End of Topic Message Model 
+End of Topic
+Header
+ 
+ 
+6.13.1 End Of Topic Object (EOT) 
+ Code Type Meaning 
++ topic_cd CV A code for the topic that has just been completed. 
+• Refer to the POCT1 standard for POCT1’s End of Topic codes. 
+• Refer to Table 22 below for Nova’s End of Topic codes. 
+# update_dttm TS If an update da te and time is sent in this attribute by NovaNet or an 
+Operator List Server, the device shall record this date and time as the 
+topic’s last  update date and time. 
+ 
+If an update date and time is NOT sent in this attribute by NovaNet to 
+an instrument/meter or by the Operator List Server to NovaNet, the 
+recipient (the device or NovaNet) shall record the current date and time 
+as the topic’s last update date and time. 
+ 
+Table 23 - Nova's End of Topic Code Values 
+Code Meaning 
+NOVA.STATSTRIP.SETUP End of Nova’s Setup Topic 
+NOVA.LOC End of Nova’s Location List Topic 
+NOVA.FRM End of Nova’s Firmware Upgrade Topic 
+NOVA.PHYS End of Nova’s Physician List Topic 
+NOVA.REAG End of Nova’s Reagent List Topic 
+ 
+ 
+========== PAGE 70 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 70 of 117 
+6.14 Terminate Message (END.R01) 
+• The type of this message is END.R01. 
+• This message also allows NovaNet or a 3rd party to message the meter to reconnect after a 
+specified elapsed time in minutes. 
+Figure 12 - Terminate Message Model 
+ 
+6.14.1 Terminate Object (END) 
+ Code Type Meaning 
++ Reason_cd CV A code for the topic that has just been completed. 
+Refer to the POCT1 standard for POCT1’s End of Topic codes. 
+- Note_txt ST Where note_txt defines any additional activity performed by the meter upon 
+receipt of the END message: 
+V = “RECONNECT:XX” where XX = 05 – 99 minutes 
+The Auto-reconnect setup shall not be permanent, that is, it will be 
+need to be set with every END message. 
+6.14.2 Example 
+ 
+<END.R01> 
+ <HDR> 
+  < HDR.control_id V="4006"/> 
+  < HDR.version_id V="POCT1"/> 
+  < HDR.creation_dttm V="2010-08-15T16:30:09-0800"/> 
+ </HDR> 
+ <TRM> 
+  < TRM.reason_cd V="NRM"/> 
+        <TRM.note_txt V="RECONNECT:10"/> 
+ </TRM> 
+</END.R01> 
+ 
+6.15 Other Messages 
+• Escape 
+• Keep-Alive 
+• Request 
+• Acknowledgement 
+ 
+NovaNet implements the full POCT1-A model for these messages without modification. 
+Header
+Termimation
+========== PAGE 71 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 71 of 117 
+ 
+6.16 Nova Reagent List Message (NOVA.REAG) 
+• The Reagent List Message is a message of the Nova Reagent List Topic. The Nova Reagent 
+List Topic is used to send all of the reagent lots to the device. 
+• The Reagent List Topic is a Complete Update Topic. 
+• The message type of this message is NOVA.REAG. 
+ 
+The Nova Reagent List Message structure is illustrated in the following figure: 
+ 
+Figure 13 - Nova Reagent List Message Model 
+Header
+Lot (1…*)
+Level (0…*)
+Test (0…*)
+ 
+6.16.1 Nova Reagent List Topic Rules and Notes 
+• The Nova Reagent List Topic is a Complete Update Topic. When the Nova Reagent List 
+Topic is sent to the device, it must send a Complete List of all reagent lots to the device. 
+6.16.2 Nova Reagent List Message Rul es and Notes 
+• The cardinality of the Nova Reagent List Message is one-or-more. Therefore, an Observation 
+Reviewer could send all of the Reagent Lots in a single Nova Reagent List Message, or it 
+could send multiple Nova Reagent List messages to communicate the entire set of reagent 
+lots to the device. 
+6.16.3 The Empty Reagent List Topic 
+• An empty reagent list topic may be used to command the device to delete all of its current 
+reagent lots. 
+• An empty reagent list topic shall contain ONE empty reagent list message. An empty reagent 
+list message shall contain only the header object. Following is an example of an empty 
+Reagent List Message: 
+ 
+ 
+ 
+ 
+========== PAGE 72 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 72 of 117 
+<NOVA.REAG> 
+ <HDR> 
+  <HDR.message_type V=”NOVA.REAG” /> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+</NOVA.REAG> 
+6.16.4 Lot Object (LOT) 
+• The Lot Object is used to send the Reagent Lots to the device. 
+• The types of reagent lots include: 
+o Test Strip Lot 
+o Liquid Quality Control Lot. 
+o Proficiency Lot 
+o Linearity Lot 
+o Manual Test Card/Strip/Kit Lot 
+o Manual Test QC Lot 
+o Manual Test Developer sol. Lot 
+• The following table describes the attributes of the Lot Object: 
+ 
+Table 24 - Lot Object Attributes 
+ Attribute Type Description 
++ lot_number INT The lot number. 
+Maximum length is 10 characters. 
++ type CS The lot type. 
+Maximum length is 10 characters. 
+Valid values are: 
+• TS: TestStrip 
+• QC: Liquid Quality Control Lot 
+• LN: Linearity Lot 
+• PRO: Proficiency Lot 
+• RG: Reagent 
+• MT_TS: Manual Test Card/Strip/Kit Lot 
+• MT_QC: Manual Test QC Lot 
+• MT_DE: Manual Test Developer sol. Lot 
++ expiration_dttm TS The e xpiration date and time. 
+- name ST The lot name. 
+Maximum length is 16 characters. 
+Name is a required for MTE related lots 
+ 
+6.16.4.1 Lot Object Rules and Notes 
+• Any attribute that exceeds the maximum length shall cause the Lot Object to be invalid. 
+• If the “expiration_dttm” attribute does not follow the POCT1 TS Data Type or its content 
+contains invalid values, this shall cause the Lot Object to be invalid. 
+========== PAGE 73 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 73 of 117 
+• An invalid Lot Object shall be removed from the downloaded lot list. 
+6.16.5 Level Object (Level) 
+• The Level Object is used to send information about a specific Level within a Reagent Lot. 
+• Cardinality: 
+o If the Lot Object is a Test Strip Lot or any of the Manual Test related lots, the Lot 
+Object shall not have any Level Object. 
+o If the Lot Object is anything except a Test Strip Lot or any of the Manual Test related 
+lots, the Lot Object shall contain one-or-more Level Objects 
+• The following table describes the attributes of the Level Object: 
+ Attribute Type Description 
++ number INT The level number. 
+Maximum length is 1 character. 
++ type CS The lot type. 
+This attribute contains the same value as the LOT.type 
+attribute. 
+For details, see LOT.type attribute. 
+ 
+6.16.5.1 Level Object Rules and Notes 
+• The followings shall cause the Level Object to be invalid: 
+o The Level Object does not have a level number 
+o The Level Object does not have a valid level type. 
+o A Liquid Quality Control Level Object has a level number that is outside 1-3 (Level 4 
+is allowed on latter versions of Japanese firmware). 
+o A Linearity Level Object has a level number that is outside 1-5. 
+• An invalid Level Object shall cause the Lot Object to be removed from the downloaded Lot 
+list. 
+6.16.6 Test Object (TST) 
+• The Test Object is used to send the reference range information for a specific Test and Level. 
+• Cardinality: There shall be one-or-more Test Objects if the type of the Level Object is Liquid 
+Quality Control or Linearity. 
+• The following table describes the attributes of the Test Object: 
+ 
+ Attribute Type Description 
++ observation_id CE A test name th at is recognized by the device. 
+For example: Glu, Creat. 
+Maximum length is 20 characters. 
++ lo-hi_limit IVLPQ The reference range. 
+The maximum length of the low limit is 8 characters. 
+The maximum length of the high limit is 8 characters. 
+ 
+========== PAGE 74 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 74 of 117 
+ 
+6.16.6.1 Test Object Rules and Notes 
+• The followings shall cause the Test Object to be invalid: 
+o The Test Object does not have an observation_id 
+o The Test Object does not have a lo-hi_limit. 
+o The values of observation_id or lo-hi_limit exceed the maximum length allowed. 
+o The observation_id attribute contains a test name that is not recognized by the 
+device. 
+o The lo-hi_limit attribute has the low limit equal to or greater than the high limit. 
+• An invalid Test Object shall cause the Lot Object to be removed from the downloaded Lot 
+list. 
+6.16.7 Example 
+0310001249  StatStrip Test Strip (Glu) Lot 
+555-102S  Urinalysis (MTE) Card Lot 
+0410050242 StatStrip Control Level 2 (Glu) Lot 
+555-102CP Urinalysis –UAPosQC (MTE) Control Lot 
+555-102CN Urinalysis –UANegQC (MTE) Control Lot  
+ 
+<NOVA.REAG> 
+    <HDR>  
+  < HDR.control_id V="4003" />  
+  < HDR.version_id V="POCT1" />  
+  < HDR.creation_dttm V="2010-02-26T15:54:48-05:00" /> </HDR> 
+ < LOT> 
+  < LOT.lot_number V="0310001249" />  
+  < LOT.type V="TS" />  
+  < LOT.expiration_dttm V="2012-01-31T00:00:00-05:00" />  
+  </LOT>  
+ <LOT> 
+  < LOT.lot_number V="555-102S" />  
+  < LOT.type V="MT_TS" />  
+  < LOT.expiration_dttm V="2012-01-31T00:00:00-05:00" />  
+  < LOT.lot_name V="Urinalysis" />  
+ </LOT>  
+ <LOT> 
+  < LOT.lot_number V="0410050242" />  
+  < LOT.type V="QC" />  
+  < LOT.expiration_dttm V="2012-02-29T00:00:00-05:00" />  
+  < Level> 
+   < Level.number V="2" />  
+   < Level.type V="QC" />  
+   < TST> 
+    < TST.observation_id V="Glu" />  
+    < TST.lo-hi_limit V="[80;140]" U="mg/dL" />  
+   </TST>  
+  </Level>  
+ </LOT> 
+ < LOT> 
+  < LOT.lot_number V="555-102CP" />  
+  < LOT.type V="MT_QC" />  
+========== PAGE 75 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 75 of 117 
+  < LOT.expiration_dttm V="2012-01-31T00:00:00-05:00" />  
+ <LOT.lot_name V="UAPosQC" /> 
+ </LOT>  
+ < LOT> 
+  < LOT.lot_number V="555-102CN" />  
+  < LOT.type V="MT_QC" />  
+  < LOT.expiration_dttm V="2012-01-31T00:00:00-05:00" />  
+  < LOT.lot_name V="UANegQC" />  
+ </LOT> 
+ < LOT> 
+  < LOT.lot_number V="555-102D" />  
+  < LOT.type V="MT_DE" />  
+  < LOT.expiration_dttm V="2012-01-31T00:00:00-05:00" />  
+  < LOT.lot_name V="Fecal Occult" />  
+ </LOT>  
+</NOVA.REAG> 
+ 
+========== PAGE 76 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 76 of 117 
+ 
+6.17 Nova Location List Message (NOVA.LOC) 
+• The Location List Message is a message of the Nova Location List Topic. The Nova 
+Location List Topic is used to send a list of facilities and units to the device 
+• The Location List Topic is a Complete Update Topic. 
+• The message type of this message is NOVA.LOC 
+6.17.1 Element Details 
+ Element  Use in NovaNet 
++ NOVA.LOC/HDR/HDR.control_id ST Retu rned in the Acknowledge message 
+ack_control_id 
++ NOVA.LOC /LOC ST 1…* 
++ NOVA.LOC /LOC/LOC.facility ST Name of a facility 
++ NOVA.LOC 
+/LOC/LOC.facility/unit 
+ST Name of a location within a facility 
+DF=<T.F>  flags default unit=F 
+6.17.2 Example 
+<NOVA.LOC> 
+ <HDR> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+ <LOC> 
+  <LOC.facility V="Boston"> 
+   <unit V="ICU" DF=”F”/> 
+   <unit V="ER" DF=”T”/> 
+  </LOC.facility> 
+ </LOC> 
+ <LOC> 
+  <LOC.facility V="Cambridge"> 
+   <unit V="CARD" DF=”T”/> 
+   <unit V="PED" DF=”F”/> 
+  </LOC.facility> 
+ </LOC> 
+</NOVA.LOC> 
+========== PAGE 77 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 77 of 117 
+ 
+6.18 Nova Physician List Message (NOVA.PHYS.R01, NOVA.PHYS.R02) 
+• The Physician List Message is a message of the Physician List Topic. 
+• The message type of the complete update message is NOVA.PHYS.R01. 
+• The message type of the incremetal update message is NOVA.PHYS.R02. 
+• The Physician List Topic shall adhere to the rules applied to the Update List Topics 
+(Operator List Topic, Patient List Topic) in the POCT1 standard. 
+ 
+Figure 14 - Physician List Complete Update Message Model 
+Physician  (1…*)
+Header
+ 
+ 
+ 
+Figure 15 - Physician List Incremental Update Message Model 
+ 
+ 
+6.18.1 Update Action Object (UPD) 
+The Update Action Object is a component of the Incremental Update Physician List Message. The 
+device supports this object as specified in the POCT1 standard. 
+========== PAGE 78 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 78 of 117 
+ 
+6.18.2 Physician Object (PHYS) 
+The following table describes the attributes of the Physician Object: 
+Table 25 - Physician Object Attributes 
+ Attribute Type Description 
++ physician_id ST The unique identifier of the physician 
+- name PN Name of the physician, if any. 
+ 
+6.18.3 Example 
+Following is an example of a Complete Update Physician List Message. 
+ 
+<NOVA.PHYS.R01> 
+ < HDR> 
+  < HDR.control_id V="4011" />  
+  < HDR.version_id V="POCT1" />  
+  < HDR.creation_dttm V="2010-03-05T11:27:44-05:00" />  
+ </ HDR> 
+ < PHYS> 
+  < PHYS.physician_id V="123456" />  
+  < PHYS.name V="Gregory House"> 
+   < FAM V="House" />  
+   < GIV V="Gregory" />  
+   < PFX V="Dr" />  
+   < SFX V="MD" />  
+  < / PHYS.name> 
+ </ PHYS> 
+<PHYS> 
+  < PHYS.physician_id V="PH3 8485 " />  
+  < PHYS.name V="Florence Nightingale"> 
+   < FAM V="Nightingale" />  
+   < GIV V="Florence" />  
+   < PFX V="Dr" />  
+  < / PHYS.name> 
+</PHYS> 
+</NOVA.PHYS.R01> 
+========== PAGE 79 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 79 of 117 
+ 
+6.18.4 Example 
+Following is an example of an Incremental Update Physician List Message. 
+ 
+<NOVA.PHYS.R02> 
+ < HDR> 
+    <HDR.control_id V="4003" />  
+    <HDR.version_id V="POCT1" />  
+   <HDR.creation_dttm V="2010-03-05T11:21:01-05:00" />  
+  </HDR> 
+ <UPD> 
+  < UPD.action_cd V="D" />  
+  < PHYS> 
+   < PHYS.physician_id V="123456" />  
+  </ PHYS> 
+  < PHYS> 
+   < PHYS.physician_id V="PH38485" />  
+  </ PHYS> 
+ </UPD> 
+ <UP D>  
+  < UPD.action_cd V="I" />  
+  < PHYS> 
+   < PHYS.physician_id V="123456" />  
+   < PHYS.name V="Gregory House"> 
+    < FAM V="House" />  
+    < GIV V="Gregory" />  
+    < PFX V="Dr" />  
+    < SFX V="MD" />  
+   </ PHYS.name> 
+  </ PHYS> 
+  < PHYS> 
+   < PHYS.physician_id V="PH38485" />  
+   < PHYS.name V="Florence Nightingale"> 
+    < FAM V="Ni
+ghtingale" />  
+    < GIV V="Florence" />  
+    < PFX V="Dr" />  
+   </ PHYS.name> 
+  </ PHYS> 
+ </UPD> 
+  </NOVA.PHYS.R02> 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+========== PAGE 80 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 80 of 117 
+ 
+ 
+6.19 Nova Firmware Update Message (NOVA.FRM) 
+• The Nova Firmware Update Message is a message of the Nova Firmware Upgrade Topic. 
+• The Firmware Update message contains encapsulated data, a base64 encoded block of binary 
+values.  The block is presumed to contain an internal validation of the transmission. 
+• The Nova Firmware Upgrade Topic is a Complete Update Topic. 
+• The message type of this message is NOVA.FRM. 
+ 
+Figure 16 - Firmware Update Message Model 
+Firmware Data
+Header
+ 
+ 
+6.19.1 Firmware Data Object (FRM) 
+• Each Firmware Upgrade message shall contain one Firmware Data Object. 
+• Each Firmware Data object shall contain a block of base-64 encoded text. 
+• The following table describes the attributes of the Firmware Data object: 
+Table 26 – Firmware Data Object Attributes 
+ Attribute Typ
+e 
+Description 
++ data ED Contains a block of base-64 encoded text.  
+The attribute “ENC” shall specify “B64” 
+The text node shall contain the base-64 text. 
+ 
+6.19.2 Example 
+<NOVA.FRM> 
+ <HDR> 
+  <HDR.control_id V="10003"/> 
+  <HDR.version_id V="POCT1"/> 
+  <HDR.creation_dttm V="2001-11-01T16:30:06-05:00"/> 
+ </HDR> 
+<FRM> 
+ <FRM.data ENC=”B64”> 
+omSJEUdmde9j44zmMicorSJUEdmde9jrrzmMirdMDSsWdlJdksLJR3373jeu 
+ </FRM.data> 
+</FRM> 
+</NOVA.FRM> 
+========== PAGE 81 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 81 of 117 
+6.19.3 Firmware File Identification 
+The firmware file shall identify the target meter by id using the following format: 
+ “Meter_ID_MM_mm_bb_rr_ll-RR.b64”. 
+ Where: 
+ MM = Major firmware version 
+ mm = Minor firmware version  
+ bb = Firmware Build 
+ rr = Firmware Revision 
+ ll = Language 
+ RR = Region 
+Meter  Meter_ID Gen 1 HW Meter_ID Gen 2 HW 
+StatStrip (Glu) StatStrip StatStrip-K1 
+StatStrip (Glu/Ket) StatStrip79 StatStrip79-K1 
+StatStrip (Lac) StatStrip32 StatStrip32-K1 
+StatSensor (Creat) StatSensor39 StatSensor39-K1 
+StatSensor International (Creat) St atSensor39i   StatSensor39i-K1 
+ 
+ 
+6.20 Nova Setup Message (NOVA. STATSTRIP.SETUP) 
+• The Nova Setup Message is a message of the Nova Setup Topic. The Nova Setup Topic is 
+used to send all of the setup settings to the device. 
+• The Nova Setup Topic is a Complete Update Topic. 
+• The message type of this message is NOVA.STATSTRIP.SETUP. 
+ 
+The Nova Setup Message structure is illustrated in the following figure: 
+Figure 17 - Nova Setup Message Model 
+Header
+KeyValues
+Test 
+Configurations
+Comments
+Diagnosis Codes
+ 
+ 
+========== PAGE 82 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 82 of 117 
+6.20.1 Nova Setup Topic Rules and Notes 
+• The Nova Setup Topic is a Complete Update Topic. 
+• When the Nova Setup Topic is sent to the device, it must send a complete list of ALL of the 
+setup settings to the device. 
+6.20.2 Nova Setup Message Rules and Notes 
+• The cardinality of the Nova Setup Message is one-or-more. Therefore, an Observation 
+Reviewer could send all of its setup settings in a single Nova Setup Message, or it could send 
+multiple Nova Setup messages to communicate the entire set of setup settings. 
+• The objects in the Nova Setup Message are: 
+o KeyValues 
+o Test Configurations 
+o Predefined Comments 
+o Diagnosis Codes 
+• The cardinality of the above objects is one-and-only-one in the Nova Setup Message. Each 
+Nova Setup Message may contain one-and-only-one KeyValues object, Test Configurations 
+object, Predefined Comments object, Diagnosis Code object. 
+6.20.2.1 The Relationship between the KeyValues Object and the Test 
+Configur
+ation Objects 
+• The KeyValues Object and the Test Configurations Object contain may contain settings that 
+are related to each other. One setting in one object may not work correctly if the 
+corresponding setting in the other object does not have a correct value. 
+• Therefore, to maintain the integrity of the KeyValues settings and the Test Configuration 
+settings, the device shall use the following rules: 
+o Any setting in the KeyValues Object that is found to contain invalid value or has 
+invalid format shall cause all of the settings in the KeyValues Object and all of the 
+settings in the Test Configurations Object to be discarded. 
+o Any setting in the Test Configuration Object that is found to contain invalid value or 
+has invalid format shall cause all of the settings in the Test Configurations Object and 
+all of the settings in the KeyValues Object to be discarded. 
+o The rules on how an entry in the KeyValues Object or an entry in the Test 
+Configurations Object contain invalid values or has invalid format shall be detailed 
+later in their own sections. 
+o All of the KeyValues settings and all of the Test Configuration settings must be 
+downloaded to the device during the Setup topic. 
+6.20.3 KeyValues 
+See elsewhere in this document for a complete list of Key-value pairs. 
+• The KeyValues object is used to send the KeyValue settings to the device. 
+• The KeyValues object contains one-or-more KeyValue settings. 
+• All Key-values pairs must be delivered to the meter as part of the Setup download.  
+• The KeyValues object has the following format: 
+ 
+<KEY_VALUE> 
+========== PAGE 83 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 83 of 117 
+<KeyName1 V=”KeyValue1” /> 
+<KeyName2 V=”KeyValue2” /> 
+<KeyName3 V=”KeyValue3” /> 
+….. 
+<KeyNameN V=”KeyValueN” /> 
+<KEY_VALUE> 
+ 
+where: 
+ KeyName: the name of the KeyValue setting. 
+ KeyValue: the value of the KeyValue setting. 
+ 
+• Maximum length of each KeyName shall be 32 characters. 
+• Maximum length of each KeyValue shall be 32 characters. 
+• A KeyName or KeyValue that exceeds the maximum length allowed shall be marked as 
+invalid. 
+• A KeyValue that does not contain a valid value associated with the KeyName shall be marked 
+as invalid. 
+• A <KEY_VALUE> element without any child elements will be marked as invalid. 
+6.20.4 Diagnosis Codes 
+• The Diagnosis Codes object is used to send the predefined diagnosis codes to the device. 
+• The Diagnosis Codes object contains one-or-more diagnosis code elements. 
+• The Diagnosis Codes object has the following format: 
+ 
+<DIAGCODES> 
+<DIAGCODE> 
+<DIAGCODE.code_id V=”code id”/> 
+<DIAGCODE.code_desc V=”code description”/> 
+</DIAGCODE> 
+</DIAGCODES> 
+ 
+where: 
+code  id:    the identifier of the diagnosis code. 
+code  description:  the description of the diagnosis code. 
+ 
+• Maximum length of the identifier of the diagnosis code shall be 17 characters. 
+• Maximum length of the description of the diagnosis code shall be 255 characters. 
+• A diagnosis code identifier that exceeds the maximum length allowed shall cause the 
+diagnosis code to be marked as invalid. 
+• A diagnosis code description that exceeds the maximum length allowed shall cause the 
+diagnosis code to be marked as invalid. 
+• An invalid diagnosis code shall be removed from the downloaded list of diagnosis codes. 
+========== PAGE 84 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 84 of 117 
+6.20.4.1 <DIAGCODES> element that does not have any elements 
+• A <DIAGCODES> element that does not have any child elements shall be used to command 
+the device to delete all of its current diagnosis codes. In this case, the <DIAGCODES> 
+element shall have the following format 
+ 
+<DIAGCODES></DIAGCODES> 
+ 
+6.20.5 Comments 
+• The Comments object is used to send the predefined comments to the device. 
+• The Comments object contains one-or-more Comment elements. 
+• The Comments object has the following format: 
+ 
+<COMMENTS> 
+<Comment V=”comment description” TN=”test name” CT=”comment type” 
+CH="comment is chartable" FL="comment is flaggable" /> 
+. . . . . 
+. . . . . 
+<Comment ….. /> 
+</COMMENTS> 
+ 
+The attributes of each <Comment> element is described in the following table: 
+========== PAGE 85 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 85 of 117 
+ 
+ 
+Attribute Description 
+V The comment description. 
+This is a required attribute. 
+The maximum length of this attribute is 20 characters. 
+TN A test name that is recognized by the device. 
+This is a required attribute. 
+The maximum length of this attribute is 20 characters. 
+For example: Glu, Creat, GFR. 
+CT The test type for which this comment can be used. 
+This is a required attribute. 
+The maximum length of this attribute is 6 characters. 
+Valid values are: 
+• QC: QC test 
+•  PT: Patient test 
+• MT: Maintenance 
+• LN: Linearity test 
+• PF: Proficiency test 
+• CR: Correlation test 
+CH Indicate whether the comment is chartable. 
+This is an optional attribute. Default value is not chartable. 
+The maximum length of this attribute is 1 character. 
+Valid values are: 
+• “0”: the comment is not chartable. 
+• “1”: the comment is chartable. 
+FL Indicate whether the comment is flaggable. 
+This is an optional attribute. Default value is not flaggable. 
+The maximum length of this attribute is 1 character. 
+Valid values are: 
+• “0”: the comment is not flaggable. 
+• “1”: the comment is flaggable. 
+ 
+6.20.5.1 Rules of the Comments Object 
+• Any attributes of the <Comment> element that exceed the maximum length allowed shall 
+cause the <Comment> element to be invalid. 
+• If the “TN” attribute is missing or its value is not one of the valid values, the <Comment> 
+element shall be invalid. 
+• If the “CH” attribute is missing or its value is not one of the valid values, the <Comment> 
+element shall be invalid. 
+• If the “FL” attribute is missing or its value is not one of the valid values, the <Comment> 
+element shall be invalid. 
+• An invalid <Comment> element shall be removed from the <Comment> list 
+========== PAGE 86 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 86 of 117 
+6.20.5.2 <COMMENTS> element that does not have any elements 
+• A <COMMENTS> element that does not have any child elements shall be used to command 
+the device to delete all of its current predefined comments. In this case, the 
+<DIAGCODES> element shall have the following format: 
+ 
+<COMMENTS></COMMENTS> 
+ 
+6.20.5.3 Example 
+ 
+<COMMENTS> 
+<Comment V="Notified Doctor" TN="Glu" CH="1" FL="0" CT="PT" />  
+<Comment V="Wrong Control used" TN="Glu" CH="0" FL="0" CT="QC" />  
+<Comment V="Linearity Study" TN="Glu" CH="0" FL="0" CT="LN" />  
+</COMMENTS> 
+ 
+ 
+========== PAGE 87 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 87 of 117 
+ 
+6.20.6 Test Configuration Element <TEST_CONFIG> 
+The Test Config Xml element ( <TEST_CONFIG> ) of the Nova Setup message is used to send test 
+configurations to the device. Following is the format of the Test Config Xml element: 
+ 
+<TEST_CONFIG> 
+ <TEST> 
+ </TEST> 
+ … 
+ <TEST> 
+ </TEST> 
+<TEST_CONFIG> 
+ 
+The Nova Setup message shall have one <TEST_CONFIG> element. 
+ 
+The <TEST_CONFIG> element shall contain one or more <TEST> elements. 
+ 
+Each <TEST> element represents the settings of one test. 
+ 
+Each test can be one of the following types: 
+• Measured test 
+• Calculated test. 
+• Manual test. 
+ 
+6.20.6.1 Test XML element <TEST> 
+The <TEST> element contains the settings for one Test. 
+The <TEST> element has the following format: 
+ 
+<TEST TN=”test name” RT="result type" U="units" NF="numeric format" 
+SL="slope" IC="intercept" ED=”enable/disable de-selection” > 
+</TEST> 
+========== PAGE 88 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 88 of 117 
+ 
+ 
+The attributes of the <TEST>, <SUB_TEST>, <TEST_ENTRY and <CONTROL_ENTRY> 
+elements is described in the following table: 
+ 
+MEASURED AND CALCULATED <TEST> MANUAL TEST Attribute 
+Description <TEST> <SUB_TEST> <TEST_ENTRY> <CONTROL_ENTRY>
+TN A test name that is recognized by 
+the device. For example: Glu, 
+GFR. 
+This attribute is required and 
+must not be an empty string. 
+Req. N/A N/A N/A 
+DN Sub Test Name. Required only for 
+Manual Tests 
+N/A Req. N/A Req. 
+RT The result type. Must be one of the 
+following values: 
+• M for measured tests, 
+• C for Calculated tests 
+• I for manual tests  
+ 
+Req. N/A N/A N/A 
+U The unit of measure if applicable. 
+This attribute is optional. 
+N/A N/A Opt. Opt. 
+NF The numeric format if applicable. 
+For example, “XXX.X”. 
+This attribute is required for 
+Measured and Calculated tests 
+(that is RT=””M” and RT=”C”). 
+ 
+This attribute is optional for 
+manual tests (that is RT=”I”). 
+Req. N/A Opt. Opt. 
+SL Slope value. This attribute is 
+optional. 
+Req. N/A N/A N/A 
+IC Intercept value. This attribute is 
+optional. 
+Req. N/A N/A N/A 
+ED* Enable or disable the de-selection 
+of this test parameter in the user 
+interface of the device: 
+• This attribute shall be set to 
+“1” to enable the de-
+selection of the test 
+parameter in the user 
+interface of the device. 
+• This attribute shall be set to 
+“0” to disable the de-
+selection of the test 
+parameter in the user 
+Req. N/A N/A N/A 
+========== PAGE 89 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 89 of 117 
+interface of the device. 
+ 
+This attribute is a required 
+parameter. If this attribute is not 
+sent to the device, or an empty 
+string is sent, or a value other than 
+“0” or “1” is sent to the device, the 
+device shall use a default value for 
+this attribute based on the 
+following rules: 
+• For measured test, the 
+default value shall be “0”. 
+• For calculated test, the 
+default value shall be “1”. 
+• For manual test the default 
+value shall be “1” 
+SKIP 1= Enable, 0 = Disable skipping 
+data entry for a test in multiple 
+tests. This attribute applies ONLY 
+to Manual tests 
+N/A Req. N/A N/A 
+*ED feature not implemented. 
+ 
+Depending on the value of the result type RT (measured, calculated, manual), the <TEST> element 
+may contain other inner Xml elements to provide specific information for that test type. The 
+following paragraphs will describe the inner Xml elements for each of the test types: measured, 
+calculated and manual test. 
+6.20.6.1.1 Measured Test 
+If a <TEST> element is a measured test, the RT attribute shall contain “M” for measured test and 
+the <TEST> element may contain zero or more <RANGE> elements. Each <RANGE> element 
+contains one reference range and/or one critical range for the specified test. Age group and Gender 
+group for the reference range  and/or critical range can also be specified in the <RANGE> element. 
+ 
+The format of the <TEST> element for a measured test is as follows: 
+ 
+<TEST TN=”test name” RT="result type" U="units" NF="numeric format" 
+SL="slope" IC="intercept" ED=”1”> 
+ <RANGE…./> 
+ ….. 
+ <RANGE…./> 
+</TEST> 
+ 
+Note that each Test can contain zero or more <RANGE> elements. 
+The format of the <RANGE> element is as follows: 
+ 
+<RANGE RF=”ref. range” CT=”critical range” SEX="sex" AGE="age range" RACE=”patient race 
+group” 
+    LABEL=” label for age range” ABS="absolute range" EQ="GFR equation name" 
+========== PAGE 90 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 90 of 117 
+    EQ_CONST=" GFR K const" CODE="test code" 
+    CODE_SYS="coding system of CODE "/> 
+ 
+The <RANGE> element is used in all of the test types (measured, calculated, manual tests). 
+ 
+The following table describes the attributes used in the <RANGE> element: 
+Attribute Description 
+RF Contains the normal range if applicable. 
+Format: [low-limit;high-limit] 
+The format shall follow the IVL<PQ> data type of the POCT1-A DML specification. 
+This attribute is optional. 
+CT Contains the critical  range if applicable.  
+Format: [low-limit;high-limit] 
+The format shall follow the IVL<PQ> data type of the POCT1-A DML specification. 
+This attribute is optional. 
+SEX The gender group. 
+This attribute shall use values are from table 43 of the POCT1-A DML 
+specification. 
+If no sex is specified, this attribute shall contain “U” 
+AGE Contains the age range if applicable. 
+The unit shall be days. 
+Format: [low age limit;high age limit] 
+The format shall follow the IVL<PQ> data type of the POCT1-A DML specification. 
+This attribute is optional. 
+RACE Contains the patient race group if the ranges apply to a specific race group. If the 
+patient race group is not specified, empty string shall be sent. 
+Valid values are: 
+• W: white 
+• B: black 
+• NB: non-black 
+• O: asian / pacific islander 
+• NA: native American 
+• H: Hispanic 
+This attribute is optional. 
+LABEL A text string that can be displayed in  the User Interface to identify this age group. 
+Currently, this attribute is used to identify an age group in the calculation of GFR for 
+the Schwartz method. 
+This attribute shall have a maximum length of 31 characters. 
+This attribute is optional. 
+ABS Contains the absolute rang e (a.k.a. the technical range). 
+Format: [absolute low;absolute high] 
+The format shall follow the IVL<PQ> data type of the POCT1-A DML specification. 
+This attribute is optional. 
+EQ The name of the equation used in  the calculation of a calculated test. 
+For GFR, the valid values for this attribute are: 
+• CG: for COCKCROFT-GAULT equation 
+========== PAGE 91 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 91 of 117 
+Attribute Description 
+• MDRD: for the MDRD study equation 
+• MDRD-IDMS for the MDRD Traceable equation 
+• SZ: for the SCHWARTZ equation 
+• CB: for the COUNAHANT-BARRATT equation 
+This attribute is optional. 
+EQ_CONST Contains the K consta nt for a particular age group in the calculation of GFR, 
+Schwartz method. 
+If attribute EQ is “SCHWARTZ”, this attribute is required and must contain 
+the K constant for the Age group. Otherwise, this attribute is optional. 
+CODE An alternative code for the test name. 
+This attribute is optional. 
+CODE_SYS The coding system of CODE. For example: LN, NOVABIO. 
+If CODE contains a value, this attribute must specify a coding system. 
+Otherwise, this attribute is optional. 
+Following is an example of a Glucose test and a Creatinine test in the <TEST_CONFIG> element: 
+ 
+<TEST_CONFIG> 
+ <!--  Measured test, Glucose  --> 
+<TEST_CONFIG> 
+<TEST TN="Glu" RT="M" U="mg/dL" SL="1.00" IC="0"> 
+<RANGE CT="[70;200]" RF="[80;120]" SEX="U" AGE="" LABEL="" ABS="[10;600]" EQ="" 
+EQ_CONST="" CODE="2341-6" CODE_SYS="LN" /> 
+ </TEST>  
+ 
+ <! --  Measured test, Creatinine  --> 
+<TEST_CONFIG> 
+ < TEST TN="Creat" RT="M" U="mg/dL" SL="1.00" IC="0"> 
+<RANGE CT="[0.50;10.00]" RF="[6.50;8.50]" SEX="U" AGE="" LABEL="" ABS="[0.30;12.00]" EQ="" 
+EQ_CONST="" CODE="CRESS" CODE_SYS="NOVABIO" />  
+ </ TEST> 
+</TEST_CONFIG> 
+ 
+6.20.6.1.2 Calculated Test 
+If a <TEST> element is a calculated test, the RT attribute shall contain “C” for calculated test. 
+The <TEST> element may contain zero or more <RANGE> elements. The <RANGE> element 
+is already discussed in the measured test section. 
+========== PAGE 92 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 92 of 117 
+ 
+The format of the <TEST> element for calculated tests is as follows: 
+ 
+<TEST TN=”test name” RT="result type" U="units" NF="numeric format" 
+SL="slope" IC="intercept" ED=”enable/disable de-selection”> 
+ <RANGE…./> 
+ ….. 
+ <RANGE…./> 
+</TEST> 
+ 
+Following is an example of calculated tests in the <TEST_CONFIG> element: 
+ 
+<TEST_CONFIG> 
+ < TEST TN="eGFR" RT="C" U="mL/min/1.73 m2"> 
+<RANGE CT="[10;85]" RF="[15;70]" SEX="U" AGE="" LABEL="" ABS="[0;1000]" EQ="MDRD" 
+EQ_CONST="" CODE="CREGFR" CODE_SYS="NOVABIO" />  
+<RANGE CT="" RF="" SEX="U" AGE="[1;365]" LABEL="Pre-Term Infant <1 Yr" ABS="[0;1000]" 
+EQ="SZ" EQ_CONST="0.33" CODE="CREGFR" CODE_SYS="NOVABIO" />  
+<RANGE CT="" RF="" SE X="U" AGE="[1;365]" LABEL="Term Infant <1 Yr" ABS="[0;1000]" EQ="SZ" 
+EQ_CONST="0.45" CODE="CREGFR" CODE_SYS="NOVABIO" />  
+<RANGE CT="[20;75]" RF="[30;63]" SEX="U" AGE="[365;4383]" LABEL="Child 1-12 Yr" 
+ABS="[0;1000]" EQ="SZ" EQ_CONST="0.55" CODE="CREGFR" CODE_SYS="NOVABIO" />  
+<RANGE CT="" RF="" SEX="F" AGE="[4748;6574]" LABEL="Female 13-18 Yr" ABS="[ 0;1000] " 
+EQ="SZ" EQ_CONST="0.55" CODE="CREGFR" CODE_SYS="NOVABIO" />  
+<RANGE CT="" RF="" SEX="M" AGE="[4748;6574]" LABEL="Male 13-18 Yr" ABS="[0;1000]" 
+EQ="SZ" EQ_CONST="0.65" CODE="CREGFR" CODE_SYS="NOVABIO" /> 
+ </ TEST>  
+</TEST_CONFIG> 
+ 
+6.20.6.1.3 Manual Test 
+If a <TEST> element is a test panel, the RT attribute shall contain “I” for manual test. 
+The <TEST> element shall contain zero or one < MANUAL_TEST> elements and/or zero or 
+up to three <MANUAL_QC_TEST> elements. 
+The < MANUAL_TEST> element provides specific information about the manual test entry 
+configuration for Patient results. 
+The <MANUAL_QC_TEST> element provides specific information about the manual test entry 
+configuration for External Control results 
+. 
+ 
+The format of the <TEST> element for a single manual test is as follows: 
+ 
+<MANUAL_TEST> defines a “Patient Test” 
+<MANUAL_QC_TEST> defines a “QC Test” 
+<CONTROL_ENTRY > defines the configuration for the Internal Controls for the given 
+SUB_TEST 
+DEV_LOT_NUM_REQ = 0, 1. If  1, the Lot for the Developer material will be requested for data 
+entry 
+TEST TN = Test Panel (for meter’s internal use) Card/strip and QC lots will ‘belong’ this test 
+family 
+========== PAGE 93 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 93 of 117 
+MANUAL_TEST DN = Test Name – appears as a button selection on the meter. 
+SUB_TEST DN = Sub test name – appears a prompt for single and multiple tests for data entry. 
+ 
+ 
+<TEST TN=" test panel" RT="result type"  >  
+ <!—zero or One -->  
+ < MANUAL_TEST DN=" test name "  
+        C O D E = "  test code "  
+            CODE_SYS=" coding system of CODE"  
+        L O T _ N U M _ R E Q = " 1 "   
+        D E V _ L O T _ N U M _ R E Q = ” 0 ” >  
+ <!-- One or more --> 
+    <SUB_TEST DN=" sub-test name " SKIP = “allow skip”>
+ 
+                   <TEST_ENTRY MDT="  data type "  
+       U = "  units "  
+       C O D E = "  test code "  
+       CODE_SYS=" coding system of CODE" > 
+       N F = ” numeric format” 
+     <!-- One or more Select Values if MDT="SELECT_LIST"-->  
+     <SELECT_VALUE V="  value "  
+      I P _ C O D E = "  interpretation code "  
+      B K G _ C L R = " background color"  
+      F R G _ C L R = " foreground color" /> 
+     <!-- Zero or more Ranges if MDT="NUMERIC"-->  
+    <RANGE ABS="[low;high]"  
+      RF="[low;high]"  
+      C T = " [low;high]"  
+      S E X = " sex" /> 
+  </TEST_ENTRY> 
+   <!-- Zero or more if internal QC is/are defined -- >.  
+  <CONTROL_ENTRY DN="  control name " 
+      M D T = "  data type "  
+       U = "  units” 
+       C O D E = "  test code “ 
+      CODE_SYS=" coding system of CODE"> 
+     <!-- One or more Select Val ues if MDT="SELECT_LIST"--> 
+    <SELECT_VALUE V="  value " /> 
+     <!-- Zero or one Ranges if MDT="NUMERIC"-->  
+    <RANGE ABS="[low;high]" /> 
+  </CONTROL_ENTRY>  
+   </SUB_TEST> 
+ </ MANUAL_TEST> 
+ <!-zero or more --> 
+ < MANUAL_QC_TEST DN=" test name " 
+         C O D E = "  test code " 
+         C O D E _ S Y S = " coding system of CODE"  
+        L O T _ N U M _ R E Q = " 1 "  
+        D E V _ L O T _ N U M _ R E Q = ” 0 ” >  
+   <SUB_TEST DN=" sub-test name " SKIP = “allow skip”>
+ 
+     <TEST_ENTRY MDT=" data type "  
+         U = "  units "  
+         C O D E = "  test code "  
+         C O D E _ S Y S = " coding system of CODE" > 
+     <!-- One or more Select Val ues if MDT="SELECT_LIST"--> 
+        <SELECT_VALUE V=" value "  
+========== PAGE 94 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 94 of 117 
+      I P _ C O D E = "  interpretation code "  
+      B K G _ C L R = " background color"  
+       F R G _ C L R = " foreground color" 
+     <!-- Zero or more Ranges if MDT="NUMERIC"-->  
+    <RANGE ABS="[low;high]"  
+      RF="[low;high]"  
+      C T = " [low;high]"  
+       S E X = " sex" /> 
+   </TEST_ENTRY>    
+   <!-- Zero or more if internal QC is/are defined. 
+  <CONTROL_ENTRY DN="  control name " 
+      M D T = "  data type "  
+       U = "  units” 
+       C O D E = "  test code “ 
+      CODE_SYS=" coding system of CODE"> 
+     <!-- One or more Select Val ues if MDT="SELECT_LIST"--> 
+    <SELECT_VALUE V="  value " /> 
+     <!-- Zero or one Ranges if MDT="NUMERIC"-->  
+    <RANGE ABS="[low;high]" /> 
+  </CONTROL_ENTRY>  
+   </SUB_TEST> 
+ </ MANUAL_QC_TEST> 
+</TEST> 
+The following table describes the attributes of the < MANUAL_TEST>, <MANUAL_QC_TEST> 
+element: 
+ 
+Attribute Description 
+DN • Test Name Test Name as displayed for selection. 
+• The test name shall be = to the test panel for Patient test. 
+• The test name shall be unique. 
+This attribute is required 
+CODE An alternative code for the test name if available. 
+This attribute is optional. 
+CODE_SYS The coding system of CODE. 
+Example: LN, NOVABIO… 
+This attribute is optional. However, if CODE contains a value, this 
+attribute must specify a coding system. 
+LOT_NUM_REQ Require or does not require a lo t number to be entered for the result of 
+this manual test: 
+• This attribute shall be set to “1” to require a lot number to be 
+entered for the result of this manual test. 
+• This attribute shall be set to “0” when a lot number is not required 
+for the result of this manual test. 
+This attribute is required. If this attribute is not sent to the device, or an 
+empty string is sent to the device, or a value other than “1” or “0” is sent 
+to the device, the device shall use a value of “0”. 
+DEV_LOT_NUM_REQ Require or does not require a lot number to be entered for the developer 
+solution if used as part of the Manual Testing process. 
+• This attribute shall be set to “1” to require a lot number to be 
+========== PAGE 95 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 95 of 117 
+Attribute Description 
+entered for the developer used for this manual test. 
+• This attribute shall be set to “0” when a lot number is not required 
+for the developer used for this manual test. 
+This attribute is required. If this attribute is not sent to the device, or an 
+empty string is sent to the device, or a value other than “1” or “0” is sent 
+to the device, the device shall use a value of “0”. 
+ 
+The following table describes the attributes of the <SUB_TEST> element: 
+Attribute Description 
+DN Sub test name that is displayed for data entry on a multi-test configuration 
+i.e.: Urinalysis (pH, Color, Specific Gravity, etc.) 
+This attribute is required  
+SKIP 1= Enable, 0 = Disable skipping data entry for a subtest test in multiple 
+tests.  
+ 
+If the value of MDT for <TEST_ENTRY> or <CONTROL_ENTRY> is “SELECT_LIST”, the  
+<TEST_ENTRY> or <CONTROL_ENTRY>shall contain one or more <SELECT_VALUE> 
+elements that represent the list of values of the manual test. The following table describes the 
+attributes of the <SELECT_VALUE> element: 
+ 
+Attribute Description 
+V Contains a pre-defined value of the manual test. This attribute is required and must 
+have a value. 
+IP_CODE The interpretation c ode of the value in V. The following codes from table 38 of the 
+POCT1-A DML specification shall be used for this attribute: 
+• LL: Critical Low 
+• L: Abnormal Low 
+• H: Abnormal High 
+• HH: Critical High 
+• N: Normal 
+• A: Abnormal 
+• AA: Very Abnormal 
+This attribute is ignored for the <CONTROL_ENTRY> element. 
+BKG_CLR The background color to show the value of  the manual test in the User Interface of the 
+device. The format is BKG_CLR=”R,G,B”, where R, G, and B are the values of Red, 
+Green and Blue, respectively. 
+This attribute is optional. This attribute is ignored for the <CONTROL_ENTRY> 
+element.. 
+FRG_CLR The foreground color to show the value of  the manual test in the User Interface of the 
+device. The format is FRG_CLR=”R,G,B”, where R, G, and B are the values of Red, 
+Green and Blue, respectively. 
+This attribute is optional. This attribute is ignored for the <CONTROL_ENTRY> 
+element. 
+ 
+========== PAGE 96 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 96 of 117 
+If the value of MDT for <TEST_ENTRY> or <CONTROL_ENTRY> is “NUMERIC”, the  
+<TEST_ENTRY> shall contain one or more <RANGE> elements that represent the ranges of the 
+manual test. For the <CONTROL_ENTRY> only the ABS range shall be defined. 
+The <RANGE> element is already discussed in the measured test section. 
+ 
+If the value of MDT is “TEXT” to indicate that the value of this manual test is entered text, the 
+<TEST_ENTRY> and <CONTROL_ENTRY> elements shall not contain any inner XML elements. 
+ 
+Following is an example of single manual tests in the <TEST_CONFIG> element: 
+ 
+Manual Patient Test (Fecal Occult)   
+<TEST TN="Fecal Occult" RT="I" > 
+ <MANUAL_TEST DN=" Fecal Occult" CODE="" CODE_SYS="" LOT_NUM_REQ="1” DEV_LOT_NUM_REQ=”1”>  
+  <SUB_TEST  DN="Fecal Occult" SKIP = “0”> 
+   < TEST_ENTRY MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Positive" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Negative" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Pos Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Positive" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Negative" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+   < CONTROL_ENTRY DN=”Neg Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Positive" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Negative" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+ </MANUAL_TEST></TEST>  
+ 
+Manual Patient Test (Pregnancy)   
+TEST TN="Pregnancy" RT="I"  > 
+ (MTE Patient Test) 
+ <MANUAL_TEST DN=" Pregnancy" CODE="" CODE_SYS="" LOT_NUM_REQ="1” DEV_LOT_NUM_REQ=”0”>  
+  <SUB_TEST DN=" Pregnancy" SKIP = “0”> 
+   < TEST_ENTRY MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Positive" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Negative" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Present" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Absent" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+  < / SUB_TEST> 
+ </MANUAL_TEST> 
+ (MTE QC Test) 
+ <MANUAL_QC_TEST DN=" PregPosQC" CODE="" CODE_SYS="" LOT_NUM_REQ="1" DEV_LOT_NUM_REQ=”0”>  
+  < SUB_TEST DN="PregPosQC" SKIP = “0”> 
+   < TEST_ENTRY MDT="SELECT_LIST" U="" CODE="11" CODE_SYS="b" >   
+    < SELECT_VALUE V="Positive" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Negative" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a"> 
+    < SELECT_VALUE V="Present" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Absent" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+ </MANUAL_QC_TEST>  
+========== PAGE 97 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 97 of 117 
+Manual Patient Test (Urinalysis)   
+<TEST TN="Urinalysis" RT="I"  > 
+ (MTE Patient Test)  
+ <MANUAL_TEST DN=" Urinalysis" CODE="" CODE_SYS="" LOT_NUM_REQ="1" DEV_LOT_NUM_REQ=”0”>  
+  <SUB_TEST DN=" Color" SKIP = “1”> 
+   < TEST_ENTRY MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Yellow" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="White" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+   < SELECT_VALUE V="Present" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Absent" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+  <SUB_TEST DN=" pH" "SKIP = “1”> 
+   < TEST_ENTRY MDT="NUMERIC" CODE="2" CODE_SYS="B" NF="X.XXX"> 
+    < RANGE ABS="[7.300;7.800]" RF="[7.500;7.600]" CT="[7.400;7.700]" SEX="U" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+          <SELECT_VALUE  V="Present" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Absent" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+ </MANUAL_TEST> 
+ (MTE QC Test) 
+ <MANUAL_QC_TEST DN=" UAPosQC" CODE="" CODE_SYS="" LOT_NUM_REQ="1" DEV_LOT_NUM_REQ=”0”> >  
+  <SUB_TEST DN=" Color" SKIP = “1”> 
+   < TEST_ENTRY MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Yellow" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="White" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+                 <SELECT_VALUE V="Present" 
+ IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+     < SELECT_VALUE V="Absent" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+  <SUB_TEST DN=" pH" SKIP = “1”> 
+   < TEST_ENTRY MDT="NUMERIC" CODE="2" CODE_SYS="B" NF="X.XXX"> 
+    < RANGE ABS="[7.300;7.800]" RF="[7.500;7.600]" CT="[7.400;7.700]" SEX="U" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Value” MDT="NUMERIC="" CODE="1" CODE_SYS="a" NF="X.XXX"> 
+               <RANGE ABS="[7.300;7.800] /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+ </MANUAL_QC_TEST> 
+ (MTE QC Test)   
+ <MANUAL_QC_TEST DN=" UANegQC" CODE="" CODE_SYS="" LOT_NUM_REQ="1" DEV_LOT_NUM_REQ=”0”> >  
+  <SUB_TEST DN=" Color" SKIP = “1”> 
+   < TEST_ENTRY MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+    < SELECT_VALUE V="Yellow" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="White" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Bar” MDT="SELECT_LIST" U="" CODE="1" CODE_SYS="a" > 
+              <SELECT_VALUE V="Present" IP_CODE="N" BKG_CLR="" FRG_CLR="" /> 
+    < SELECT_VALUE V="Absent" IP_CODE="A" BKG_CLR="" FRG_CLR="" /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+  <SUB_TEST DN=" pH" SKIP = “1”> 
+   < TEST_ENTRY MDT="NUMERIC" CODE="2" CODE_SYS="B" NF="X.XXX"> 
+    < RANGE ABS="[7.300;7.800]" RF="[7.500;7.600]" CT="[7.400;7.700]" SEX="U" /> 
+   < / TEST_ENTRY> 
+   < CONTROL_ENTRY DN=”Ctrl Value” MDT="NUMERIC="" CODE="1" CODE_SYS="a" NF="X.XXX"> 
+========== PAGE 98 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 98 of 117 
+               <RANGE ABS="[7.300;7.800] /> 
+   < / CONTROL_ENTRY> 
+  </SUB_TEST> 
+ </MANUAL_QC_TEST> 
+</TEST> 
+6.20.7 QC Configuration (QC_CONFIG) 
+THIS SECTION IS NOT IMPLEMENTED.  
+• The QC Configuration information of the device shall be sent in the <QC_CONFIG> 
+element of the Nova Setup message. 
+• Each Nova Setup message shall contain 1 <QC_CONFIG> element. 
+• If the QC configuration information does not fit in one Nova Setup message, the QC 
+configuration information can be broken so that it can be sent in multiple messages. 
+• The following figure illustrates the structure of a <QC_CONFIG> element: 
+ 
+<QC_CONFIG> 
+ 
+ <!-- Liquid QC configuration, 0 or 1 element per message --> 
+  <QC> 
+   <!-- QC configuration for a specific test  --> 
+<!-- 1 or more elements per message --> 
+   <qc_cfg_test> … </qc_cfg_test> 
+   … … … 
+   <qc_cfg_test> … </qc_cfg_test> 
+</QC> 
+ 
+ <!-- Linearity QC configuration, 0 or 1 element per message --> 
+<LINEARITY> 
+   <qc_cfg_test> … </qc_cfg_test> 
+   … … … 
+ <qc_cfg_test> … </qc_cfg_test> 
+</LINEARITY> 
+ 
+ <!-- Proficiency QC configuration, 0 or 1 element per message --> 
+<PROFICIENCY> 
+<qc_cfg_test> … </qc_cfg_test> 
+   … … … 
+  <qc_cfg_test> … </qc_cfg_test> 
+  …  
+</PROFICIENCY> 
+</QC_CONFIG>
+ 
+ 
+• The <QC> element contains the QC configuration for Liquid QC tests. Cardinality is 0 or 
+1. 
+• The <LINEARITY> element contains the QC configuration for Linearity tests. 
+Cardinality is 0 or 1. 
+• The <PROFICIENCY> element contains the QC configuration for Proficiency tests. 
+Cardinality is 0 or 1. 
+• The <QC>, <LINEARITY>, or <PROFICIENCY> element shall contain 1 or more 
+<qc_config_test> elements each of which contains QC configuration for a specific test. 
+========== PAGE 99 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 99 of 117 
+ 
+6.20.7.1 Attributes of the <QC>, <LINEARITY>, and <PROFICIENCY> 
+elem
+ent 
+• The following section lists the attributes of the <QC>, <LINEARITY>, and 
+<PROFICIENCY> element: 
+ 
+<interval_type V=”value” /> 
+<alert_mins V=”value” /> 
+<time V=”value” /> 
+<result_valid_time V=”value” /> 
+ 
+• The <interval_type> element contains the type of time interval to configure for QC. The 
+value of the <interval_type> element shall dictate the content of the <time> element. 
+The valid values of the interval_type element are: 
+o SHIFT : 
+The QC configuration is configured by shift times. 
+The <time> element shall then contain a string of shift times separated by the “*” 
+character. Each shift time shall have the format “HHMM”, where HH is the hour in 
+24-hour format, and MM is the minutes. 
+ 
+Example: <interval_type V=”SHIFT” /> 
+<time V=”0130*0930*1730” /> 
+ 
+< interval_type V=”SHIFT” /> 
+   <time V=”0100*0500*0900*1300*1700*2100” /> 
+ 
+o ELAPSED: 
+The QC configuration is configured by elapsed hours. . The <time> element shall 
+then contain the number of elapsed hours. 
+ 
+Example: <interval_type V=”ELAPSED” /> 
+<time V=”8” /> 
+ 
+o EXACT: 
+The QC configuration is configured at a specific date and time. The <time> element 
+shall then contain a string that specifies the date and time. The format of this string 
+shall adhere to the TS data type of the POCT1 standard. 
+ 
+Example: <interval_type V=”EXACT” /> 
+<time V=”2007-07-01T13:30:00-05:00” /> 
+ 
+• The <time> element contains the time interval of the QC tests. Its value is dependent on the 
+value of the <interval_type> element. See examples in the <interval_type> element. 
+• The alert_mins element contains the number of minutes prior to a scheduled QC test to 
+alert the user. 
+========== PAGE 100 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 100 of 117 
+• The result_valid_time element contains the number of days that a QC test is valid after the 
+QC test is successfully run. 
+Example: <result_valid_time V=”90” /> indicates that when the QC test is successfully run, 
+its results will be valid for 90 days. 
+6.20.7.2 The <qc_cfg_test> element 
+• The <qc_cfg_test> element contains the QC configuration for a specific test. The following 
+section lists the attributes of the <qc_cfg_test> element: 
+ 
+<name V=”value” /> 
+<mode_cd V=”value” /> 
+<level_req level=”value” repet_req=”value” /> 
+<allow_stat_qty V=”value” /> 
+ 
+• The <name> element contains the test name. 
+Example: <name V=”Glu” />, <name V=”Creat” /> 
+ 
+• The <mode_cd> element contains the QC mode. Valid values are: 
+o NONE:  No QC is configured for the specific test. 
+o NOTIFY: User is notified when QC is due. 
+o LOCK: Device is locked when QC is due. 
+ 
+• The <level_req> element contains a level that QC must be passed and the number of times to 
+repeat for that level. The level attribute contains the level(s). The repet_req attribute 
+contains the number of times to repeat for that level. 
+ 
+A series of <level_req> elements shall be used when more than one level is required to pass 
+QC for a specific test. The following example specifies that level 1, 2, and 3 are required and 
+5 tests must be done for each level. 
+ 
+  <level_req level=”1” repet_req=”5” /> 
+  <level_req level=”2” repet_req=”5” /> 
+  <level_req level=”3” repet_req=”5” /> 
+ 
+• The allow_stat_qty element contains the number of measurements that can be taken for a 
+specific test after QC is due and <mode_cd> is LOCK. This attribute is only meaningful 
+when the value of the <mode_cd> element is LOCK. 
+6.20.7.3 Empty <QC_CONFIG> element 
+An empty <QC_CONFIG> element in the following format shall be used to specify that the device 
+has no QC configuration: 
+ 
+<QC_CONFIG></QC_CONFIG> 
+ 
+If the device is currently configured for QC, all of the QC configuration settings shall be removed 
+from the device. 
+========== PAGE 101 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 101 of 117 
+ 
+6.20.7.4 Example 
+The following example illustrates a <QC> element that specifies the following QC configuration: 
+• QC for all tests is due every 8 hours. 
+• The device shall alert the user 30 minutes before QC is due 
+• For test “Glu” 
+o The device shall lock when QC is due 
+o The device shall allow 3 measurements of “Glu” after the device is QC locked. 
+o QC must be passed for levels 1, 2, and 3 in order to unlock the device. 
+• For test “Creat” 
+o The device shall notify the user when QC is due 
+o QC must be passed for level 2. 
+ 
+<QC> 
+   <interval_type V="ELAPSED" /> 
+<alert_mins V="30" /> 
+<time V="8" /> 
+ 
+   <qc_cfg_test> 
+    <name V="Glu" /> 
+    <mode_cd V="LOCK"/> 
+ 
+    <allow_stat_qty V="3" /> 
+ 
+    <level_req level="1" repet_req="1" /> 
+    <level_req level="2" repet_req="1" /> 
+    <level_req level="3" repet_req="1" /> 
+   </qc_cfg_test > 
+ 
+   <qc_cfg_test> 
+    <name V="Creat" />    
+    <mode_cd V="NOTIFY"/> 
+ 
+    <level_req level="2" repet_req="1" /> 
+   </qc_cfg_test> 
+  </QC> 
+========== PAGE 102 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 102 of 117 
+ 
+The following example illustrates a <QC> element that specifies the following QC configuration: 
+• QC for all tests is due at shift times. 
+• The shift times are 1:00 AM, 9:00 AM, 5:00 PM 
+• The device shall alert the user 30 minutes before each shift time. 
+• For test “Glu” 
+o The device shall notify the user when QC is due. 
+o QC must be passed for levels 1, 2, and 3. 
+• For test “Creat” 
+o No QC is configured. 
+ 
+<QC> 
+  <interval_type V="SHIFT" /> 
+<alert_mins V="30" /> 
+<times V="0100*0900*1700" /> 
+ 
+  <qc_cfg_test> 
+   <name V="Glu" /> 
+   <mode_cd V="NOTIFY"/> 
+ 
+   <level_req level="1" repet_req="1" /> 
+   <level_req level="2" repet_req="1" /> 
+   <level_req level="3" repet_req="1" /> 
+  </qc_cfg_test > 
+ 
+  <qc_cfg_test> 
+   <name V="Creat" />    
+   <mode_cd V="NONE"/> 
+  </qc_cfg_test> 
+ </QC>
+ 
+ 
+Note from the above example that a <qc_cfg_test> element is used to specify that no QC is 
+configured for “Creat”. An alternative method is NOT to send any <qc_cfg_test> element for 
+“Creat”. When no QC configuration is sent for a specific test, the device considers that no QC is 
+configured for that test.
+========== PAGE 103 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 103 of 117 
+The following example illustrates a <LINEARITY> element that specifies the following 
+configuration: 
+• The Linearity tests are scheduled at a specific date and time. 
+• The linearity test’s date and time is July 1, 2007 at 1:30 PM 
+• The device shall alert the user 30 minutes before test time. 
+• The Linearity tests, if successfully run, will be valid for 180 days. 
+• For test “Glu” 
+o The device shall notify the user when linearity is due. 
+o Levels 1, 2, 3, 4, 5 are required to pass linearity. The number of tests to repeat is 5 for 
+level 1, 5 for level 2, 4 for level 3, 4 for level 4, and 3 for level 5 
+• For test “Creat”. 
+o The device shall lock when linearity is due. 
+o The device shall allow 5 measurements of Creat after the device is Linearity locked. 
+o Levels 1, 2, 3, 4, 5 are required to pass linearity. Five tests must be done for each 
+level.  
+ 
+<LINEARITY> 
+  <interval_type V="EXACT" /> 
+<alert_mins V="30" /> 
+<time V="2007-07-01T13:30:00-05:00" /> 
+<result_valid_time V="180" /> 
+ 
+  <qc_cfg_test> 
+   <name V="Glu" /> 
+   <mode_cd V="NOTIFY"/> 
+ 
+   <level_req level="1" repet_req="5" /> 
+   <level_req level="2" repet_req="5" /> 
+   <level_req level="3" repet_req="4" /> 
+   <level_req level="4" repet_req="4" /> 
+   <level_req level="5" repet_req="3" /> 
+  </qc_cfg_test> 
+ 
+  <qc_cfg_test> 
+   <name V="Creat" /> 
+   <mode_cd V="LOCK"/> 
+ 
+   <allow_stat_qty V="5" /> 
+ 
+   <level_req level="1" repet_req="5" /> 
+   <level_req level="2" repet_req="5" /> 
+   <level_req level="3" repet_req="5" /> 
+   <level_req level="4" repet_req="5" /> 
+   <level_req level="5" repet_req="5" /> 
+  </qc_cfg_test> 
+ </LINEARITY> 
+========== PAGE 104 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 104 of 117 
+The following example illustrates a <LINEARITY> element that specifies the following 
+configuration: 
+• The Linearity tests are scheduled at a specific date and time. 
+• The linearity test’s date and time is July 1, 2007 at 1:30 PM 
+• The device shall alert the user 30 minutes before test time. 
+• The Linearity tests, if successfully run, will be valid for 180 days 
+• For test “Glu” 
+o The device shall notify the user when linearity is due. 
+o Levels 1, 2, 3, 4, 5 are required to pass linearity. The number of tests to repeat is 5 for 
+level 1, 5 for level 2, 4 for level 3, 4 for level 4, and 3 for level 5 
+• For test “Creat”. 
+o Creat is not configured for linearity tests. 
+ 
+<LINEARITY> 
+  <interval_type V="EXACT" /> 
+<alert_mins V="30" /> 
+<time V="2007-07-01T13:30:00-05:00" /> 
+<result_valid_time V="180" /> 
+ 
+  <qc_cfg_test> 
+   <name V="Glu" /> 
+   <mode_cd V="NOTIFY"/> 
+ 
+   <level_req level="1" repet_req="5" /> 
+   <level_req level="2" repet_req="5" /> 
+   <level_req level="3" repet_req="4" /> 
+   <level_req level="4" repet_req="4" /> 
+   <level_req level="5" repet_req="3" /> 
+  </qc_cfg_test> 
+ 
+  <qc_cfg_test> 
+   <name V="Creat" /> 
+   <mode_cd V="NONE"/> 
+  </qc_cfg_test> 
+ </LINEARITY>
+ 
+ 
+Note from the above example that a <qc_cfg_test> element is used to specify that no Linearity is 
+configured for “Creat”. An alternative method is NOT to send any <qc_cfg_test> element for 
+“Creat”. When no Linearity configuration is sent for a specific test, the device considers that no 
+Linearity is configured for that test
+========== PAGE 105 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 105 of 117 
+The following example illustrates a <PROFICIENCY> element that specifies the following 
+configuration: 
+• The Proficiency tests are due at a specific date and time. 
+• The Proficiency test time is July 10, 2007 2:30 PM 
+• The device shall alert the user 30 minutes before test time. 
+• For test “Glu” 
+o The device shall notify the user when proficiency is due. 
+• For test “Creat” 
+o The device shall notify the user when proficiency is due. 
+ 
+<PROFICIENCY> 
+  <interval_type V="EXACT" /> 
+<alert_mins V="30" /> 
+<time V="2007-07-10T14:30:00-05:00" /> 
+ 
+<qc_cfg_test> 
+   <name V="Glu" /> 
+   <mode_cd V="NOTIFY"/> 
+</qc_cfg_test> 
+ 
+<qc_cfg_test> 
+   <name V="Creat" /> 
+   <mode_cd V="NOTIFY"/> 
+</qc_cfg_test> 
+ </PROFICIENCY > 
+ 
+The following example illustrates a <PROFICIENCY> element that specifies no proficiency tests 
+are configured for “Glu” and “Creat”. Note that since Proficiency is not scheduled for any tests, this 
+is equivalent to NOT sending the <PROFICIENCY> element in the <QC_CONFIG> element. 
+ 
+<PROFICIENCY> 
+<qc_cfg_test> 
+   <name V="Glu" /> 
+   <mode_cd V="NONE"/> 
+</qc_cfg_test> 
+ 
+<qc_cfg_test> 
+   <name V="Creat" /> 
+   <mode_cd V="NONE"/> 
+</qc_cfg_test> 
+ </PROFICIENCY > 
+ 
+========== PAGE 106 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 106 of 117 
+ 
+6.20.8 Example of Nova Setup Message 
+<NOVA.STATSTRIP.SETUP> 
+   <HDR> 
+      <HDR.message_type V="NOVA_STATSTRIP.SYSSETUP" SN="STATSTRIP" SV="1.0"/> 
+      <HDR.control_id V="4010"/> 
+      <HDR.version_id V="POCT1"/> 
+      <HDR.creation_dttm V="2004-11-01T14:22:55-05:00"/> 
+   </HDR> 
+   <KEY_VALUE> 
+<accn_id_alpha_enable V=”1”/> 
+<accn_id_alpha_len_validate_enable V=”0”/> 
+<accn_id_list_enable V=”0”/> 
+<accn_id_max_length V=”7”/> 
+<accn_id_min_length V=”7”/>
+ 
+… 
+<sup_override_scan_mask_i2of5 V=”000000”/> 
+<sup_override_sup_override_enable V=”0”/> 
+<sup_override_validation V=”0” 
+<allow_testing_default_unit V=”1”/> 
+<obs_review_no_login V=”1”/> 
+   </KEY_VALUE> 
+   <COMMENTS> 
+<Comment V="Insulin given" TN="Glu" CH="0" FL ="0" CT=”QC”/> 
+… 
+<Comment V="Check result" TN="Hct" CH="1" FL ="1" CT=”PT”/> 
+   </COMMENTS> 
+   <TEST_CONFIG> 
+See section TEST_CONFIG for examples. 
+   </TEST_CONFIG> 
+ <QC_CONFIG> 
+See section QC_CONFIG for examples. 
+   </QC_CONFIG> 
+   <DIAGCODES> 
+<DIAGCODE> 
+<DIAGCODE.code_id V=”250.00”/> 
+<DIAGCODE.code_desc V=”Diabetes mellitus without mention 
+of complication, type II or unspecified type, not stated 
+as uncontrolled”/> 
+ </DIAGCODE>
+ 
+ <DIAGCODE> 
+<DIAGCODE.code_id V=”250.01”/> 
+<DIAGCODE.code_desc V=”Diabetes mellitus without mention 
+of complication, type I [juvenile type], not stated as 
+uncontrolled”/> 
+ </DIAGCODE>
+ 
+   </DIAGCODES> 
+</NOVA.STATSTRIP.SETUP> 
+ 
+========== PAGE 107 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 107 of 117 
+6.21 Key Value Definitions  
+ 
+Key Name Key Value (Default) Description 
+AccnId2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+AccnIdAlphaEnable 0 0,1 Allow Alpha chars for Accession Num entry  
+AccnIdListEnable 0 0,1 Enable view list of Accn Numbers. 
+AccnIdMaxLength 16 1-16, Max # of chars accepted. 
+AccnIdMinLength 1 1-16, Min # of chars accepted  
+AccnIdNonBarcodeCommentReq 0 0,1 Force Comment if Accn not scanned (NI) 
+AccnIdScanEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+AccnIdScanEnableCbar 1 0,1 Enable Codabar for Accn 
+AccnIdScanEnableC128 1 0,1 Enable Code 128 for Accn 
+AccnIdScanEnableC39 1 0,1 Enable Code 39 for Accn 
+AccnIdScanEnableC93 1 0,1 Enable Code 93 for Accn 
+AccnIdScanEnableC2o5 1 0,1 Enable Code 2of5 for Accn 
+AccnIdScanEnable2D 1 0,1 Enable 2D Bar codes Accn 
+AccnIdSmCbar ZZZZZZZZZZZZZZZZ Mask definition for Codabar 
+AccnIdSmC128 ZZZZZZZZZZZZZZZZ Mask definition for Code 128 
+AccnIdSmC39 ZZZZZZZZZZZZZZZZ Mask definition for Code 39 
+AccnIdSmC93 ZZZZZZZZZZZZZZZZ Mask definition for Code 93 
+AccnIdSmC2o5 ZZZZZZZZZZZZZZZZ Mask definition for Code 2of5 
+AccnIdSm2D [16]Z Mask definition for 2D barcodes 
+AccnIdScanMaskFailRejCbar 0 0,1 Reject if fail to scan 
+AccnIdScanMaskFailRejC128 0 0,1 Reject if fail to scan 
+AccnIdScanMaskFailRejC39 0 0,1 Reject if fail to scan 
+AccnIdScanMaskFailRejC93 0 0,1 Reject if fail to scan 
+AccnIdScanMaskFailRejC2o5 0 0,1 Reject if fail to scan  
+AccnIdScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+AccnIdSupOverrideEnable 0 0,1 Allow override for this entry 
+AccnIdValidation 0 0,1 Enable validation for this entry 
+DxId2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+DxIdAlphaEnable 0 0,1 Allow Alpha chars for Diag Code Entry  
+========== PAGE 108 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 108 of 117 
+Key Name Key Value (Default) Description 
+DxIdListEnable 0 0,1 Enable view list of Diag Codes 
+DxIdMaxLength 6 1-16, Max # of chars accepted. 
+DxIdMinLength 3 1-16, Min # of chars accepted  
+DxIdNonBarcodeCommentReq 0 0,1 Force Comment if Diag Code not scanned (NI) 
+DxIdPromptEnable 0 0,1 Enable prompting for the Diag Code Entry at the meter 
+DxIdScanEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+DxIdScanEnableCbar 1 0,1 Enable Codabar for D. Code 
+DxIdScanEnableC128 1 0,1 Enable Code 128 for D. Code 
+DxIdScanEnableC39 1 0,1 Enable Code 39 for D. Code 
+DxIdScanEnableC93 1 0,1 Enable Code 93 for D. Code 
+DxIdScanEnableC2o5 1 0,1 Enable Code 2of5 for D. Code 
+DxIdScanEnable2D 1 0,1 Enable 2D Bar codes D. Code 
+DxIdSmCbar ZZZZZZ Mask definition for Codabar 
+DxIdSmC128 ZZZZZZ Mask definition for Code 128 
+DxIdSmC39 ZZZZZZ Mask definition for Code 39 
+DxIdSmC93 ZZZZZZ Mask definition for Code 93 
+DxIdSmC2o5 ZZZZZZ Mask definition for Code 2of5 
+DxIdSm2D [6]Z Mask definition for 2D barcodes 
+DxIdScanMaskFailRejCbar 0 0,1 Reject if fail to scan 
+DxIdScanMaskFailRejC128 0 0,1 Reject if fail to scan 
+DxIdScanMaskFailRejC39 0 0,1 Reject if fail to scan 
+DxIdScanMaskFailRejC93 0 0,1 Reject if fail to scan 
+DxIdScanMaskFailRejC2o5 0 0,1 Reject if fail to scan  
+DxIdScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+DxIdSupOverrideEnable 0 0,1 Allow override for this entry 
+DxIdValidation 0 0,1 Enable validation for this entry 
+ArchivedObsRetainDays 10 1,999 Days archived results are retained on the meter if DB not 
+full 
+ArchivedOvrwDisregardArchBit 1 0,1 Delete oldest result if  
+DockLockAlertMins 120 0-999 minutes for alert before Dock Lockout 
+DockLockElapsedHrs 8 1-99 hours elapsed before Docking is required. 
+DockLockModeCd NONE REQ (lock), ALLOW (notify), NONE after ‘elapsed’ hrs since last dock 
+========== PAGE 109 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 109 of 117 
+Key Name Key Value (Default) Description 
+DockLockShiftTimes  0000*0800*1600 time of day (up to 3) for docking mode. 
+DockLockInterval ELAPSED SHIFT, ELAPSED, NONE dock lock interval selection 
+LinLot2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+LinLotListEnable 0 0,1 Enable view list of Lin Lots 
+LinLotNonBarcodeCmntReq 0 0,1 Force Comment if Lin Lot not scanned (NI) 
+LinLotScanEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+LinLotScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+LinLotSupOverrideEnable 0 0,1 Allow override for this entry 
+LinLotValidation 0 0,1 Enable validation for this entry 
+LinObsFailCommentReqCd ALLOW REQ, ALLOW Require comment if Lin result out of range  
+LinObsPassCommentReqCd ALLOW REQ, ALLOW Require comment if Lin result in range  
+LinObsValueDisplay 1 0,1 Lin Display 0=PASS/FAIL, 1= “RESULT VALUE”  
+OpLogoffElapsedSecs 300 1-999 minutes for auto logoff. 
+OpLogoffModeCd MAN MAN (manual), TEST (after test result), ELAPSED (x seconds after meter 
+sleeps), NEVER (Auto login) 
+DateFormat dd/MM dd/MM, MM/dd Date format 
+MeterMaxLinRec 200 DO NOT ALTER 
+MeterMaxPatRec 1000 DO NOT ALTER 
+MeterMaxProfRec 60 DO NOT ALTER 
+MeterMaxQCRec 200 DO NOT ALTER 
+TimeFormat HH:mm HH:mm (24 hr), hh:mm tt (12 hr) format 
+OpLogin2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+OpLoginAlphaEnable 0 0,1 Allow Alpha chars for OP Login Entry  
+OpLoginMaxLength 18 1-18, Max # of chars accepted. 
+OpLoginMinLength 1 1-18, Min # of chars accepted 
+OpLoginNonBarcodeCommentReq 0 0,1 Force Comment if Op ID not scanned (NI) 
+OpLoginScanEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+OpLoginScanEnableCbar 1 0,1 Enable Codabar for Op ID 
+OpLoginScanEnableC128 1 0,1 Enable Code 128 for Op ID 
+OpLoginScanEnableC39 1 0,1 Enable Code 39 for Op ID 
+OpLoginScanEnableC93 1 0,1 Enable Code 93 for Op ID 
+OpLoginScanEnableC2o5 1 0,1 Enable Code 2of5 for Op ID 
+========== PAGE 110 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 110 of 117 
+Key Name Key Value (Default) Description 
+OpLoginScanEnable2D 1 0,1 Enable 2D Bar codes Op ID 
+OpLoginSmCbar ZZZZZZZZZZZZZZZZZZ Mask definition for Codabar 
+OpLoginSmC128 ZZZZZZZZZZZZZZZZZZ Mask definition for Code 128 
+OpLoginSmC39 ZZZZZZZZZZZZZZZZZZ Mask definition for Code 39 
+OpLoginSmC93 ZZZZZZZZZZZZZZZZZZ Mask definition for Code 93 
+OpLoginSmC2o5 ZZZZZZZZZZZZZZZZZZ Mask definition for Code 2of5 
+OpLoginSm2D [18]Z Mask definition for 2D barcodes 
+OpLoginScanMaskFailRejCbar 0 0,1 Reject if fail to scan 
+OpLoginScanMaskFailRejC128 0 0,1 Reject if fail to scan 
+OpLoginScanMaskFailRejC39 0 0,1 Reject if fail to scan 
+OpLoginScanMaskFailRejC93 0 0,1 Reject if fail to scan 
+OpLoginScanMaskFailRejC2o5 0 0,1 Reject if fail to scan  
+OpLoginScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+OpLoginSupOverrideEnable 0 0,1 Allow override for this entry 
+OpLoginValidation 0 0,1 Enable validation for this entry 
+OpLoginDisplayCd NAME NAME, ID, NAME_ID, NONE  Info display of logged in Operator 
+PatId2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+PatIdAlphaEnable 0 0,1 Allow Alpha chars for Patient ID Entry  
+PatIdAutoEnabled 0 0, 1 Enable auto entry of patient ID (ID=”AUTO_999” is 
+predefined at the meter). 
+PatIdFailCommentReq 0 0,1 Force Comment if Pat ID not in meter’s db (NI) 
+PatIdFailDowntimeEnable 0 0,1 Allow Downtime override if Pat ID not in meter’s db 
+(Validation = ON) 
+PatIdFailNewPtEnable 0 0,1 Allow New Patient override if Pat ID not in meter’s db 
+(Validation = ON) 
+PatIdListEnable 0 0,1 Enable view list of Patient IDs 
+PatIdMaxLength 16 1-16, Max # of chars accepted. 
+PatIdMinLength 1 1-16, Min # of chars accepted 
+PatIdNonBarcodeCommentReq 0 0,1 Force Comment if Pat ID not scanned (NI) 
+PatIdScanEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+PatIdScanEnableCbar 1 0,1 Enable Codabar for Pat ID 
+PatIdScanEnableC128 1 0,1 Enable Code 128 for Pat ID 
+========== PAGE 111 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 111 of 117 
+Key Name Key Value (Default) Description 
+PatIdScanEnableC39 1 0,1 Enable Code 39 for Pat ID 
+PatIdScanEnableC93 1 0,1 Enable Code 93 for Pat ID 
+PatIdScanEnableC2o5 1 0,1 Enable Code 2of5 for Pat ID 
+PatIdScanEnable2D 1 0,1 Enable 2D Bar codes Pat ID 
+PatIdSmCbar ZZZZZZZZZZZZZZZZ Mask definition for Codabar 
+PatIdSmC128 ZZZZZZZZZZZZZZZZ Mask definition for Code 128 
+PatIdSmC39 ZZZZZZZZZZZZZZZZ Mask definition for Code 39 
+PatIdSmC93 ZZZZZZZZZZZZZZZZ Mask definition for Code 93 
+PatIdSmC2o5 ZZZZZZZZZZZZZZZZ Mask definition for Code 2of5 
+PatIdSm2D [16]Z Mask definition for 2D barcodes 
+PatIdScanMaskFailRejCbar 0 0,1 Reject if fail to scan 
+PatIdScanMaskFailRejC128 0 0,1 Reject if fail to scan 
+PatIdScanMaskFailRejC39 0 0,1 Reject if fail to scan 
+PatIdScanMaskFailRejC93 0 0,1 Reject if fail to scan 
+PatIdScanMaskFailRejC2o5 0 0,1 Reject if fail to scan  
+PatIdScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+PatIdSupOverrideEnable 0 0,1 Allow override for this entry 
+PatIdTgcEnable 0 0,1 Enable TGC tagging 
+PatIdValidation 0 0,1 Enable validation for this entry 
+CommentsFreeTextChartableEnable 1 0,1 Enable “Chart” tag on Free Text comments 
+CommentsFreeTextEnable 1 0,1 Enable Free Text comments 
+CommentsFreeTextFlaggedEnable 1 0,1 Enable “Flag” tag on Free Text comments 
+ObsAbnormalRangeCommentReq 0 0,1 Require comment if Pat result exceeds normal range  
+ObsCriticalRangeCommentReq 0 0,1 Require comment if Pat result exceeds abnormal range 
+ObsNormalRangeCommentReq 0 0,1 Require comment if Pat result in normal range 
+ObsRejectEnable 1 0,1 Enable ‘reject’ of if Pat results 
+ObsRejectResultCommentReq 0 0,1 Force Comment if Pat result is rejected 
+ObsRejectSupOverrideReq 0 0,1 Supervisor Override required if  Pat result is rejected (NI) 
+ObsTechnicalRangeCommentReq 0 0,1 Force Comment if Pat result exceeds technical range  
+PhysId2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+PhysIdAlphaEnable 0 0,1 Allow Alpha chars for Physician ID Entry  
+PhysIdListEnable 0 0,1 Enable view list of Physician IDs 
+========== PAGE 112 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 112 of 117 
+Key Name Key Value (Default) Description 
+PhysIdMaxLength 16 1-16, Max # of chars accepted. 
+PhysIdMinLength 1 1-16, Min # of chars accepted 
+PhysIdNonBarcodeCommentReq 0 0,1 Force Comment if Phys ID not scanned (NI) 
+PhysIdPromptEnable 0 0,1 Enable prompting for the Phys ID Entry at the meter 
+PhysIdScanEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+PhysIdScanEnableCbar 1 0,1 Enable Codabar for Phys ID 
+PhysIdScanEnableC128 1 0,1 Enable Code 128 for Phys ID 
+PhysIdScanEnableC39 1 0,1 Enable Code 39 for Phys ID 
+PhysIdScanEnableC93 1 0,1 Enable Code 93 for Phys ID 
+PhysIdScanEnableC2o5 1 0,1 Enable Code 2of5 for Phys ID 
+PhysIdScanEnable2D 1 0,1 Enable 2D Bar codes Phys ID 
+PhysIdSmCbar ZZZZZZZZZZZZZZZZ Mask definition for Codabar 
+PhysIdSmC128 ZZZZZZZZZZZZZZZZ Mask definition for Code 128 
+PhysIdSmC39 ZZZZZZZZZZZZZZZZ Mask definition for Code 39 
+PhysIdSmC93 ZZZZZZZZZZZZZZZZ Mask definition for Code 93 
+PhysIdSmC2o5 ZZZZZZZZZZZZZZZZ Mask definition for Code 2of5 
+PhysIdSm2D [16]Z Mask definition for 2D barcodes 
+PhysIdScanMaskFailRejCbar 0 0,1 Reject if fail to scan 
+PhysIdScanMaskFailRejC128 0 0,1 Reject if fail to scan 
+PhysIdScanMaskFailRejC39 0 0,1 Reject if fail to scan 
+PhysIdScanMaskFailRejC93 0 0,1 Reject if fail to scan 
+PhysIdScanMaskFailRejC2o5 0 0,1 Reject if fail to scan  
+PhysIdScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+PhysIdSupOverrideEnable 0 0,1 Allow override for this entry 
+PhysIdValidation 0 0,1 Enable validation for this entry 
+PrivLevelAdminRenameMeterCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow change 
+of meter name 
+PrivLevelAdminResetFacilityCd 19 1 (sup), 2 (op), 16 (Admin), 19  (admin + sup + op) Allow reset 
+facility 
+PrivLevelAdminSetNetworkCd 19 1 (sup), 2 (op), 16 (Admin), 19  (admin + sup + op) Allow change 
+Network settings 
+PrivLevelAdminUnarchiveBitCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow 
+========== PAGE 113 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 113 of 117 
+Key Name Key Value (Default) Description 
+Unarchive results 
+PrivLevelSetDateTimeCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow 
+set/change Date Time 
+PrivLevelTesttypeCorrelationCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow 
+Correlation testing (NI) 
+PrivLevelTesttypeLinearityCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow 
+Linearity testing 
+PrivLevelTesttypeMaintCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow 
+Maintenance access (NI) 
+PrivLevelTesttypeProficiencyCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow 
+Proficiency testing 
+PrivLevelTesttypeTrainingCd 19 1 (sup), 2 (op), 16 (Admin), 19 (admin + sup + op) Allow Training 
+access (NI) 
+ProfLot2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+ProfLotAlphaEnable 1 0,1 Allow Alpha chars for Proficiency Lot Entry  
+ProfLotListEnable 0 0,1 Enable view list of Prof. Lots (NI) 
+ProfLotMaxLength 16 1-16, Max # of chars accepted. 
+ProfLotMinLength 1 1-16, Min # of chars accepted 
+ProfLotNonBarcodeCommentReq 0 0,1 Force Comment if Prof Lot not scanned (NI) 
+ProfLotScanEnableCd ALLOW REQ, ALLOW, DIS Scan this field 
+ProfLotScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+ProfLotValidation 0 0,1 Enable validation for this entry (NI) 
+ProfLotSupOverrideEnable 0 0,1 Allow override for this entry (NI) 
+ProfRejectEnable 1 0,1 Enable ‘reject’ of if Prof results (NI) 
+QcLockAlertMins 120 0-999 minutes for alert before QC Lockout 
+QcLockKetAlertMins 120 0-999 minutes for alert before QC Lockout specific for Ket on 
+multitest meter. 
+QcLockElapsedHrs 24 1-999 hours elapsed before QC testing is required. 
+QcLockKetElapsedHrs 24 1-999 hours elapsed before QC testing is required for Ket in 
+multitest meter 
+QcLockLevel1Req 0 0,1 Level 1 QC test require for unlocking QC-locked meter 
+QcLockLevel2Req 0 0,1 Level 2 QC test require for unlocking QC-locked meter 
+========== PAGE 114 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 114 of 117 
+Key Name Key Value (Default) Description 
+QcLockLevel3Req 0 0,1 Level 3 QC test require for unlocking QC-locked meter 
+QcLockLevel4Req 0 0,1 Level 4 QC test require for unlocking QC-locked meter 
+QcLockKetLevel1Req 0 0,1 Level 1 QC test require for unlocking QC-locked meter for Ket 
+test in a multimeter 
+QcLockKetLevel2Req 0 0,1 Level 2 QC test require for unlocking QC-locked meter for Ket 
+test in a multimeter 
+QcLockKetLevel3Req 0 0,1 Level 3 QC test require for unlocking QC-locked meter for Ket 
+test in a multimeter 
+QcLockModeCd NONE LOCK (lock), NOTIF (notify), NONE after ‘elapsed’ hrs since last 
+dock  
+QcLockKetModeCd NONE LOCK (lock), NOTIF (notify), NONE after ‘elapsed’ hrs since last 
+dock  for Ket on multimeter 
+QcLockShiftTimes  0000*0800*1600 time of day (up to 3) for docking mode. 
+QcLockKetShiftTimes  0000*0800*1600 time of day (up to 3) for docking mode. 
+For Ket on multimeter 
+QcLockInterval ELAPSED SHIFT, ELAPSED, NONE QC lock interval selection 
+QcLockKetInterval ELAPSED SHIFT, ELAPSED, NONE QC lock interval selection for Ket on 
+Multimeter 
+QcLot2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+QcObsFailCommentReqCd ALLOW REQ, ALLOW Require comment if QC result out of range  
+QcObsPassCommentReqCd ALLOW REQ, ALLOW Require comment if QC result in range  
+QcObsValueDisplay 1 0,1 QC Display 0=PASS/FAIL, 1= “RESULT VALUE”  
+QcLotListEnable 0 0,1 Enable view list of QC Lots 
+QcLotNonBarcodeCommentReq 0 0,1 Force Comment if QC Lot not scanned (NI) 
+QcLotScanEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+QcLotScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+QcLotSupOverrideEnable 0 0,1 Allow override for this entry 
+QcLotValidation 0 0,1 Enable validation for this entry 
+AccnIdPromptText  “Any Text ” Custom   
+ObsIdMethodCd PATID PATID (Patient ID), ACCN (Accession), BOTH (Operator chooses) 
+PatIdPromptText  “ Any Text” Custom   
+PatIdTypeCd MRN MRN (Med Rec. Num), ACCT (Account Num),  PATID (Patient ID) 
+StripId2dSEnableCd ALLOW REQ, ALLOW,  DIS Scan this field 
+========== PAGE 115 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 115 of 117 
+Key Name Key Value (Default) Description 
+StripIdAutoEnabled 0 0, 1 Enable auto entry of Strip Lot, ”xx99999999” is predefined at 
+the meter, where xx =:  
+03 for Glucose strips 
+21 for Glucose “NIPRO” strips 
+22 for Ketone strips 
+26 for Lactate 
+49 for Creatinine strips 
+StripIdDefaultLastStripId 1 0,1 Remember last Strip lot used when requesting lot entry 
+StripIdListEnable 0 0,1 Enable view list of Strip Lots 
+StripIdNonBarcodeCommentReq 0 0,1 Force Comment if Strip Lot not scanned (NI) 
+StripIdScanEnableCd ALLOW REQ, ALLOW, DIS Scan this field 
+StripIdScanRequireAccept 1 0,1 Require press ACCEPT after scan 
+StripIdSupOverrideEnable 0 0,1 Allow override for this entry 
+StripIdValidation 0 0,1 Enable validation for this entry 
+SupOvScanEnableCd ALLOW REQ, ALLOW, DIS Allow Sup ID to be scanned (NI) 
+SupOvScanRequireAccept 1 0,1 Require press ACCEPT after scan (NI) 
+AllowTestingDefaultUnit 1 0,1 Allow Testing in Location designated as default (NI) 
+ObsReviewNoLogin 1 0,1 Allow review data without login 
+SampleTypeSelectEnable 0 0,1 Allow selection of sample type (NI) 
+PatWtUnits KGS KGS, LBS Patient weight units 
+PatHtUnits CMS CMS, INS Patient height units 
+GFRAdultMethodCd MDRD MDRD, MDRD-IDMS, CG Adult dGFR equation selection 
+GFRAdolescentMethodCd SZ SZ, CB Child dGFR equation selection 
+GFRJpRaceEnable 0 0,1 Enable “Japanese” race selection for eGFR calculation 
+DockLockSupOverrideEnable 0 0,1 Allow Supervisor to override Dock Lockout state 
+PrivLevelDockLockOvCd 7 1 (op), 2 (sup), 3 (op+sup) Allow Dock Lockout state override 
+MTEAllowExpTLotOverride 1 0,1 Allow use of Card/Strip/Kit expired lot # if lot is in meter’s 
+DB 
+MTEAllowExpQLotOverride 1 0,1 Allow use of QC expired lot # if lot is in meter’s DB 
+MTEAllowExpDLotOverride 1 0,1 Allow use of Developer expired lot # if lot is in meter’s DB 
+MTETestValidation 0 0,1 Enable Validation for Card/Strip/Kit lot entry 
+MTEQCValidation 0 0,1 Enable Validation for QC lot entry 
+========== PAGE 116 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 116 of 117 
+Key Name Key Value (Default) Description 
+MTEDevValidation 0 0,1 Enable Validation for Developer  lot entry 
+MTETestListEnable 1 0,1 Enable view list of Manual Tests card/kit Lots 
+MTEQCListEnable 1 0,1 Enable view list of Manual QC Lots 
+MTEDevListEnable 1 0,1 Enable view list of Manual Developer Lots 
+MTEAllowTLotOverride 1 0,1 Allows override if manual lot is not in DB and Validation is 
+enabled. 
+MTEAllowQLotOverride 1 0,1 Allows override if manual QC lot is not in DB and Validation 
+is enabled. 
+MTEAllowDLotOverride 1 0,1 Allows override if developer lot is not in DB and Validation is 
+enabled. 
+ 
+========== PAGE 117 ==========
+ CONFIDENTIAL 
+ DML_Interface.doc Version 2.59 
+ Page 117 of 117 
+6.22 StatStrip/StatSensor Device definitions 
+                 
+Device Statstrip StatstripNP  StatSensor39, 39i, 39AC  StatStrip79  StatStrip32 
+                 
+Measured Tests Glu (Glucose)  Creat (Creatinine)  Glu(Glucose) Ket (Ketone)  Lac (Lactate) 
+Test Code 2341-6 (LN)  CRESS (NOVABIO)  2341-6 (LN) 53061-8 (LN)  SSLAC (NOVABIO) 
+U-of-M mg/dL (mmol/L)  mg/dL (μmol/L)  mg/dL (mmol/L) mmol/L (mg/dL)  mmol/L (mg/dL) 
+Tech. Range 10 - 600 (0.6 - 33.3) 10 - 900 (0.6 – 50.0)  0.30 - 12.00 (27 -1061)  10 - 600 (0.6 - 33.3) 0 - 7.0 (0 - 73)  0.3 - 20.0 (3 - 180) 
+Offsets                
+Slope 0.80 - 1.20  0.50 - 2.00  0.80 - 1.20 0.50 - 1.50  0.70 - 1.30 
+Intercept ±25 (±1.4)  ±2.00 (±177)  ±25 (±1.4) ±1.4 (±15)  ±2.0 (±18) 
+               
+Calc. Tests    eGFR         
+Test Code    CRECRCL/CREGFR (NOVABIO)         
+U-of-M    (mL/min) / (mL/min/1.73 m2)         
+               
+Reagents              
+Strip Lot 03xxxxxxx9 21xxxxxxx9  49xxxxxxx9  03xxxxxxx9 22xxxxxxx9  26xxxxxxx9 
+QC Lot 04xxxxxxxL (L=1-3) 04xxxxxxxL (L=1-4)  50xxxxxxxL (L=1-3)  04xxxxxxxL (L=1-3)  27xxxxxxxL (L=1-2) 
+Lin Lot 05xxxxxxxL (L=1-5)  55xxxxxxxL (L=1-5)  05xxxxxxxL (L=1-5)  28xxxxxxxL (L=1-5) 
+                
+           
+Unit Conversion mg/dL * 0.0555  mg/dL * 88.4  mg/dL * 0.0555 mg/dL / 10.4  mg/dL * 0.111 
+  mmol/L * 18.016  umol/L / 88.4  mmol/L * 18.0182 mmol/L * 10.4  mmol/L / 0.111 
+  
+ 

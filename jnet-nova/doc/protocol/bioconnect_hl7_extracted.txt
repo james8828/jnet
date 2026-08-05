@@ -1,0 +1,740 @@
+
+========== PAGE 1 ==========
+Bio-Connect Interface via HL7  
+Version 1.0 (First Draft) 
+Version 1.1 
+Version 1.2 
+Version 1.3 
+Version 1.4 
+Version 1.5 
+Introduction 
+Bio-Connect is designed to act as an intermediary between individual hospital sources 
+(ADT/diagnostic test results) (Hospital Information Systems – HIS, or Laboratory 
+Information Systems - LIS) and the other device/instruments. Bio-Connect will 
+receive ADT records from the individual hospital ADT source via HL7 messages and 
+capture test results from device/instruments and sent the result to LIS/HIS system via 
+HL7 messages. The details of this interface will be discussed between Bio-Connect 
+and the individual hospital. Bio-Connect will filter and standardize the ADT/Result 
+messages as appropriate when sending them to other device/instruments/LIS. The 
+details of this second interface are the subject of this document. 
+ 
+The following provides a simplified data flow diagram of Bio-Connect 
+ 
+The system will receive HL7 version 2.4  messages via a TCP/IP socket and the HL7 
+minimal lower layer protocol  as the basis for the Interface, and will acknowledge 
+every message received and not accept another message until an acknowledgement 
+message has been returned to the sender. The acknowledgement message will indicate 
+the receipt and completion of processing of an HL7 message, and prompt the sender 
+Please note at present Bio-Connect deals with the 
+ADT and result message in uni-directional  mode only 
+(i.e. No ADT message will be sent to HIS and sample 
+ordering/result query from LIS is not supported* 
+ADT IN 
+Device/Instrument 
+(e.g. NOV ANET) 
+Bio-Connect 
+HIS 
+LIS 
+Results OUT 
+ADT OUT  
+Result IN 
+========== PAGE 2 ==========
+to send the next message.  
+*Sample ordering/result query can be added if requested, detail of which will be 
+discuss with the individual hospital. 
+HL7 Messages 
+ADT Messages 
+Whilst Bio-Connect accepts different ADT message from the sender, The ADT 
+interface only requires the following segments: 
+MSH 
+EVN 
+PID 
+PVI 
+MRG (For merging only) 
+MSA 
+All other segments are ignored. 
+ 
+Fields that are in use are: 
+PID-2     External Patient ID 
+1 
+PID-3     Internal Patient ID (MRN) 1 
+PID-5, component 1  Last Name 
+PID-5, component 2  First Name 
+PID-5, component 3  Middle Name 
+PID-5, component 4  Prefix 
+PID-5, component 5  Suffix 
+PID-7     Date of Birth 
+PID-8     Gender 
+PID-9    Race 
+PID-11     Patient Address 
+PID-13    Phone Number Home 
+PID-18     Account Number 
+1 
+PVI-3, component 1 Assigned Location 
+PVI-3, component 2 Room 
+PVI-3, component 3 Bed 
+PVI-3, component 4 Facility 
+PVI-7    Attending Physician 
+PVI-19    Visit Number 
+2 
+PVI-44    Admit Date and time 
+========== PAGE 3 ==========
+PVI-45    Discharge Date and time 
+MRG-1    prior Internal Patient ID (MRN) 
+MRG-3    prior patient account number 
+MRG-4    prior external patient ID 
+ 
+1 Note: one of them must be provided if available 
+2 Please note Bio-Connect do not store the visit ID (PV1-19). In other words, only one visit, the latest 
+visit  with the given account number  will be active at the same time on our system. All updates to visits 
+with the given account number  will affect the same  Patient record. 
+Please note at present Bio-Connect will not accept or sent query from/to the ADT source (QRY/ADR 
+message)  
+ 
+Outbound Acknowledgement Message 
+Receipt of an ADT message into Bio-Connect will return a communication 
+acknowledgement to the sending system with message segments MSH and MSA, 
+respectively. In addition, The acknowledgement message send by Bio-Connect 
+contains the MESSAGE CONTROL ID of the message originally sent by ADT 
+system. Bio-Connect will not process any application level error messages, nor will it 
+process any delayed acknowledgement messages. 
+ 
+Please note the following are ignore by Bio-Connect ADT interface: 
+/circle6 ADT^A14 
+/circle6 ADT^A15 
+/circle6 ADT^A16 
+/circle6 ADR^A19 
+/circle6 ADT^A20 
+/circle6 ADT^A24 
+/circle6 ADT^A25 
+/circle6 ADT^A26 
+/circle6 ADT^A27 
+/circle6 ADT^A28 
+/circle6 ADT^A29 
+/circle6 ADT^A30 
+/circle6 ADT^A32 
+/circle6 ADT^A37 
+/circle6 ADT^A39 
+/circle6 ADT^A42 
+/circle6 ADT^A43 
+/circle6 ADT^A44 
+/circle6 ADT^A45 
+/circle6 ADT^A46 
+/circle6 ADT^A48 
+/circle6 ADT^A50 
+/circle6 ADT^A51 
+/circle6 ADT^A54 
+/circle6 ADT^A55 
+/circle6 ADT^A60 
+/circle6 ADT^A61 
+/circle6 ADT^A62 
+ 
+Result Messages 
+Messages will be passed from Bio-Connect to the other LIS system as an unsolicited 
+observation (ORU^R01 for patient Results, OUL^R21 for QC results) which compose 
+of the following segments: 
+  
+MSH    Message Header 
+========== PAGE 4 ==========
+PID    Patient Identification 
+[PV1]   Patient visit 
+[SAC]   Specimen Container Segment (QC only) 
+[SID]   Substance Identifier Segment (QC only) 
+ORC   Common Order segment 
+OBR    Observation Request 
+{[NTE]}   Notes and Comments 
+{OBX    Observation Result 
+{[NTE]}   Notes and Comments 
+} 
+Please note only one  patient or one  Specimen is sent per message. 
+ 
+Fields that are in use are: 
+Patient 
+PID-2     External Patient ID 1 
+PID-3     Internal Patient ID (MRN) 1 
+PID-5, component 1  Last Name 
+PID-5, component 2  First Name 
+PID-5, component 3  Middle Name 
+PID-5, component 4  Prefix 
+PID-5, component 5  Suffix 
+PID-7     Date of Birth 
+PID-8     Gender 
+PID-9    Race 
+PID-11     Patient Address 
+PID-13    Phone Number Home 
+PID-18     Account Number 
+1 
+PVI-3, component 1 Assigned Location 
+PVI-3, component 2 Room 
+PVI-3, component 3 Bed 
+PVI-3, component 4 Facility 
+PVI-7    Attending Physician 
+PVI-19    Visit Number 
+2 
+ 
+QC 
+SAC-3    Container Identifier 
+SAC-6    Specimen Source 
+SID-2    Lot Number 
+========== PAGE 5 ==========
+SID-3    Lot Level 
+SID-4    Manufacturer Identifier 
+ORC-1    Order Control (always ‘NW’) 
+ORC-2    Placer Order (always ‘^HIS’) 
+ORC-3    Filler number 
+ORC-5    Order status (always ‘CM’) 
+ORC-9    date of transaction 
+OBR-1    SET ID (always 1) 
+OBR-2    Placer Order (i.e. Sample/Accession ID) 
+OBR-4    Profile Name 
+OBR-7    Observation date/time 
+OBR-8    Observation end date/time 
+OBR-14    Specimen Receive date/time 
+OBR-15    Specimen source 
+OBR-16    Ordering provider 
+OBR-25    Result Status 
+NTE-1    Comment Sequence Number 
+NTE-2    Comment Source 
+NTE-3    Free text comment 
+NTE-4    Comment Type 
+OBX-1    Sequence Number 
+OBX-2    Value type 
+OBX-3, component 1 Test Code 
+OBX-3, component 2 Test Name 
+OBX-5    Result Value 
+OBX-6    Unit 
+OBX-7    Reference Range 
+OBX-8    Abnormal Flags 
+OBX-11    Result Status 
+ 
+ 
+Please note the content within the PID and PV1 segment is dependent on the 
+information provided by the ADT feed (e.g if Address (PID-11) is provided within the 
+ADT feed, PID-11 field will be filled) 
+ 
+Inbound Acknowledgement Message 
+When an OBR message is sent, Bio-Connect expect a returning acknowledgement 
+message sent by the received system with message segments MSH and MSA, 
+========== PAGE 6 ==========
+respectively. In addition, Bio-Connect expect the acknowledgement message contains 
+the MESSAGE CONTROL ID of the message originally sent by receiving system. 
+ 
+========== PAGE 7 ==========
+Appendix – Segment definition 
+R  – Required for All 
+R1  – Required for ADT only, optional otherwise 
+R2  – Required for Data transmission only, not need ed for ADT transmission 
+O  – Optional 
+NU  – Not use, data will simply be ignored if comes  across 
+ 
+MSH 
+    
+Seq HL7 Len Description Req  Description 
+1 FIELD SEPARATOR 1 | R 
+2 ENCODING 
+CHARACTERS 4 ^~\& R 
+3 SENDING 
+APPLICATION 15 
+Sender Name^original_sender_ID 
+e.g. Bio-Connect^device_ID 
+ 
+O 
+4 SENDING FACILITY 20 e.g. ADDN O 
+5 RECEIVING 
+APPLICATION 15 
+  O 
+6 RECEIVING 
+FACILITY 30 
+  O 
+7 DATE/TIME OF 
+MESSAGE 19 YYYYMMDDHHMMSS R 
+8 SECURITY 40   NU 
+9 MESSAGE TYPE 7 e.g. ADT^A08 R 
+10 MESSAGE CONTROL 
+ID 20   R 
+11 PROCESSING ID 1 P for Production R D for Debug 
+12 VERSION ID 8 2.4 R 
+13 SEQUENCE 
+NUMBER 180 
+  NU 
+14 CONTINUATION 
+POINTER 180 
+  NU 
+     
+     
+========== PAGE 8 ==========
+MSA      
+Seq HL7 
+Description Len Description Req  
+1 Acknowledgement 
+Code  2 ‘AA’ for Positive Acknowledgement 
+‘AE’ for Negative Acknowledgement R 
+2 Message Control ID 20 Identical control ID of the message 
+that is being acknowledged.  R 
+     
+EVN      
+Seq HL7 Len Description Req  Description 
+1 EVENT TYPE CODE 3 e.g. A08 R 
+2 DATE/TIME OF 
+EVENT 19 YYYYMMDDHHMMSS O 
+3 DATE/TIME 
+PLANNED EVENT 19 
+  O 
+4 EVENT REASON 
+CODE 3 
+  NU 
+     
+PID     
+Seq HL7 Len Description Req  Description 
+1 SET ID - PATIENT ID  4   O 
+2 PATIENT ID 
+(EXTERNAL ID) 16 
+  O 
+3 PATIENT ID 
+(INTERNAL ID) 16    R 
+4 ALTERNATE 
+PATIENT ID 12 
+  NU 
+5 PATIENT NAME 48  Last Name^First Name^Middle 
+Name^Prefix^Suffix R 
+6 MOTHER'S MAIDEN 
+NAME 30 
+  NU 
+7 DATE OF BIRTH 8  YYYYMMDD R1 
+8 SEX 1  M, F, U R1 
+9 PATIENT ALIAS 48   NU 
+10 ETHNIC GROUP 1   NU 
+11 PATIENT ADDRESS 106   O 
+========== PAGE 9 ==========
+12 COUNTY CODE  4   NU 
+13 PHONE NUMBER - 
+HOME 40 
+  O 
+14 PHONE NUMBER - 
+BUSINESS 40 
+  NU 
+15 LANGUAGE - 
+PATIENT 25 
+  NU 
+16 MARITAL STATUS 1 S, M   O 
+17 RELIGION 3   O 
+18 PATIENT ACCOUNT 
+NUMBER 20 
+  R 
+19 SSN NUMBER - 
+PATIENT 16 
+  NU 
+20 DRIVER'S LIC NUM - 
+PATIENT 25 
+  NU 
+     
+MRG     
+Seq HL7 Len Description Req  Description 
+1 PRIOR PATIENT ID - 
+INTERNAL 16 
+  O 
+2 PRIOR ALTERNATE 
+PATIENT ID 16 
+  O 
+3 PRIOR PATIENT 
+ACCOUNT NUMBER 
+ 16   O 
+     
+PV1     
+Seq HL7 Len Description Req  Description 
+1 SET ID - PATIENT 
+VISIT 4 
+  R1 
+2 PATIENT CLASS 1   O 
+3 ASSIGNED PATIENT 
+LOCATION 12 
+ Location^Room^Bed^Facility R1 
+4 ADMISSION TYPE 2    O 
+5 PRE-ADMIT 
+NUMBER 20 
+  O 
+========== PAGE 10 ==========
+6 PRIOR PATIENT 
+LOCATION 12 
+ *Require if location is changed R1* 
+7 ATTENDING 
+DOCTOR 60 
+  R1 
+8 REFERRING 
+DOCTOR 60 
+  O 
+9 CONSULTING 
+DOCTOR 60 
+  O 
+10 HOSPITAL SERVICE 3   R1 
+11 TEMPORARY 
+LOCATION 12 
+  NU 
+12 PRE-ADMIT TEST 
+INIDICATOR 2 
+  NU 
+13 RE-ADMISSION 
+INDICATOR 2 
+  NU 
+14 ADMIT SOURCE 3   O 
+15 AMBULATORY 
+STATUS 2 
+  NU 
+16 VIP INDICATOR 2   O 
+17 ADMITTING 
+DOCTOR 60 
+  O 
+18 PATIENT TYPE 2   R1 
+19 VISIT NUMBER 4   NU 
+20 FINANCIAL CLASS 11   O 
+21 CHARGE PRICE 
+INDICATOR 2 
+  NU 
+22 COURTESY CODE 2   NU 
+23 CREDIT RATING 2   NU 
+24 CONTRACT CODE 2   NU 
+25 CONTRACT 
+EFFECTIVE DATE 8 
+  NU 
+26 CONTRACT 
+AMOUNT 12 
+  NU 
+27 CONTRACT PERIOD 3   NU 
+28 INTEREST CODE 2   NU 
+29 TRANSFER TO BAD 
+DEBT CODE 1 
+  NU 
+========== PAGE 11 ==========
+30 TRANSFER TO BAD 
+DEBT DATE 8 
+  NU 
+31 BAD DEBT AGENCY 
+CODE 10 
+  NU 
+32 
+BAD DEBT 
+TRANSFER 
+AMOUNT 
+12 
+  NU 
+33 
+BAD DEBT 
+RECOVERY 
+AMOUNT 
+12 
+  NU 
+34 DELETE ACCOUNT 
+INDICATOR 1 
+  NU 
+35 DELETE ACCOUNT 
+DATE 8 
+  NU 
+36 DISCHARGE 
+DISPOSITION 2 
+  O 
+37 DISCHARGED TO 
+LOCATION 2 
+  NU 
+38 DIET TYPE 2   NU 
+39 SERVICING 
+FACILITY 2 
+  O 
+40 BED STATUS 1   NU 
+41 ACCOUNT STATUS 2   O 
+42 PENDING 
+LOCATION 12 
+  NU 
+43 PRIOR TEMPORARY 
+LOCATION 12 
+  NU 
+44 ADMIT DATE/TIME 19  Require for ADT messages R1 
+45 DISCHARGE 
+DATE/TIME 19 
+ Require for ADT messages R1 
+46 CURRENT PATIENT 
+BALANCE 12 
+  NU 
+47 TOTAL CHARGES 12   NU 
+48 TOTAL 
+ADJUSTMENTS 12 
+  NU 
+49 TOTAL PAYMENTS 12   NU 
+     
+ORC      
+========== PAGE 12 ==========
+Seq HL7 Len Description Req  Description 
+1 ORDER CONTROL 2 Always ‘NW’ R2 
+2 PLACER ORDER # 75 Always ‘^HIS’   R2 
+3 FILLER ORDER # 75 Unique Number created by 
+Bio-Connect system   R2 
+4 PLACER GROUP # 75   NU 
+5 ORDER STATUS 2 Always ‘CM’   R2 
+6 RESPONSE FLAG 1   NU 
+7 QUANTITY/TIMING 200   NU 
+8 PARENT 200   NU 
+9 DATE/TIME OF 
+TRANSACTION 19 YYYYMMDDHHMMSS 
+  R2 
+     
+OBR     
+Seq HL7 Len Description Req  Description 
+1 
+SET ID - 
+OBSERVATION 
+REQUEST 
+4 
+ 1 O 
+2 PLACERS ORDER # 75 Sample ID (if available) O 
+3 FILLERS ORDER # 75  NU 
+4 
+UNIVERSAL 
+SERVICE 
+IDENTIFIER 
+200 
+ ‘WGLUC’ are used as the default 
+service identifier. O 
+5 PRIORITY 2   NU 
+6 REQUESTED 
+DATE-TIME 19 
+ YYYYMMDDHHMMSS O 
+7 OBSERVATION 
+DATE/TIME 19 
+ YYYYMMDDHHMMSS R2 
+8 OBSERVATION END 
+DATE/TIME 19 
+ YYYYMMDDHHMMSS O 
+9 COLLECTION 
+VOLUME 20 
+  NU 
+10 COLLECTOR 
+IDENTIFIER 60 
+  NU 
+11 SPECIMEN ACTION 
+CODE 1 
+  NU 
+========== PAGE 13 ==========
+12 DANGER CODE 60   NU 
+13 RELEVANT 
+CLINICAL INFO 300 
+  NU 
+14 
+SPECIMEN 
+RECEIVED 
+DATE/TIME 
+19 YYYYMMMDDHHMMSS R2 
+15 SPECIMEN SOURCE 300   O 
+16 ORDERING 
+PROVIDER 60 
+  NU 
+17 ORDER CALL-BACK 
+PHONE NUMBER 40 
+  NU 
+18 PLACERS FIELD #1 60   NU 
+19 PLACERS FIELD #2 60   NU 
+20 FILLERS FIELD #1 60   NU 
+21 FILLERS FIELD #2 60   NU 
+22 
+RESULTS 
+RPT/STATUS CHG - 
+DT/TM 
+19 
+  O 
+23 CHARGE TO 
+PRACTICE 40 
+  NU 
+24 DIAGNOSTIC SERV 
+SECT ID 10 
+  NU 
+25 RESULT STATUS 1 Always ‘F’ O 
+26 LINKED RESULTS 200   NU 
+27 QUANTITY/TIMING 200   NU 
+28 RESULTS COPIES TO  80   NU 
+29 PARENT/ACCESSION 
+# 150   NU 
+30 TRANSPORTATION 
+MODE 20 
+  NU 
+31 REASON FOR 
+STUDY 300 
+  NU 
+32 PRINCIPAL RESULT 
+INTERPRETER 60 
+  NU 
+33 ASSISTANT RESULT 
+INTERPRETER 60 
+  NU 
+34 TECHNICIAN 60   NU 
+========== PAGE 14 ==========
+35 TRANSCRIPTIONIST  60   NU 
+36 SCHEDULED - 
+DATE/TIME 19 
+  NU 
+     
+NTE     
+Seq HL7 Len Description Req  Description 
+1 SET ID -Comment 4  Sequence number per Comment O 
+2 Comment Source 8 
+‘I’ from Instrument 
+‘M’ from Manual Input in 
+Bio-Connect 
+ 
+O 
+3 Comment 255  Free text comment O 
+4 Comment Type 20  Always ‘G’ O 
+ 
+OBX     
+Seq HL7 Len Description Req  Description 
+1 
+SET ID 
+-OBSERVATION 
+SIMPLE 
+4 
+ Sequence number per observation O 
+2 VALUE TYPE 2 ST (non-numeric result) 
+NM (Numeric result) O 
+3 OBSERVATION 
+IDENTIFIER 80 Test Code^Test Name 
+  R2 
+4 OBSERVATION 
+SUB-ID 20 
+  NU 
+5 OBSERVATION 
+RESULT 65k 
+ Result value R2 
+6 UNITS 20   O 
+7 REFERENCES 
+RANGE  60 
+ e.g. 3.5-6.1 O 
+8 ABNORMAL FLAGS 10 
+‘’ or ‘N’ for Normal 
+‘H’ for High 
+‘L’ for Low 
+O 
+========== PAGE 15 ==========
+‘A’ for Anormal 
+‘<’ below measurable range 
+‘>’ above measurable range 
+9 PROBABILITY 5   NU 
+10 NATURE OF 
+ABNORMAL TEST 5 
+  NU 
+11 OBSERVATION 
+RESULT STATUS 2 
+ ‘F’ (Final Result) 
+ ‘P’ (Preliminary) 
+ ‘V’ (Verified Result) 
+ ‘W’ (Undertermine) 
+  
+O 
+12 DATE LAST OBS 
+NORMAL VALUES 19 
+  NU 
+13 USER DEFINED 
+ACCESS CHECKS   NU 
+14 DATETIME OF 
+OBSERVATION   NU 
+15 PRODUCER ID   NU 
+16 Responsible Observer 30 Displays the operator ID  O 
+ 
+========== PAGE 16 ==========
+Appendix - Examples 
+Please note <011>, <013>, <028> are the control character used with within MLLP 
+ 
+ADT Samples 
+HIS SENT 
+<011> 
+MSH|^~\&|ADM|ADDE|||200812150003||ADT^A08|MT->COBAS.1.446736|P|2. 
+4<013> 
+EVN|A08|200812150003<013> 
+PID|1||N123456||MAN^FIRSTNAME||20081214|M|^^^^^||ADDRESS|D12|TELN 
+O|||S||H000123455502<013> 
+PV1|1|I|ABC^DEF^5||||AESS^E^SMITH^A^^^|G2257088SOH^^^^^^||ICU|||| 
+BH|||SMITH^E^JOHN^A^^^|IN||NHS|||||||||||||||||||ADDE||ADM|||2008 
+12142254<013> 
+<028><013> 
+Bio-Connect SENT 
+<011> 
+MSH|^~\&|||||20090217181020||ACK|MT->COBAS.1.446736|P|2.4<013> 
+MSA|AA|MT->COBAS.1.446736||<013> 
+<028><013> 
+ 
+HIS SENT 
+<011>MSH|^~\&|ADM|ADDE|||200812150031||ADT^A01|MT->COBAS.1.446738 
+|P|2.4<013> 
+EVN|A01|200812150031<013> 
+PID|1||N123456||WOMAN^FIRSTNAME||19800905|F|^^^^^|WB|ADDRESS|E18| 
+TELNO|||||H00005285522<013> 
+PV1|1|I|DOO^DOO^83||||MWIFE^Care^DEFG^L^^^|SMITH^A^JANE^M^^^||MLC 
+||||MA|||MWIFE^Care^DEFG^L^^^|IN||NHS|||||||||||||||||||ADDE||ADM 
+|||200812150024<013> 
+<028><013> 
+Bio-Connect SENT  
+<011> 
+MSH|^~\&|||||20090217181020||ACK|MT->COBAS.1.446738|P|2.4<013> 
+MSA|AA|MT->COBAS.1.446738||<013> 
+<028><013> 
+========== PAGE 17 ==========
+ 
+HIS SENT 
+<011> 
+MSH|^~\&|ADM|ADDE|||200812150003||ADT^A17|MT->COBAS.1.446736|P|2. 
+4<013> 
+EVN|A17|200812150003<013> 
+PID|1||N9769937||SMITH^JOE||20081214|M|^^^^^||ADDRESS|D12|TELNO|| 
+|S||H00005321502<013> 
+PV1|1|I|ABC^ABCD^5||||AEC^E^CURLEY^A^^^|G2340088SOH^^^^^^||NICU|| 
+||BH|||AEC^E^SMITH^A^^^|IN||NHS|||||||||||||||||||ADDE||ADM|||200 
+812142254<013> 
+PID|1||N9769937||JONES^MARY||19800905|F|^^^^^|WB|ADDRESS|E18|TELN 
+O|||||H00005321522<013> 
+PV1|1|I|EFG^EFGH^83||||MWIFE^Care^DEFG^L^^^|JENS^A^JENNY^M^^^||ML 
+C||||MA|||MWIFE^Care^DEFG^L^^^|IN||NHS|||||||||||||||||||ADDE||AD 
+M|||200812150024<013> 
+<028><013> 
+Bio-Connect SENT  
+<011> 
+MSH|^~\&|||||20090217181430||ACK|MT->COBAS.1.446736|P|2.4<013> 
+MSA|AA|MT->COBAS.1.446736||<013> 
+<028><013> 
+ 
+Result Samples 
+Bio-Connect SENT  
+<011> 
+MSH|^~\&|BIO-CONNECT^00000453112||dummyHl7||20090324164304||ORU^R01|B 
+C54000|P|2.1<013> 
+PID|1||DB6540||Smith^John||19651204|M||||||||||<013>PV1|1||^^^NBU 
+SJH^|||<013> 
+ORC|NW|^HIS|54090000000000||CM||||20090319123722||<013> 
+OBR|1|||WGLUC||20090319123722|20090319123722|||||||20090319123722|||| 
+||||20090319123821|||F<013> 
+NTE|1|I|Insulin given|G<013> 
+OBX|1|NM|2341-6^Glu^|1|10.9|mmol/L|3.1-5.5||||F|||||001<013> 
+<028><013> 
+LIS SENT  
+<011> 
+========== PAGE 18 ==========
+MSH|^~\&|||||20090324164305||ACK|BC54000|P|2.1<013> 
+MSA|AA|BC54000||<013> 
+<028><013> 
+Bio-Connect SENT  
+<011> 
+MSH|^~\&|BIO-CONNECT^123||dummyHl7||20090324164305||ORU^R01|BC54030|P 
+|2.1<013> 
+PID|1||DE5644||||19000101|||||||||||<013>PV1|1||NBU LGI^^^ABC 
+TH^|||<013> 
+ORC|NW|^HIS|54120000000000||CM||||20090319140456||<013> 
+OBR|1|312204066||G3+||20090319140456|20090319140456|||||||20090319140 
+456||||||||20090319140613|||F<013> 
+OBX|1|NM|PH^PH^M|1|7.35||7.35-7.45||||F|||||001<013> 
+OBX|2|NM|TCO2^TCO2^C|1|25|mmol/L|23-27||||F|||||001<013> 
+OBX|3|NM|PO2^pO2^|1|158|mmHg|10.7-14|H|||F|||||001<013> 
+OBX|4|NM|PCO2^pCO2^M|1|38.3|mmHg|4.7-6.0|H|||F|||||001<013> 
+OBX|5|NM|BE^BEecf^C|1|-1|mmol/L|-2.0-3||||F|||||001<013> 
+OBX|6|NM|HCO3^HCO3-^C|1|24.2|mmol/L|22-26||||F|||||001<013> 
+OBX|7|NM|SO2^SO2^C|1|99|%|95-98||||F|||||001<013> 
+<028><013> 
+LIS SENT  
+<011> 
+MSH|^~\&|||||20090324164305||ACK|BC54030|P|2.1<013> 
+MSA|AA|BC54030||<013> 
+<028><013> 
