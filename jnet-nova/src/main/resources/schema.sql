@@ -524,3 +524,147 @@ CREATE INDEX IF NOT EXISTS idx_loc2wifi_loc ON dml_loc_to_wifi_setup(loc_num);
 CREATE INDEX IF NOT EXISTS idx_wificred_mac ON dml_wifi_credential(wifi_mac_address);
 CREATE INDEX IF NOT EXISTS idx_insttest_type ON dml_instrument_test(inst_type);
 CREATE INDEX IF NOT EXISTS idx_insttest_testname ON dml_instrument_test(test_name);
+
+-- ============================================================================
+-- RTM Extension Tables (RTMADTP, RTMOPL, RTMLIS)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Patient table (RTMADTP)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_patient (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_num VARCHAR(100) UNIQUE,
+    patient_id VARCHAR(100),
+    medrec_num VARCHAR(100),
+    account_num VARCHAR(100),
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    middle_name VARCHAR(100),
+    birth_date DATE,
+    sex VARCHAR(5),
+    race VARCHAR(50),
+    address VARCHAR(500),
+    phone_home VARCHAR(40),
+    facility VARCHAR(200),
+    location VARCHAR(200),
+    status VARCHAR(20) DEFAULT 'A',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- Patient account table (RTMADTP)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_patient_account (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    account_num VARCHAR(100) UNIQUE,
+    patient_num VARCHAR(100),
+    account_number VARCHAR(100),
+    account_name VARCHAR(200),
+    status VARCHAR(20) DEFAULT 'A',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- Patient visit table (RTMADTP)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_patient_visit (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    visit_num VARCHAR(100) UNIQUE,
+    visit_number VARCHAR(100),
+    patient_num VARCHAR(100),
+    account_num VARCHAR(100),
+    visit_type VARCHAR(50),
+    location VARCHAR(200),
+    room VARCHAR(50),
+    bed VARCHAR(50),
+    facility VARCHAR(200),
+    admitting_doctor VARCHAR(200),
+    visit_date TIMESTAMP,
+    discharging_date TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'A',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- Operator privilege table (RTMOPL)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_operator_privilege (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    operator_num VARCHAR(100),
+    inst_type VARCHAR(64),
+    privilege_code VARCHAR(50),
+    privilege_desc VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- Operator to unit table (RTMOPL)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_operator_to_unit (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    operator_num VARCHAR(100),
+    loc_num VARCHAR(50),
+    unit_name VARCHAR(200),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- Method table (RTMOPL)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_method (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    operator_num VARCHAR(100),
+    inst_type VARCHAR(64),
+    method_name VARCHAR(100),
+    method_code VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- QC result table (RTMLIS)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_qc_result (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sample_key_num VARCHAR(100),
+    lot_number VARCHAR(100),
+    control_type VARCHAR(50),
+    test_code VARCHAR(64),
+    result_value VARCHAR(128),
+    result_units VARCHAR(32),
+    target_value VARCHAR(128),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- Health ping table (RTM monitoring)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dml_health_ping (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    process_name VARCHAR(40),
+    host VARCHAR(100),
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_connect_dttm TIMESTAMP,
+    last_disconnect_dttm TIMESTAMP,
+    tot_messages_processed INT DEFAULT 0
+);
+
+-- Additional RTM indexes
+CREATE INDEX IF NOT EXISTS idx_patient_medrec ON dml_patient(medrec_num);
+CREATE INDEX IF NOT EXISTS idx_patient_id ON dml_patient(patient_id);
+CREATE INDEX IF NOT EXISTS idx_patient_account ON dml_patient_account(patient_num);
+CREATE INDEX IF NOT EXISTS idx_visit_patient ON dml_patient_visit(patient_num);
+CREATE INDEX IF NOT EXISTS idx_visit_number ON dml_patient_visit(visit_number);
+CREATE INDEX IF NOT EXISTS idx_op_privilege ON dml_operator_privilege(operator_num);
+CREATE INDEX IF NOT EXISTS idx_op_unit ON dml_operator_to_unit(operator_num);
+CREATE INDEX IF NOT EXISTS idx_op_method ON dml_method(operator_num);
+CREATE INDEX IF NOT EXISTS idx_qc_sample ON dml_qc_result(sample_key_num);
+CREATE INDEX IF NOT EXISTS idx_qc_lot ON dml_qc_result(lot_number);
+CREATE INDEX IF NOT EXISTS idx_health_process ON dml_health_ping(process_name);

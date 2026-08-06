@@ -43,22 +43,26 @@ spring.datasource:
           auto: none
 
 bioconnect:
-  # Inbound MLLP server: receives ADT from HIS and Results (ORU/OUL) from device
+  # Inbound MLLP server: receives ADT from HIS (RTMADTP entry point)
   inbound:
     enabled: true
-    port: 2575
+    port: 57399
     worker-threads: 4
-  # Outbound MLLP client: forwards ADT to device/instrument (e.g. NOVANET)
-  device:
-    enabled: true
-    host: 127.0.0.1
-    port: 2580
-    reconnect-delay-ms: 5000
-  # Outbound MLLP client: forwards Results (ORU^R01 / OUL^R21) to LIS/HIS
+  # Outbound MLLP client: forwards Results (ORU^R01 / OUL^R21) to LIS/HIS (RTMLIS exit point)
   lis:
     enabled: true
     host: 127.0.0.1
     port: 2590
+    reconnect-delay-ms: 5000
+  # DML TCP server: receives OBS/SVC from devices (RTMLIS entry point)
+  dml:
+    enabled: true
+    port: 57381
+  # DML TCP client: pushes PAT/OPL to device (RTMADTP/RTMOPL exit point)
+  device:
+    enabled: true
+    host: 127.0.0.1
+    port: 57380
     reconnect-delay-ms: 5000
   # Default MSH identities used when Bio-Connect originates a message
   sending-application: BIO-CONNECT

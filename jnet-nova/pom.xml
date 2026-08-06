@@ -25,6 +25,15 @@
     </properties>
 
     <dependencies>
+        <!-- Sybase SQL Anywhere JDBC Driver (jconn3) -->
+        <!-- Driver class: com.sybase.jdbc3.jdbc.SybDriver -->
+        <dependency>
+            <groupId>com.sybase</groupId>
+            <artifactId>jconn3</artifactId>
+            <version>16.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/jconn3-16.0.jar</systemPath>
+        </dependency>
         <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -137,6 +146,7 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <includeSystemScope>true</includeSystemScope>
                 </configuration>
             </plugin>
         </plugins>
