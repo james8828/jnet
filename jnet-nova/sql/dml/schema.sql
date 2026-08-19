@@ -69,11 +69,14 @@ CREATE TABLE IF NOT EXISTS dml_loc_last_update (
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS dml_operator (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    operator_id VARCHAR(100) UNIQUE NOT NULL,
+    operator_num VARCHAR(100) UNIQUE NOT NULL,
+    operator_id VARCHAR(100) NOT NULL,
     operator_name VARCHAR(200),
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     middle_name VARCHAR(100),
+    email VARCHAR(200),
+    is_supervisor VARCHAR(1) DEFAULT 'F',
     access_control_level INT,
     privilege_level INT,
     facility VARCHAR(200),
@@ -82,7 +85,7 @@ CREATE TABLE IF NOT EXISTS dml_operator (
     department VARCHAR(200),
     effective_start_dttm TIMESTAMP,
     effective_end_dttm TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'Active',
+    status VARCHAR(20) DEFAULT 'A',
     note VARCHAR(1000),
     datetime_stamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -91,34 +94,10 @@ CREATE TABLE IF NOT EXISTS dml_operator (
 
 -- ----------------------------------------------------------------------------
 -- Patients (mirrors C# DBA.patients)
+-- NOTE: Full dml_patient definition is in the RTM Extension Tables section
+--       below (with patient_num as unique key). Defined there to keep RTM
+--       entities (PatientEntity) and DML entities aligned.
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS dml_patient (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    patient_id VARCHAR(100) UNIQUE NOT NULL,
-    medrec_num VARCHAR(100),
-    enterprise_id VARCHAR(100),
-    account_num VARCHAR(100),
-    patient_name VARCHAR(200),
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    middle_name VARCHAR(100),
-    birth_date DATE,
-    sex VARCHAR(5),
-    race VARCHAR(50),
-    facility VARCHAR(200),
-    location VARCHAR(200),
-    loc_num VARCHAR(50),
-    bed VARCHAR(50),
-    room VARCHAR(50),
-    diagnosis_code VARCHAR(100),
-    diagnosis_desc VARCHAR(500),
-    physician_id VARCHAR(100),
-    physician_name VARCHAR(200),
-    status VARCHAR(20) DEFAULT 'Active',
-    note VARCHAR(1000),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- ----------------------------------------------------------------------------
 -- Physicians (mirrors C# DBA.physicians)
@@ -496,6 +475,7 @@ CREATE TABLE IF NOT EXISTS dml_communication (
     computer_name VARCHAR(100),
     instrument_id VARCHAR(100),
     port_num INT,
+    port_type VARCHAR(50),
     comm_record_num VARCHAR(100),
     started_dttm TIMESTAMP,
     last_comm_dttm TIMESTAMP,
@@ -530,14 +510,18 @@ CREATE INDEX IF NOT EXISTS idx_insttest_testname ON dml_instrument_test(test_nam
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Patient table (RTMADTP)
+-- Patient table (RTMADTP) - mirrors C# DBA.patients
+-- Merged definition: patient_num (UUID) is the unique business key,
+-- patient_id is the external enterprise ID, medrec_num is the MRN.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS dml_patient (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    patient_num VARCHAR(100) UNIQUE,
+    patient_num VARCHAR(100) UNIQUE NOT NULL,
     patient_id VARCHAR(100),
     medrec_num VARCHAR(100),
+    enterprise_id VARCHAR(100),
     account_num VARCHAR(100),
+    patient_name VARCHAR(200),
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     middle_name VARCHAR(100),
@@ -548,7 +532,15 @@ CREATE TABLE IF NOT EXISTS dml_patient (
     phone_home VARCHAR(40),
     facility VARCHAR(200),
     location VARCHAR(200),
+    loc_num VARCHAR(50),
+    bed VARCHAR(50),
+    room VARCHAR(50),
+    diagnosis_code VARCHAR(100),
+    diagnosis_desc VARCHAR(500),
+    physician_id VARCHAR(100),
+    physician_name VARCHAR(200),
     status VARCHAR(20) DEFAULT 'A',
+    note VARCHAR(1000),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

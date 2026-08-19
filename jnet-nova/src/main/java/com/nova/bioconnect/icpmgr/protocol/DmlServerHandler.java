@@ -99,8 +99,7 @@ public class DmlServerHandler extends SimpleChannelInboundHandler<String> {
             return;
         }
 
-        if (evt instanceof IdleStateEvent) {
-            IdleStateEvent idleEvent = (IdleStateEvent) evt;
+        if (evt instanceof IdleStateEvent idleEvent) {
             IdleState state = idleEvent.state();
 
             switch (state) {

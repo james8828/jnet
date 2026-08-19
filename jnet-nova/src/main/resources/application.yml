@@ -71,6 +71,41 @@ bioconnect:
   version: "2.4"
   charset: UTF-8
 
+  # === 定时同步任务配置 ===
+  sync:
+    enabled: true
+    # 患者同步（从 HIS 查询在院患者，对比获取变更后推送）
+    patient:
+      enabled: true
+      # 查询策略：database(数据库直连), rest(RESTful API)
+      strategy: database
+      # 同步间隔（秒）
+      interval-seconds: 60
+      # 启动时立即执行一次全量同步
+      sync-on-startup: true
+      # HIS 数据库配置（strategy=database 时使用）
+      database:
+        url: jdbc:sybase:Tds:172.31.0.52:26383?ServiceName=rtmbackend
+        username: dba
+        password: ab3dq@RND
+      # HIS RESTful API 配置（strategy=rest 时使用）
+      rest:
+        base-url: http://his-server:8080/api
+        api-key: your-api-key
+    # 医护人员同步（从 HIS 查询院内医护，对比获取变更后推送）
+    operator:
+      enabled: true
+      strategy: database
+      interval-seconds: 300
+      sync-on-startup: true
+      database:
+        url: jdbc:sybase:Tds:172.31.0.52:26383?ServiceName=rtmbackend
+        username: dba
+        password: ab3dq@RND
+      rest:
+        base-url: http://his-server:8080/api
+        api-key: your-api-key
+
 logging:
   level:
     com.nova.bioconnect: INFO

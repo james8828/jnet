@@ -9,6 +9,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -25,6 +26,11 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class DmlTcpServer {
 
+    /**
+     * -- GETTER --
+     *  Get the server port
+     */
+    @Getter
     @Value("${dml.server.port:57380}")
     private int port;
 
@@ -102,13 +108,6 @@ public class DmlTcpServer {
             log.error("Error stopping DML TCP server", e);
             Thread.currentThread().interrupt();
         }
-    }
-
-    /**
-     * Get the server port
-     */
-    public int getPort() {
-        return port;
     }
 
     /**
